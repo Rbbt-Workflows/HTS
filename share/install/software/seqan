@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='seqan'
+url="https://github.com/seqan/seqan.git"
+
+install_git "$name" "$url" 

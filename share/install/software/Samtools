@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='Samtools'
+url="https://github.com/samtools/samtools.git"
+
+install_git "$name" "$url"

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='PicardTools'
+url="https://sourceforge.net/projects/picard/files/picard-tools/1.119/picard-tools-1.119.zip/download"
+
+install_src "$name" "$url" 

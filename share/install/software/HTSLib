@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='HTSLib'
+url="https://github.com/samtools/htslib.git"
+
+install_git "$name" "$url" --enable-s3=no --without-s3

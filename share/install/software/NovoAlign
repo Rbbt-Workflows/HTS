@@ -1,0 +1,8 @@
+#!/bin/bash
+
+name='NovoAlign'
+url="http://www.novocraft.com/support/download/download.php?filename=V3.08.02/novocraftV3.08.02.Linux3.10.0.tar.gz"
+
+install_src "$name" "$url" 
+
+(cd $OPT_DIR/bin ; ln -s $OPT_DIR/$name/novo* .)

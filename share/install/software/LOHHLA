@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='LOHHLA'
+url="https://bitbucket.org/mcgranahanlab/lohhla.git"
+
+install_git "$name" "$url" 

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='OptiType'
+url="https://github.com/FRED-2/OptiType.git"
+
+install_git "$name" "$url" 
