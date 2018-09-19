@@ -1,0 +1,7 @@
+#!/bin/bash
+
+name='AlleleCount'
+url="https://github.com/cancerit/alleleCount.git"
+
+get_git "$name" "$url" 
+custom_build "$name" "./setup.sh '$OPT_DIR/$name'"

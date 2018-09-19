@@ -6,9 +6,23 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   tools=tools{
    BWA.rb
    GATK.rb
-   samtools.rb
+   Bowtie.rb
+   IGV.rb
+   NovoAlign.rb
    opti_type.rb
-   LOHHLA.rb
+   samtools.rb
+   VarScan.rb
+   alleleCount.rb
+   scatter.rb
+  }
+  tasks=HTS/tasks{
+   BAM.rb
+   CNV.rb
+   sequenza.rb
+   MuTect2.rb
+   VarScan.rb
+   filter.rb
+   test.rb
   }
  }
  test=test {
@@ -17,15 +31,20 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
  share=share filter="*"{
   software=install/software{
    BWA
+   Bowtie
+   Bowtie2
    GATK
    HTSLib
    Samtools
    OptiType
+   Jellyfish
+   NovoAlign
+   PicardTools
+   IGV
    seqan
    LOHHLA
-   Jellyfish
-   Novalign
-   PicardTools
+   VarScan
+   AlleleCount
   }
  }
  data=data filter="*"{

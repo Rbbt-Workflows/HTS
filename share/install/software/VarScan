@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='VarScan'
+url="https://github.com/dkoboldt/varscan/blob/master/VarScan.v2.4.3.jar?raw=true"
+
+install_jar "$name" "$url" 

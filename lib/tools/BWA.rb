@@ -17,6 +17,30 @@ module BWA
     CMD.cmd("#{BWA_CMD} mem #{args} '#{reference}' #{files.collect{|f| "'#{f}'"} * " "} ", :pipe => true)
   end
 
+  def self.prepare_FASTA(file, dir = nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+
+    digest = Misc.digest(file)
+    basename = File.basename(file)
+
+    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+    if ! File.exists?(linked + ".bwt") || Persist.newer?(linked + ".bwt", file)
+
+      Misc.in_dir dir do
+        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        CMD.cmd("'#{BWA_CMD}' index '#{ linked }'")
+      end
+    end
+
+    linked
+  end
+
   Rbbt.claim Rbbt.software.opt.BWA, :install, Rbbt.share.install.software.BWA.find
 
   BWA_CMD = Rbbt.software.opt.BWA.produce.bwa.find

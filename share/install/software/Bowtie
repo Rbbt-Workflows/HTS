@@ -1,0 +1,8 @@
+#!/bin/bash
+
+name='Bowtie'
+url="https://github.com/BenLangmead/bowtie.git"
+
+install_git "$name" "$url"
+ln -s $OPT_DIR/$name/bowtie $OPT_DIR/bin/bowtie 
+

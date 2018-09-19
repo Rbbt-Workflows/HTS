@@ -40,34 +40,76 @@ module GATK
     end
   end
 
-  GATK.claim GATK.known_sites.b37["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  GATK.claim GATK.known_sites.b37["Miller_1000G_indels.vcf"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
-    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}.gz'")
+    args = {}
+    args["feature-file"] = target + '.gz'
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.b37["1000G_phase1.snps.high_confidence.b37.vcf"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}.gz'")
+    args = {}
+    args["feature-file"] = target + '.gz'
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.b37["1000G_phase1.indels.vcf"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.indels.b37.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}.gz'")
+    args = {}
+    args["feature-file"] = target + '.gz'
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.hg19["Miller_1000G_indels.vcf"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}.gz'")
+    args = {}
+    args["feature-file"] = target + '.gz'
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.hg19["1000G_phase1.indels.vcf"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/1000G_phase1.indels.hg19.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}.gz'")
     args = {}
     args["feature-file"] = target
     GATK.run_log("IndexFeatureFile", args)
     nil
   end
 
-  GATK.claim GATK.known_sites.b37["1000G_phase1.indels.vcf.gz"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.indels.b37.vcf.gz"
-    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
-    args = {}
-    args["feature-file"] = target
-    GATK.run_log("IndexFeatureFile", args)
-    nil
+  GATK.claim GATK.bundle.hg38, :proc do |target|
+    Misc.in_dir target do
+      CMD.cmd_log("wget -m -nH --cut-dirs=2 ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/")
+    end
+  end
+
+  GATK.claim GATK.bundle.hg38, :proc do |target|
+    Misc.in_dir target do
+      CMD.cmd_log("wget -m -nH --cut-dirs=2 ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/")
+    end
   end
   
   def self.hash2args(hash)
     hash.collect do |k,v| 
-      k = '--' + k unless k[0] == "-"
+      k = '--' + k.to_s unless k[0] == "-"
       next if v.nil? || FalseClass === v
       v = nil if TrueClass === v
       vs = Array === v ? v : [v]
       vs.collect do |v|
-        v = "'" + v + "'" unless v[0] == "'" || v[0] == '"' unless v.nil?
+        v = "'" + v.to_s + "'" unless v[0] == "'" || v[0] == '"' unless v.nil?
         [k,v].compact * " " 
       end
     end.compact.flatten * " "
@@ -75,7 +117,12 @@ module GATK
 
   def self.run(command, arg_string = "", sin = nil)
     arg_string = hash2args(arg_string) if Hash === arg_string
-    CMD.cmd("#{GATK_CMD} #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+    if tmpdir
+      CMD.cmd("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    else
+      CMD.cmd("#{GATK_CMD} #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    end
   end
 
   def self.run_log(*args)
@@ -92,6 +139,5 @@ end
 
 if __FILE__ == $0
   Log.severity = 0
-  iif GATK.tutorials.tutorial_11682.produce
-  iif GATK.tutorials.tutorial_11136.produce
+  iif GATK.known_sites.b37["1000G_phase1.snps.high_confidence.b37.vcf"].produce(true)
 end
