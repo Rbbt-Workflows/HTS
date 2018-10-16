@@ -2,15 +2,6 @@ require 'rbbt-util'
 require 'rbbt/resource'
 
 module IGV
-  extend Resource
-  self.subdir = 'share/databases/IGV'
-
-  #def self.organism(org="Hsa")
-  #  Organism.default_code(org)
-  #end
-
-  #self.search_paths = {}
-  #self.search_paths[:default] = :lib
 
   def self.run(script, height = 5000, width = 2000)
     Log.debug "IGV script:\n" << script

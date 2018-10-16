@@ -8,7 +8,7 @@ module HTS
   input :platform_unit, :string, "PLATFORM_UNIT BAM field", "DefaultPlatformUnit"
   input :platform, :string, "PLATFORM BAM field", "DefaultPlatform"
   input :sequencing_center, :string, "SEQUENCING_CENTER BAM field", "DefaultSequencingCenter"
-  extension :bam
+  extension :ubam
   task :uBAM => :binary do |fastq1, fastq2, read_group_name, sample_name, library_name, platform_unit, platform, sequencing_center, run_date|
     args = {}
     args["FASTQ"] = fastq1
@@ -26,7 +26,7 @@ module HTS
   end
 
   dep :uBAM, :compute => :produce
-  extension :bam
+  extension :ubam
   task :mark_adapters => :binary do
     args = {}
     args["INPUT"] = step(:uBAM).path
@@ -39,12 +39,13 @@ module HTS
 
   dep :mark_adapters
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
-  input :bwa_mem_args, :string, "Arg string", "-M -p -t 30"
+  input :bwa_mem_args, :string, "Arg string", "-M -p"
   extension :bam
   task :BAM => :binary do |reference, bwa_mem_args|
 
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference
+    reference = GATK.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)

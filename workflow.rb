@@ -110,6 +110,7 @@ require 'HTS/tasks/filter'
 require 'HTS/tasks/sequenza'
 require 'HTS/tasks/MuTect2'
 require 'HTS/tasks/VarScan'
+require 'HTS/tasks/Strelka'
 require 'HTS/tasks/test'
 
 #require 'rbbt/knowledge_base/HTS'

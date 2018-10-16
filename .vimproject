@@ -12,6 +12,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    opti_type.rb
    samtools.rb
    VarScan.rb
+   Strelka.rb
    alleleCount.rb
    scatter.rb
   }
@@ -22,6 +23,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    MuTect2.rb
    VarScan.rb
    filter.rb
+   Strelka.rb
    test.rb
   }
  }
@@ -45,6 +47,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    LOHHLA
    VarScan
    AlleleCount
+   Strelka
   }
  }
  data=data filter="*"{

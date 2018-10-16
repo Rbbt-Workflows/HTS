@@ -115,6 +115,30 @@ module GATK
     end.compact.flatten * " "
   end
 
+  def self.prepare_FASTA(file, dir = nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+
+    digest = Misc.digest(file)
+    basename = File.basename(file)
+
+    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+    if ! File.exists?(linked.replace_extension("dict")) || Persist.newer?(linked.replace_extension('dict'), file)
+
+      Misc.in_dir dir do
+        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        CMD.cmd("'#{GATK_CMD}' CreateSequenceDictionary -R '#{ linked }'")
+      end
+    end
+
+    linked
+  end
+
   def self.run(command, arg_string = "", sin = nil)
     arg_string = hash2args(arg_string) if Hash === arg_string
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
@@ -132,6 +156,16 @@ module GATK
     end
     io.join
     nil
+  end
+
+  def self.run_log(command, arg_string = "", sin = nil)
+    arg_string = hash2args(arg_string) if Hash === arg_string
+    tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+    if tmpdir
+      CMD.cmd_log("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    else
+      CMD.cmd_log("#{GATK_CMD} #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    end
   end
 
   GATK_CMD=Rbbt.software.opt.GATK.produce.gatk.find

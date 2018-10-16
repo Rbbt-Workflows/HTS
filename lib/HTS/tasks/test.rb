@@ -49,4 +49,35 @@ module HTS
     nil
   end
 
+
+  dep :strelka
+  dep :mutect2_clean
+  task :compare_variants => :tsv do
+
+    strelka_variants = TSV.traverse step(:strelka), :into => [] do |chr, values|
+      pos, id, ref, alt, *rest = values
+
+      [chr, pos, alt] * ":"
+    end
+
+    mutect2_variants = TSV.traverse step(:mutect2_clean), :into => [] do |chr, values|
+      pos, id, ref, alt, *rest = values
+
+      [chr, pos, alt] * ":"
+    end
+
+    common = strelka_variants & mutect2_variants
+    only_strelka = strelka_variants - mutect2_variants
+    only_mutect2 =  mutect2_variants - strelka_variants
+
+    
+    tsv = TSV.setup({}, :key_field => "Statistic", :fields => ["Value"], :type => :single, :cast => :to_i)
+
+    tsv["Common"] = common.length
+    tsv["Only Strelka"] = only_strelka.length
+    tsv["Only MuTect2"] = only_mutect2.length
+
+    tsv
+  end
+
 end
