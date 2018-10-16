@@ -14,7 +14,9 @@ module HTS
 
     reference = Samtools.prepare_FASTA(reference)
 
-    Strelka.runSomatic(tumor, normal, reference, output)
+    cpus = config :cpus, :strelka, :default => 3
+
+    Strelka.runSomatic(tumor, normal, reference, output, cpus)
     
     Open.read(output.results.variants["somatic.snvs.vcf.gz"])
   end

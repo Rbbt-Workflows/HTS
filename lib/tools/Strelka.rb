@@ -17,10 +17,9 @@ module Strelka
   end
 
 
-  def self.runSomatic(normal, tumor, reference, output)
+  def self.runSomatic(normal, tumor, reference, output, cpus = 3)
     cmd_config = Rbbt.software.opt.Strelka_bin.bin["configureStrelkaSomaticWorkflow.py"].find
 
-    cpus = 10
 
     CMD.cmd_log("'#{ cmd_config }' --normalBam='#{normal}' --tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}'")
     
