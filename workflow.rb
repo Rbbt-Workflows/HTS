@@ -22,6 +22,8 @@ module HTS
       BWA.references.hg38["reference.fa"].produce.find
     when 'b37'
       BWA.references.b37["reference.fa"].produce.find
+    when 'GRCh38'
+      BWA.references.GRCh38["reference.fa"].produce.find
     else
       reference
     end
