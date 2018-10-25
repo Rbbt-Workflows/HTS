@@ -2,7 +2,7 @@ module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
   dep :GC_windows, :jobname => :reference
   input :normal_purity, :float, "Normal sample purity", 1 
   input :tumor_purity, :float, "Tumor sample purity", 1 
@@ -28,7 +28,7 @@ module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
   dep :pileup, :bam => :placeholder do |jobname,options|
     deps = []
 
@@ -60,7 +60,7 @@ module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
   dep :pileup, :bam => :placeholder do |jobname,options|
     deps = []
 
