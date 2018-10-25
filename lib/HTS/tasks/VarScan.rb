@@ -15,8 +15,8 @@ module HTS
     reference = reference_file reference
     reference = Samtools.prepare_FASTA reference
     CMD.cmd("samtools mpileup -f '#{reference}' -Q 20 '#{normal}' '#{tumor}' > '#{pileup}'")
-    Misc.in_dir output do
-      io = monitor_cmd_genome ["java -jar #{Rbbt.software.opt.jars["VarScan.jar"].find} somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
+    io = Misc.in_dir output do
+      monitor_cmd_genome ["java -jar #{Rbbt.software.opt.jars["VarScan.jar"].find} somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
     end
 
     ConcurrentStream.setup(io) do

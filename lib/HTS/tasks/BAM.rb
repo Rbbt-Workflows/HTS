@@ -49,6 +49,8 @@ module HTS
     reference = Samtools.prepare_FASTA orig_reference
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
+
+    Open.rm file('SamToFastq')
     Misc.with_fifo(file('SamToFastq')) do |s2f_path|
 
       args = {}
@@ -117,8 +119,8 @@ module HTS
     args["reference"] = reference
     args["output"] = file('recal_data.table')
 
-    known_sites = [DbSNP["All.vcf.gz"].produce.find] 
-    ["Miller_1000G_indels.vcf.gz", "1000G_phase1.indels.vcf.gz"].each do |file|
+    known_sites = [] 
+    ["dbsnp_138.vcf.gz","Miller_1000G_indels.vcf.gz", "1000G_phase1.indels.vcf.gz"].each do |file|
       known_sites << GATK.known_sites[reference_code][file].produce.find
     end
     args["known-sites"] = known_sites
