@@ -136,7 +136,7 @@ module HTS
   end
 
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,reference|
 
     variants_file = case reference
