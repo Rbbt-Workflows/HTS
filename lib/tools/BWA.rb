@@ -96,6 +96,22 @@ module BWA
     nil
   end
 
+  BWA.claim BWA.references.GRCh38["reference.fa"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    target.sub!(/\.gz$/,'')
+    url = "ftp://ftp.ensembl.org/pub/release-94/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz"
+    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
+    Misc.in_dir File.dirname(target) do
+      CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
+      io = GATK.run("CreateSequenceDictionary", {"R" => target})
+      while line = io.gets
+        Log.debug line
+      end
+      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+    end
+    nil
+  end
+
 end
 
 if __FILE__ == $0
