@@ -37,7 +37,7 @@ module Samtools
     if ! File.exists?(linked + ".bai") || Persist.newer?(linked + ".bai", file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, linked unless File.exists?(linked)
         Samtools.run("index '#{ linked }'")
       end
     end

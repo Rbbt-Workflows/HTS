@@ -109,6 +109,7 @@ module HTS
   task :BAM_rescore => :binary do
 
     reference = reference_file self.recursive_inputs[:reference]
+    reference = GATK.prepare_FASTA reference
     reference_code = self.recursive_inputs[:reference]
 
     DbSNP["All.vcf.gz.tbi"].produce.find
@@ -135,26 +136,45 @@ module HTS
     GATK.run_log("ApplyBQSR", args)
   end
 
-  input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
-  task :BAM_pileup_sumaries => :text do |bam,reference|
-
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
+  extension :vcf
+  task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
     variants_file = case reference
-                    when 'b37'
-                      GATK.known_sites[reference]["1000G_phase1.snps.high_confidence.b37.vcf.gz"].find
+                    when 'b37', 'hg19', 'hg38'
+                      GATK.known_sites[reference]["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
                     else 
-                      raise ParameterException.new "Cannot file a suitable variant file for reference: #{Misc.fingerprint reference}"
+                      if m = Pathname.new(reference).realpath.to_s.match(/(b37|hg19|hg38|GRCh38)/)
+                        code = m[1]
+                        code = 'hg38' if code == 'GRCh38'
+                        GATK.known_sites[code]["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
+                      else
+                        raise ParameterException.new "Cannot file a suitable variant file for reference: #{Misc.fingerprint reference}"
+                      end
                     end
 
-    variants = file('variants')
-    Open.mkdir files_dir
-    CMD.cmd("zcat '#{variants_file}' > '#{variants}' ")
+    reference = reference_file self.recursive_inputs[:reference]
+    reference = GATK.prepare_FASTA reference
+
+    args = {}
+    args["reference"] = reference
+    args["variant"] = variants_file
+    args["restrict-alleles-to"] = 'BIALLELIC'
+    args["output"] = tmp_path
+    GATK.run_log("SelectVariants", args)
+    nil
+  end
+
+  dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
+  input :BAM, :file, "BAM file", nil, :nofile => true
+  task :BAM_pileup_sumaries => :text do |bam|
+
+    variants_file = step(:BAM_pileup_sumaries_known_biallelic).path
+
     args = {}
     args["input"] = Samtools.prepare_BAM bam 
-    args["variant"] = variants
+    args["variant"] = variants_file
     args["output"] = self.tmp_path
     GATK.run_log("GetPileupSummaries", args)
-    Open.rm variants
     nil
   end
 

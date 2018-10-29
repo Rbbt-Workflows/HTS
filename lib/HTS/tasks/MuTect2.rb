@@ -8,6 +8,8 @@ module HTS
 
     reference = reference_file reference
 
+    reference = GATK.prepare_FASTA reference
+
     args = {}
     tumor = tumor.path if Step === tumor
     normal = normal.path if Step === normal
@@ -33,6 +35,7 @@ module HTS
   end
 
   dep :mutect2
+  dep :contamination, :BAM => :tumor
   extension :vcf
   task :mutect2_filtered => :tsv do
     args = {}
@@ -43,6 +46,9 @@ module HTS
 
     args["variant"] = tmp
     args["output"] = self.tmp_path
+    #args["normal-artifact-lod"] = '10.0'
+    #args["tumor-lod"] = '0.0'
+    args["contamination-table"] = step(:contamination).path
     GATK.run_log("FilterMutectCalls", args)
   end
 
@@ -53,7 +59,7 @@ module HTS
       next line if line[0] =~ /^#/
       
       chr = line.split("\t").first
-      next unless chr =~ /^[0-9MTXY]+$/
+      next unless chr =~ /^(chr)?[0-9MTXY]+$/
       next unless line =~ /PASS/
 
       line

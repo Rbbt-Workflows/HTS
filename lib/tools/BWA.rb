@@ -45,21 +45,6 @@ module BWA
 
   BWA_CMD = Rbbt.software.opt.BWA.produce.bwa.find
 
-  BWA.claim BWA.references.hg38["reference.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
-    CMD.cmd("wget '#{url}' -O - | gunzip -c > '#{target}'")
-    Misc.in_dir File.dirname(target) do
-      CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
-      io = GATK.run("CreateSequenceDictionary", {"R" => target})
-      while line = io.gets
-        Log.debug line
-      end
-      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
-    end
-    nil
-  end
-
   BWA.claim BWA.references.hg19["reference.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
@@ -95,20 +80,35 @@ module BWA
     end
     nil
   end
+ 
+#  BWA.claim BWA.references.hg38["reference.fa"], :proc do |target|
+#    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+#    url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+#    CMD.cmd("wget '#{url}' -O - | gunzip -c > '#{target}'")
+#    Misc.in_dir File.dirname(target) do
+#      CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
+#      io = GATK.run("CreateSequenceDictionary", {"R" => target})
+#      while line = io.gets
+#        Log.debug line
+#      end
+#      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+#    end
+#    nil
+#  end
 
-  BWA.claim BWA.references.GRCh38["reference.fa"], :proc do |target|
+  BWA.claim BWA.references.hg38["reference.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
-    url = "ftp://ftp.ensembl.org/pub/release-94/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz"
-    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
-    Misc.in_dir File.dirname(target) do
-      CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
-      io = GATK.run("CreateSequenceDictionary", {"R" => target})
-      while line = io.gets
-        Log.debug line
-      end
-      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
-    end
+    url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
+    CMD.cmd("wget '#{url}' -O  - > #{target}")
+    #Misc.in_dir File.dirname(target) do
+    #  CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
+    #  io = GATK.run("CreateSequenceDictionary", {"R" => target})
+    #  while line = io.gets
+    #    Log.debug line
+    #  end
+    #  CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+    #end
     nil
   end
 
@@ -117,6 +117,6 @@ end
 if __FILE__ == $0
   Log.severity = 0
   Rbbt.software.opt.BWA.produce
-  BWA.references.hg18["reference.fa"].produce
+  BWA.references.GRCh38["reference.fa"].produce
 end
 

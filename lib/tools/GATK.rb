@@ -68,6 +68,16 @@ module GATK
     nil
   end
 
+  GATK.claim GATK.known_sites.hg38["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/1000G_phase1.snps.high_confidence.hg38.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
   GATK.claim GATK.known_sites.hg38["dbsnp_138.vcf.gz"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/dbsnp_138.hg38.vcf.gz"
@@ -90,7 +100,7 @@ module GATK
     nil
   end
 
-  GATK.claim GATK.known_sites.b37["1000G_phase1.snps.high_confidence.b37.vcf.gz"], :proc do |target|
+  GATK.claim GATK.known_sites.b37["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
     CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
@@ -134,7 +144,17 @@ module GATK
 
   GATK.claim GATK.known_sites.hg19["1000G_phase1.indels.vcf.gz"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/1000G_phase1.indels.hg19.vcf.gz"
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/1000G_phase1.indels.hg19.sites.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.hg19["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/1000G_phase1.snps.high_confidence.hg19.sites.vcf.gz"
     CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
     args = {}
     args["feature-file"] = target
