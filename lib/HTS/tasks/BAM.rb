@@ -106,7 +106,8 @@ module HTS
 
   dep :BAM_duplicates
   extension :bam
-  task :BAM_rescore => :binary do
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :BAM_rescore => :binary do |interval_list|
 
     reference = reference_file self.recursive_inputs[:reference]
     reference = GATK.prepare_FASTA reference
@@ -115,9 +116,13 @@ module HTS
     DbSNP["All.vcf.gz.tbi"].produce.find
     db_SNP = DbSNP["All.vcf.gz"].produce.find
 
+    bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
+
     args = {}
-    args["input"] = step(:BAM_duplicates).path
+    args["input"] = bam_file
     args["reference"] = reference
+    args["intervals"] = interval_list if interval_list
+    args["interval-padding"] = 100 if interval_list
     args["output"] = file('recal_data.table')
 
     known_sites = [] 
@@ -130,9 +135,11 @@ module HTS
     GATK.run_log("BaseRecalibrator", args)
 
     args = {}
-    args["input"] = step(:BAM_duplicates).path
+    args["input"] = bam_file
     args["output"] = self.tmp_path
     args["bqsr-recal-file"] = file('recal_data.table')
+    args["intervals"] = interval_list if interval_list
+    args["interval-padding"] = 100 if interval_list
     GATK.run_log("ApplyBQSR", args)
   end
 
@@ -166,14 +173,21 @@ module HTS
 
   dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   input :BAM, :file, "BAM file", nil, :nofile => true
-  task :BAM_pileup_sumaries => :text do |bam|
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :BAM_pileup_sumaries => :text do |bam,interval_list|
 
     variants_file = step(:BAM_pileup_sumaries_known_biallelic).path
+
+    args = {}
+    args["feature-file"] = variants_file
+    GATK.run_log("IndexFeatureFile", args)
 
     args = {}
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
     args["output"] = self.tmp_path
+    args["intervals"] = interval_list if interval_list
+    args["interval-padding"] = 100 if interval_list
     GATK.run_log("GetPileupSummaries", args)
     nil
   end
