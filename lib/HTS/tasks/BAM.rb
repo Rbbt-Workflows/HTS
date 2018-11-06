@@ -38,7 +38,7 @@ module HTS
   end
 
   dep :mark_adapters
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :bwa_mem_args, :string, "Arg string", "-M -p"
   extension :bam
   task :BAM => :binary do |reference, bwa_mem_args|
@@ -143,7 +143,7 @@ module HTS
     GATK.run_log("ApplyBQSR", args)
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
   extension :vcf
   task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
     variants_file = case reference
@@ -201,7 +201,7 @@ module HTS
   end
 
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :fastq1, :file, "FASTQ file", nil, :nofile => true
   input :fastq2, :file, "FASTQ file 2", nil, :nofile => true
   extension :bam
@@ -221,7 +221,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :fastq1, :file, "FASTQ file", nil, :nofile => true
   input :fastq2, :file, "FASTQ file 2", nil, :nofile => true
   input :bowtie_args, :string, "Bowtie2 arguments", "--end-to-end"
@@ -257,7 +257,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :fastq1, :file, "FASTQ file", nil, :nofile => true
   input :fastq2, :file, "FASTQ file 2", nil, :nofile => true
   input :novoalign_args, :string, "NovoAlign arguments", "-F STDFQ -R 0 -r All 9999 -o SAM -o FullNW"
@@ -306,7 +306,7 @@ module HTS
   end
 
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   extension 'pileup.gz'
   task :pileup => :text do |bam,reference|
     orig_reference = reference_file(reference)

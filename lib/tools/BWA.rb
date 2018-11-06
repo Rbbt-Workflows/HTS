@@ -100,7 +100,7 @@ module BWA
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
-    CMD.cmd("wget '#{url}' -O  - > #{target}")
+    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
     #Misc.in_dir File.dirname(target) do
     #  CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
     #  io = GATK.run("CreateSequenceDictionary", {"R" => target})
@@ -112,11 +112,27 @@ module BWA
     nil
   end
 
+  BWA.claim BWA.references.hs37d5["reference.fa"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    target.sub!(/\.gz$/,'')
+    url = "https://storage.googleapis.com/genomics-public-data/references/hs37d5/hs37d5.fa.gz"
+    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
+    #CMD.cmd("wget -q -O - '#{url}' | gunzip -q -c > #{target}")
+    #Misc.in_dir File.dirname(target) do
+    #  CMD.cmd("#{BWA_CMD} index -p reference -a bwtsw #{target}")
+    #  io = GATK.run("CreateSequenceDictionary", {"R" => target})
+    #  while line = io.gets
+    #    Log.debug line
+    #  end
+    #  CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+    #end
+    nil
+  end
 end
 
 if __FILE__ == $0
   Log.severity = 0
   Rbbt.software.opt.BWA.produce
-  BWA.references.GRCh38["reference.fa"].produce
+  BWA.references.hs37d5["reference.fa"].produce
 end
 
