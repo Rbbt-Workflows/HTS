@@ -172,6 +172,40 @@ module GATK
     nil
   end
 
+
+#-- Claims for  hs37d5
+
+  GATK.claim GATK.known_sites.hs37d5["Miller_1000G_indels.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.hs37d5["1000G_phase1.indels.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+  GATK.claim GATK.known_sites.hs37d5["dbsnp_138.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+
   def self.hash2args(hash)
     hash.collect do |k,v| 
       k = '--' + k.to_s unless k[0] == "-"
@@ -198,7 +232,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked.replace_extension("dict")) || Persist.newer?(linked.replace_extension('dict'), file)
+    if ! File.exists?(linked.replace_extension("fa.dict")) || Persist.newer?(linked.replace_extension('fa.dict'), file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)

@@ -17,15 +17,15 @@ module HTS
   helper :reference_file do |reference|
     case reference
     when 'hg19'
-      BWA.references.hg19["reference.fa"].produce.find
+      BWA.references.hg19[reference + ".fa"].produce.find
     when 'hg38'
-      BWA.references.hg38["reference.fa"].produce.find
+      BWA.references.hg38[reference + ".fa"].produce.find
     when 'b37'
-      BWA.references.b37["reference.fa"].produce.find
+      BWA.references.b37[reference + ".fa"].produce.find
     when 'GRCh38'
-      BWA.references.GRCh38["reference.fa"].produce.find
+      BWA.references.GRCh38[reference + ".fa"].produce.find
     when 'hs37d5'
-      BWA.references.hs37d5["reference.fa"].produce.find
+      BWA.references.hs37d5[reference + ".fa"].produce.find
     else
       reference
     end
