@@ -68,7 +68,6 @@ module HTS
         end
       end
 
-      bwa_mem_args = bwa_mem_args.sub('-t 30', '')
       bwa_mem_args << " -t " << config('cpus', 'bwa', :default => 8) 
       io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
 
