@@ -232,7 +232,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked.replace_extension("fa.dict")) || Persist.newer?(linked.replace_extension('fa.dict'), file)
+    if ! File.exists?(linked.replace_extension("dict")) || Persist.newer?(linked.replace_extension('dict'), file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)

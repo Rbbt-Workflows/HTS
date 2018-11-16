@@ -4,12 +4,15 @@ module HTS
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
+  input :pon, :file, "Panel of normals", nil, :nofile => true
   extension :vcf
-  task :mutect2 => :text do |tumor,normal,reference,interval_list|
+  task :mutect2 => :text do |tumor,normal,reference,interval_list,pon|
 
     reference = reference_file reference
+    orig_reference = reference
 
-    reference = GATK.prepare_FASTA reference
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
 
     args = {}
     tumor = tumor.path if Step === tumor
@@ -31,6 +34,7 @@ module HTS
     args["normal-sample"] = normal_sample if normal_sample
     args["intervals"] = interval_list if interval_list
     args["interval-padding"] = 100 if interval_list
+    args["panel-of-normals"] = pon if pon
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
     args["bam-output"] = file('haplotype.bam')
 
