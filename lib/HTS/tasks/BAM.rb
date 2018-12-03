@@ -146,10 +146,10 @@ module HTS
   extension :vcf
   task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
     variants_file = case reference
-                    when 'b37', 'hg19', 'hg38'
+                    when 'b37', 'hg19', 'hg38', 'hs37d5'
                       GATK.known_sites[reference]["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
                     else 
-                      if m = Pathname.new(reference).realpath.to_s.match(/(b37|hg19|hg38|GRCh38)/)
+                      if m = Pathname.new(reference).realpath.to_s.match(/(b37|hg19|hg38|GRCh38|hs37d5)/)
                         code = m[1]
                         code = 'hg38' if code == 'GRCh38'
                         GATK.known_sites[code]["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find

@@ -78,6 +78,16 @@ module GATK
     nil
   end
 
+	GATK.claim GATK.known_sites.hg38["af-only-gnomad.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+		url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/Mutect2/af-only-gnomad.hg38.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
   GATK.claim GATK.known_sites.hg38["dbsnp_138.vcf.gz"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/dbsnp_138.hg38.vcf.gz"
@@ -113,6 +123,16 @@ module GATK
   GATK.claim GATK.known_sites.b37["1000G_phase1.indels.vcf.gz"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.indels.b37.vcf.gz"
+    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    args = {}
+    args["feature-file"] = target
+    GATK.run_log("IndexFeatureFile", args)
+    nil
+  end
+
+	GATK.claim GATK.known_sites.b37["af-only-gnomad.vcf.gz"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+		url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/Mutect2/af-only-gnomad.raw.sites.b37.vcf.gz"
     CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
     args = {}
     args["feature-file"] = target

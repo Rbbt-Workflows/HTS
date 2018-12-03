@@ -2,11 +2,13 @@ module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :pon, :file, "Panel of normals", nil, :nofile => true
+  input :germline_resource, :file, "Germline resource", nil, :nofile => true
+  input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
   extension :vcf
-  task :mutect2 => :text do |tumor,normal,reference,interval_list,pon|
+  task :mutect2 => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
     reference = reference_file reference
     orig_reference = reference
@@ -21,9 +23,6 @@ module HTS
     tumor = Samtools.prepare_BAM(tumor)
     normal = Samtools.prepare_BAM(normal) if normal
 
-    #tumor_sample = CMD.cmd("#{Samtools::Samtools_CMD} view -H '#{tumor}' | grep '@RG'").read.match(/SM:([^\t]*)/)[1]
-    #tumor_sample = CMD.cmd("samtools view -H '#{tumor}' | grep '@RG'").read.match(/SM:([^\t]*)/)[1]
-    #normal_sample = CMD.cmd("samtools view -H '#{normal}' | grep '@RG'").read.match(/SM:([^\t]*)/)[1]
     tumor_sample = GATK.BAM_sample_name(tumor)
     normal_sample = GATK.BAM_sample_name(normal) if normal
 
@@ -37,7 +36,8 @@ module HTS
     args["panel-of-normals"] = pon if pon
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
     args["bam-output"] = file('haplotype.bam')
-
+    args["germline-resource"] = germline_resource
+    args["af-of-alleles-not-in-resource"] = af_not_in_resource.to_s if af_not_in_resource
     GATK.run_log("Mutect2", args)
   end
 
@@ -53,8 +53,6 @@ module HTS
 
     args["variant"] = tmp
     args["output"] = self.tmp_path
-    #args["normal-artifact-lod"] = '10.0'
-    #args["tumor-lod"] = '0.0'
     args["contamination-table"] = step(:contamination).path
     GATK.run_log("FilterMutectCalls", args)
   end
