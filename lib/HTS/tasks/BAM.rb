@@ -68,7 +68,7 @@ module HTS
         end
       end
 
-      bwa_mem_args << " -t " << config('cpus', 'bwa', :default => 8) 
+      bwa_mem_args += " -t " << config('cpus', 'bwa', :default => 8) 
       io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
 
       args = {}
@@ -102,6 +102,20 @@ module HTS
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
     GATK.run_log("MarkDuplicates", args)
   end
+
+  input :bam_files, :array, "BAM filenames to multiplex"
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  extension :bam
+  task :BAM_multiplex => :binary do |bam_filenames|
+    args = {}
+    args["INPUT"] = bam_filenames
+    args["OUTPUT"] = self.tmp_path
+    args["METRICS_FILE"] = file('metrics.txt')
+
+    FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
+    GATK.run_log("MarkDuplicates", args)
+  end
+
 
   dep :BAM_duplicates
   extension :bam
