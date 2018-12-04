@@ -85,7 +85,7 @@ module BWA
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
-    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
+    CMD.cmd("wget '#{url}' -O #{target}")
     nil
   end
 
