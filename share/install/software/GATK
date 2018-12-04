@@ -4,5 +4,3 @@ name='GATK'
 url="https://github.com/broadinstitute/gatk/releases/download/4.0.11.0/gatk-4.0.11.0.zip"
 
 install_src "$name" "$url"
-
-ln -s $OPT_DIR/$name/gatk $OPT_DIR/bin/gatk
