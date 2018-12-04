@@ -116,6 +116,7 @@ require 'HTS/tasks/MuTect2'
 require 'HTS/tasks/VarScan'
 require 'HTS/tasks/Strelka'
 require 'HTS/tasks/test'
+require 'HTS/tasks/CNV'
 
 #require 'rbbt/knowledge_base/HTS'
 #require 'rbbt/entity/HTS'
