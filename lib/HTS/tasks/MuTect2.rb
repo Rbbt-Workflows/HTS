@@ -44,7 +44,7 @@ module HTS
   dep :mutect2
   dep :contamination, :BAM => :tumor
   extension :vcf
-  task :mutect2_filtered => :tsv do
+  task :mutect2_filtered => :text do
     args = {}
     FileUtils.mkdir_p files_dir
 
@@ -59,7 +59,7 @@ module HTS
 
   dep :mutect2_filtered
   extension :vcf
-  task :mutect2_clean => :tsv do
+  task :mutect2_clean => :text do
     TSV.traverse step(:mutect2_filtered), :into => :stream, :type => :array do |line|
       next line if line[0] =~ /^#/
       

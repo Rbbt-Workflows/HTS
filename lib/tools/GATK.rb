@@ -159,7 +159,7 @@ module GATK
     file = File.expand_path(file)
 
 
-    digest = Misc.digest(file)
+    digest = Misc.digest(Open.realpath(file))
     basename = File.basename(file)
 
     dir = Rbbt.var.fasta_indices[digest].find if dir.nil?

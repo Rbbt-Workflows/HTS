@@ -9,8 +9,8 @@ module HTS
     output = file('output')
     reference = reference_file reference
 
-    normal = Samtools.prepare_BAM(normal)
-    tumor = Samtools.prepare_BAM(tumor)
+    normal = Samtools.prepare_BAM(normal) if normal
+    tumor = Samtools.prepare_BAM(tumor) if tumor
 
     reference = Samtools.prepare_FASTA(reference)
 

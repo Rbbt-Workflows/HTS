@@ -199,7 +199,7 @@ module HTS
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
     args["output"] = self.tmp_path
-    args["intervals"] = interval_list if interval_list
+    args["intervals"] = interval_list ? interval_list : variants_file
     args["interval-padding"] = 100 if interval_list
     GATK.run_log("GetPileupSummaries", args)
     nil

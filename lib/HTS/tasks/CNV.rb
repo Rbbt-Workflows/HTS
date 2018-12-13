@@ -40,7 +40,7 @@ module HTS
   task :germline_intervals => :tsv do |reference|
     file = GATK.known_sites[reference]["af-only-gnomad.vcf.gz"].produce.find
 
-    TmpFile.with_file do |tmpfile|
+    TmpFile.with_file nil, :extension => 'vcf' do |tmpfile|
       TmpFile.with_file nil, :extension => 'interval_list' do |tmp_interval_file|
         txt = step(:preprocess_intervals).path.read.split("\n").reject{|line| line =~ /^(Y|MT|GL|hs|NC)/} * "\n" + "\n"
         Open.write(tmp_interval_file, txt)
