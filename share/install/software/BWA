@@ -4,5 +4,3 @@ name='BWA'
 url="https://github.com/lh3/bwa.git"
 
 install_git "$name" "$url"
-ln -s $OPT_DIR/$name/bwa $OPT_DIR/bin/bwa 
-
