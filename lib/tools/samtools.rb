@@ -15,8 +15,8 @@ module Samtools
   Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
   Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
 
-  Samtools_CMD='samtools'
-  #Samtools_CMD=Rbbt.software.opt.Samtools.produce.samtools.find
+  #Samtools_CMD='samtools'
+  Samtools_CMD=Rbbt.software.opt.Samtools.produce.bin.samtools.find
 
   def self.run(command)
     CMD.cmd_log("'#{Samtools_CMD}' " << command)
