@@ -14,6 +14,14 @@ module GATK
   #self.search_paths = {}
   #self.search_paths[:default] = :lib
 
+  begin
+    tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+    if tmpdir
+      Open.mkdir tmpdir
+      File.chmod(777, tmpdir)
+    end
+  end
+
   def self.BAM_sample_name(bam_file)
     TmpFile.with_file do |tmp_file|
       GATK.run_log('GetSampleName', :input => bam_file, :output => tmp_file)
