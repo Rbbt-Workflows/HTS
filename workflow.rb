@@ -9,7 +9,8 @@ require 'tools/BWA'
 require 'tools/GATK'
 require 'tools/samtools'
 require 'tools/NovoAlign'
-require 'tools/Bowtie'
+require 'tools/control_FREEC'
+require 'tools/svABA'
 
 module HTS
   extend Workflow
@@ -117,6 +118,8 @@ require 'HTS/tasks/VarScan'
 require 'HTS/tasks/Strelka'
 require 'HTS/tasks/test'
 require 'HTS/tasks/CNV'
+require 'HTS/tasks/Delly'
+require 'HTS/tasks/svABA'
 
 #require 'rbbt/knowledge_base/HTS'
 #require 'rbbt/entity/HTS'

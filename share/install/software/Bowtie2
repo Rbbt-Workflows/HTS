@@ -3,5 +3,4 @@
 name='Bowtie2'
 url="https://github.com/BenLangmead/bowtie2.git"
 
-install_git "$name" "$url"
-
+(install_git "$name" "$url")

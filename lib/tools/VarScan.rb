@@ -13,7 +13,7 @@ module VarScan
   #self.search_paths[:default] = :lib
 
 
-  Rbbt.claim Rbbt.software.opt.VarScan, :install, Rbbt.share.install.software.VarScan.find
+  Rbbt.claim Rbbt.software.opt.jars["VarScan.jar"], :install, Rbbt.share.install.software.VarScan.find
 end
 
 if __FILE__ == $0

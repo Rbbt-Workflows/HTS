@@ -16,9 +16,11 @@ module Strelka
     end
   end
 
+  Rbbt.claim Rbbt.software.opt.Strelka, :install, Rbbt.share.install.software.Strelka.find
 
   def self.runSomatic(tumor, normal, reference, output, cpus = 3)
-    cmd_config = Rbbt.software.opt.Strelka_bin.bin["configureStrelkaSomaticWorkflow.py"].find
+    #cmd_config = Rbbt.software.opt.Strelka_bin.bin["configureStrelkaSomaticWorkflow.py"].find
+    cmd_config = Rbbt.software.opt.Strelka.produce.bin["configureStrelkaSomaticWorkflow.py"].find
 
 
     if normal.nil?
@@ -32,7 +34,6 @@ module Strelka
     CMD.cmd_log("'#{ cmd_workflow }' --mode local -j #{cpus}")
   end
 
-  #Rbbt.claim Rbbt.software.opt.Strelka, :install, Rbbt.share.install.software.Strelka.find
 end
 
 if __FILE__ == $0

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='ControlFREEC'
+url="https://github.com/BoevaLab/FREEC.git"
+
+install_git "$name" "$url" 

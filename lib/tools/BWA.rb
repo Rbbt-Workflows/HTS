@@ -59,7 +59,7 @@ module BWA
       while line = io.gets
         Log.debug line
       end
-      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+      CMD.cmd("#{Samtools::samtools_cmd} faidx #{target}")
     end
     nil
   end
@@ -75,7 +75,7 @@ module BWA
       while line = io.gets
         Log.debug line
       end
-      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+      CMD.cmd("#{Samtools::samtools_cmd} faidx #{target}")
     end
     nil
   end
@@ -99,7 +99,7 @@ module BWA
       while line = io.gets
         Log.debug line
       end
-      CMD.cmd("#{Samtools::Samtools_CMD} faidx #{target}")
+      CMD.cmd("#{Samtools::samtools_cmd} faidx #{target}")
     end
     nil
   end

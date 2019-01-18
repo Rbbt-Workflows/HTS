@@ -1,3 +1,4 @@
+require 'tools/VarScan'
 module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
@@ -16,7 +17,7 @@ module HTS
     reference = Samtools.prepare_FASTA reference
     CMD.cmd("samtools mpileup -f '#{reference}' -Q 20 '#{normal}' '#{tumor}' > '#{pileup}'")
     io = Misc.in_dir output do
-      monitor_cmd_genome ["java -jar #{Rbbt.software.opt.jars["VarScan.jar"].find} somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
+      monitor_cmd_genome ["java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
     end
 
     ConcurrentStream.setup(io) do
@@ -54,7 +55,7 @@ module HTS
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
-      monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
+      monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
     end
   end
 
@@ -85,7 +86,7 @@ module HTS
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
-      self.monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]'| java -jar #{Rbbt.software.opt.jars["VarScan.jar"].find} copynumber --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", {:in => pipe}], clean_name + '.copynumber'
+      self.monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]'| java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} copynumber --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", {:in => pipe}], clean_name + '.copynumber'
     end
   end
 end

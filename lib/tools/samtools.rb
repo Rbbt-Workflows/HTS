@@ -16,10 +16,15 @@ module Samtools
   Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
 
   #Samtools_CMD='samtools'
-  Samtools_CMD=Rbbt.software.opt.Samtools.produce.bin.samtools.find
+  
+  #Samtools_CMD=Rbbt.software.opt.Samtools.produce.bin.samtools.find
+
+  def self.samtools_cmd
+    Rbbt.software.opt.Samtools.produce.bin.samtools.find
+  end
 
   def self.run(command)
-    CMD.cmd_log("'#{Samtools_CMD}' " << command)
+    CMD.cmd_log("'#{samtools_cmd}' " << command)
   end
 
   def self.prepare_BAM(file, dir = nil)
