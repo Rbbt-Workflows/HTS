@@ -16,7 +16,7 @@ module GATK
 
   begin
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
-    if tmpdir
+    if tmpdir && ! File.exists?(tmpdir)
       Open.mkdir tmpdir
       File.chmod(0777, tmpdir)
     end
