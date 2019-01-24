@@ -120,7 +120,7 @@ require 'HTS/tasks/test'
 require 'HTS/tasks/CNV'
 require 'HTS/tasks/Delly'
 require 'HTS/tasks/svABA'
-
+require 'HTS/tasks/control_FREEC'
 #require 'rbbt/knowledge_base/HTS'
 #require 'rbbt/entity/HTS'
 

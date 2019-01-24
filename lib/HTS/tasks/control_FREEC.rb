@@ -1,23 +1,15 @@
-require 'tools/Strelka'
+require 'tools/control_FREEC'
+require 'byebug'
 module HTS
 
-  input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :normal, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :config, :file, "Configuration file", nil, :nofile => true
   extension :vcf
-  task :control_freeC => :text do |tumor,normal,reference|
+  task :control_freeC => :text do |config|
     output = file('output')
-    reference = reference_file reference
 
-    normal = Samtools.prepare_BAM(normal) if normal
-    tumor = Samtools.prepare_BAM(tumor) if tumor
-
-    reference = Samtools.prepare_FASTA(reference)
-
-    cpus = config :cpus, :strelka, :default => 3
-
-    ControlFREEC.run(...)
+		byebug
+    ControlFREEC.run(config)
     
-    Open.read(output....)
+#    Open.read(output....)
   end
 end

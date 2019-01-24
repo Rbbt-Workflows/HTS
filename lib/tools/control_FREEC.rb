@@ -5,9 +5,11 @@ module ControlFREEC
   # ToDo pull files out of directory
   
   Rbbt.claim Rbbt.software.opt.ControlFREEC, :install, Rbbt.share.install.software.ControlFREEC.find
+	
+	FREEC_CMD = Rbbt.software.opt.ControlFREEC.src.freec.find
 
-  def self.run
-    raise "Complete this"
+  def self.run(config_file)
+		CMD.cmd_log("'#{FREEC_CMD}' -conf '#{config_file}'")
   end
 end
 
