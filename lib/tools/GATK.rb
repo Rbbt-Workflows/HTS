@@ -85,8 +85,8 @@ module GATK
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hg38["dbsnp_138.vcf.gz"], :proc do |target|
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/dbsnp_138.hg38.vcf.gz"
+  GATK.claim GATK.known_sites.hg38["dbsnp_146.vcf.gz"], :proc do |target|
+		url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/dbsnp_146.hg38.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
