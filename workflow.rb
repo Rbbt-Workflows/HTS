@@ -11,6 +11,8 @@ require 'tools/samtools'
 require 'tools/NovoAlign'
 require 'tools/control_FREEC'
 require 'tools/svABA'
+require 'tools/stringTie'
+require 'tools/HISAT'
 
 module HTS
   extend Workflow
@@ -121,6 +123,5 @@ require 'HTS/tasks/CNV'
 require 'HTS/tasks/Delly'
 require 'HTS/tasks/svABA'
 require 'HTS/tasks/control_FREEC'
-#require 'rbbt/knowledge_base/HTS'
-#require 'rbbt/entity/HTS'
 
+require 'HTS/tasks/sample' if defined? Sample

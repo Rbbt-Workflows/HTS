@@ -214,7 +214,7 @@ module GATK
     end
   end
 
-  GATK_CMD=Rbbt.software.opt.GATK.produce.gatk.find
+  GATK_CMD='gatk'
 end
 
 if __FILE__ == $0

@@ -2,14 +2,17 @@ require 'rbbt/sources/organism'
 module HTS
   input :fastq1, :file, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :file, "FASTQ 2 file", nil, :nofile => true
-  input :read_group_name, :string, "READ_GROUP_NAME BAM field", "DefaultReadGroupName"
-  input :sample_name, :string, "SAMPLE_NAME BAM field", "DefaultSampleName"
+  input :sample_name, :string, "SAMPLE_NAME BAM field", nil
+  input :read_group_name, :string, "READ_GROUP_NAME BAM field", nil
   input :library_name, :string, "LIBRARY_NAME BAM field", "DefaultLibraryName"
   input :platform_unit, :string, "PLATFORM_UNIT BAM field", "DefaultPlatformUnit"
   input :platform, :string, "PLATFORM BAM field", "DefaultPlatform"
   input :sequencing_center, :string, "SEQUENCING_CENTER BAM field", "DefaultSequencingCenter"
   extension :ubam
   task :uBAM => :binary do |fastq1, fastq2, read_group_name, sample_name, library_name, platform_unit, platform, sequencing_center, run_date|
+    sample_name ||= self.clean_name
+    read_group_name ||= sample_name
+
     args = {}
     args["FASTQ"] = fastq1
     args["FASTQ2"] = fastq2
@@ -107,7 +110,8 @@ module HTS
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   extension :bam
   task :BAM_multiplex => :binary do |bam_filenames|
-    args = {}
+    args= {}
+    bam_filenames = Dir.glob(File.join(bam_filenames, "*.bam")) if File.directory?(bam_filenames)
     args["INPUT"] = bam_filenames
     args["OUTPUT"] = self.tmp_path
     args["METRICS_FILE"] = file('metrics.txt')
@@ -155,6 +159,82 @@ module HTS
     args["interval-padding"] = 100 if interval_list
     GATK.run_log("ApplyBQSR", args)
   end
+
+  input :bam_file, :binary, "Bam file"
+  task :revert_BAM => :binary do |bam_file|
+    args = {}
+    args["INPUT"] = bam_file
+    args["OUTPUT"] = file("uBAM").find
+    args["OUTPUT_BY_READGROUP"] = "true"
+    
+    args["SANITIZE"] = "true"
+    args["MAX_DISCARD_FRACTION"] = "0.005"
+    args["ATTRIBUTE_TO_CLEAR"] = "XA"
+    args["ATTRIBUTE_TO_CLEAR"] = "BD"
+    args["ATTRIBUTE_TO_CLEAR"] = "BI"
+    args["SORT_ORDER"] = "queryname"
+    args["RESTORE_ORIGINAL_QUALITIES"] = "true"
+    args["REMOVE_DUPLICATE_INFORMATION"] = "true"
+    args["REMOVE_ALIGNMENT_INFORMATION"] = "true"
+
+    Open.mkdir file("uBAM").find
+    GATK.run_log("RevertSam", args)
+    file("uBAM").glob("*")
+  end
+
+  input :fastq1_files, :array, "FASTQ files for first mate"
+  input :fastq2_files, :array, "FASTQ files for second mate", []
+  input :uBAM_files, :array, "uBAM files for second mate", []
+  dep :BAM, :compute => :produce do |jobname,options,uBAM_files|
+    fastq1_files = options[:fastq1_files]
+    if fastq1_files
+      fastq2_files = options[:fastq2_files]
+      fastq1_files.zip(fastq2_files).collect do |fastq1,fastq2|
+        read_group_name = File.basename(fastq1).sub(/(_{1,2})?\.fastq.*/,'')
+        options = options.merge({:fastq1 => fastq1, :fastq2 => fastq2, :read_group_name => read_group_name})
+        {:inputs => options, :jobname => [jobname, read_group_name] * "." }
+      end
+    elsif uBAM_files
+      uBAM_files = Dir.glob(File.join(uBAM_files, '*.bam')) + Dir.glob(File.join(uBAM_files, '*.ubam')) if String === uBAM_files && File.directory?(uBAM_files)
+      [uBAM_files].flatten.collect do |uBAM|
+        read_group_name = File.basename(uBAM).sub(/.u?bam/i,'')
+        options = options.merge({"HTS#uBAM" => uBAM})
+        {:inputs => options, :jobname => [jobname, read_group_name] * "." }
+      end
+    else
+      raise "No FASTQ or uBAM files for #{ jobname }"
+    end
+  end
+  dep :BAM_multiplex, :compute => :produce do |jobname, options,dependencies|
+    bam_files = dependencies.flatten.collect{|dep| dep.path}
+    {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
+  end
+  dep_task :BAM_rescore_mutiplex, HTS, :BAM_rescore do |jobname,options, dependencies|
+    mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
+    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
+  end
+
+
+
+
+  dep :revert_BAM, :compute => :produce
+  dep :BAM, :compute => :produce do |jobname, options, dependencies|
+    dependencies.first.file('uBAM').glob("*.bam").collect do |uBAM|
+      {:task => :BAM, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, File.basename(uBAM)] * "."}
+    end
+  end
+  dep :BAM_multiplex, :compute => :produce do |jobname, options,dependencies|
+    bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM}
+    {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
+  end
+  dep_task :BAM_rescore_realign, HTS, :BAM_rescore do |jobname,options, dependencies|
+    mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
+    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
+  end
+
+
+
+
 
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
   extension :vcf

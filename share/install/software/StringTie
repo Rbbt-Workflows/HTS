@@ -1,0 +1,6 @@
+#!/bin/bash
+
+name='StringTie'
+url="http://ccb.jhu.edu/software/stringtie/dl/stringtie-1.3.5.tar.gz"
+
+install_src "$name" "$url" 

@@ -16,11 +16,14 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    alleleCount.rb
    scatter.rb
    control_FREEC.rb
+   stringTie.rb
+   HISAT.rb
    svABA.rb
    Delly.rb
   }
   tasks=HTS/tasks{
    BAM.rb
+   RNASeq.rb
    CNV.rb
    sequenza.rb
    MuTect2.rb
@@ -30,6 +33,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    Delly.rb
    svABA.rb
    test.rb
+   sample.rb
   }
  }
  test=test {
@@ -56,6 +60,9 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    ControlFREEC
    Delly
    SvABA
+   bcftools
+   StringTie
+   HISAT
   }
  }
  data=data filter="*"{
