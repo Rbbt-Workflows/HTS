@@ -67,7 +67,7 @@ module Sample
       files = sample_files[sample]
       return IndiferentHash.setup(files) if files
     end
-    raise "Sample files not found for #{ sample }"
+    nil
   end
   
   def self.sample_options(sample)
@@ -116,7 +116,6 @@ module Sample
   end
 
   dep_task :BAM_normal, Sample, :BAM do |sample,options|
-    iii sample
     nsample = nil
     [sample + '_normal', 'normal'].each do |normal_sample|
       nsample = normal_sample
@@ -125,7 +124,6 @@ module Sample
       sample_files = Sample.sample_files normal_sample
       break if sample_files
     end
-    iii nsample
     {:inputs => options, :jobname => nsample}
   end
 

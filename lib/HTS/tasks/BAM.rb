@@ -111,7 +111,7 @@ module HTS
   extension :bam
   task :BAM_multiplex => :binary do |bam_filenames|
     args= {}
-    bam_filenames = Dir.glob(File.join(bam_filenames, "*.bam")) if File.directory?(bam_filenames)
+    bam_filenames = Dir.glob(File.join(bam_filenames.first, "*.bam")) if Array === bam_filenames && bam_filenames.length == 1 && File.directory?(bam_filenames.first)
     args["INPUT"] = bam_filenames
     args["OUTPUT"] = self.tmp_path
     args["METRICS_FILE"] = file('metrics.txt')
@@ -224,7 +224,7 @@ module HTS
     end
   end
   dep :BAM_multiplex, :compute => :produce do |jobname, options,dependencies|
-    bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM}
+    bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM}.collect{|dep| dep.path}
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
   dep_task :BAM_rescore_realign, HTS, :BAM_rescore do |jobname,options, dependencies|
