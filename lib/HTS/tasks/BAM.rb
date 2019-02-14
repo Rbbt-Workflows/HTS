@@ -219,8 +219,15 @@ module HTS
 
   dep :revert_BAM, :compute => :produce
   dep :BAM, :compute => :produce do |jobname, options, dependencies|
-    dependencies.first.file('uBAM').glob("*.bam").collect do |uBAM|
-      {:task => :BAM, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, File.basename(uBAM)] * "."}
+    read_groups = CMD.cmd("samtools view -H #{options[:bam_file]}").read.split("\n").select{|line| 
+      line =~ /^@RG/
+    }.collect{|line| 
+      line.split("\t").select{|part| part =~ /^ID:(.*)/}.first.split(":").last
+    }
+
+    read_groups.collect do |read_group|
+      uBAM = dependencies.first.file('uBAM')[read_group] + ".bam"
+      {:task => :BAM, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, read_group] * "."}
     end
   end
   dep :BAM_multiplex, :compute => :produce do |jobname, options,dependencies|

@@ -84,10 +84,20 @@ module Sample
     IndiferentHash.setup({:sample_name => sample})
   end
 
+  def self.study_options(sample)
+    load_study_files.each do |study, sample_files|
+      next unless Sample.study_dir(study).options.exists?
+      YAML.load(Sample.study_dir(study).options.find)
+    end
+    {}
+  end
+
+
   dep_task :BAM, HTS, :BAM_rescore do |sample,options|
     sample_files = Sample.sample_files sample
 
     options = options.merge(Sample.sample_options(sample))
+    options = options.merge(Sample.study_options(sample))
 
     
     if fastq_files = sample_files[:FASTQ]
