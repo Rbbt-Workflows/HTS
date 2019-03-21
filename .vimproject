@@ -23,6 +23,11 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   }
   tasks=HTS/tasks{
    BAM.rb
+   BAM=BAM{
+    plumbing.rb
+    other_aligners.rb
+    util.rb
+   }
    RNASeq.rb
    CNV.rb
    sequenza.rb
