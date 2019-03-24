@@ -20,6 +20,8 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    HISAT.rb
    svABA.rb
    Delly.rb
+   scatter.rb
+   shard.rb
   }
   tasks=HTS/tasks{
    BAM.rb
@@ -43,6 +45,10 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
  }
  test=test {
   test_helper.rb
+  tools=tools{
+   test_scatter.rb
+   test_shard.rb
+  }
  }
  share=share filter="*"{
   software=install/software{
