@@ -212,7 +212,7 @@ Bwa
 ExtractOriginalAlignmentRecordsByName
 MarkDuplicates
 PrintReads
-RevertSam
+___RevertSam
 SortSam
 FindBadGenomicKmers
 HaplotypeCaller
@@ -227,13 +227,21 @@ CountVariants
 PrintVariants
 )
 
-  def self.run(command, arg_string = "", sin = nil)
-    arg_string = hash2args(arg_string) if Hash === arg_string
+  def self.run(command, args = {}, sin = nil)
 
     spark = Rbbt::Config.get('spark', :gatk)
-    if spark and SPARK_COMMANDS.include?(command)
+    if spark and SPARK_COMMANDS.include?(command) and Hash === args
+      args_new = {}
+      args.each do |k,v|
+        k = k.downcase if k.length > 1
+        k.gsub!('_', '-')
+        args_new[k] = v
+      end
+      args = args_new
       command << "Spark"
     end
+
+    arg_string = hash2args(args) if Hash === args
 
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
     if tmpdir
@@ -243,9 +251,22 @@ PrintVariants
     end
   end
 
-  def self.run_log(command, arg_string = "", sin = nil)
-    arg_string = hash2args(arg_string) if Hash === arg_string
+  def self.run_log(command, args = {}, sin = nil)
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+
+    spark = Rbbt::Config.get('spark', :gatk)
+    if spark and SPARK_COMMANDS.include?(command) and Hash === args
+      args_new = {}
+      args.each do |k,v|
+        k = k.downcase if k.length > 1
+        k = k.gsub('_', '-')
+        args_new[k] = v
+      end
+      args = args_new
+      command << "Spark"
+    end
+
+    arg_string = hash2args(args) if Hash === args
 
     spark = Rbbt::Config.get('spark', :gatk)
     if spark == 'true' and SPARK_COMMANDS.include?(command)
