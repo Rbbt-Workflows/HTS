@@ -92,15 +92,28 @@ module Sample
     IndiferentHash.setup({:sample_name => sample})
   end
 
+  STUDY_OPTIONS = {:organism => :string, :reference => :string, :interval_list => :file, 
+                   :pon => :file, :germline_resource => :file}
   def self.study_options(sample)
+    options = {}
     load_study_files.each do |study, sample_files|
-      next unless Sample.study_dir(study).options.exists?
-      YAML.load(Sample.study_dir(study).options.find)
+      next unless Sample.sample_study(sample) == study
+      options_file = Sample.study_dir(study).options.find
+      next unless options_file.exists?
+      study_options = if File.directory? options_file
+                        input_names = STUDY_OPTIONS.keys
+                        input_types = STUDY_OPTIONS
+                        Workflow.load_inputs(options_file, input_names, input_types)
+                      else
+                        YAML.load(options_file)
+                      end
+      options.merge! study_options
     end
-    {}
+    options
   end
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", true
+  extension :bam
   dep_task :BAM, HTS, :BAM_rescore do |sample,options|
     sample_files = Sample.sample_files sample
 
@@ -137,6 +150,7 @@ module Sample
     end
   end
 
+  extension :bam
   dep_task :BAM_normal, Sample, :BAM do |sample,options|
     nsample = nil
     sample_files = nil
@@ -162,6 +176,31 @@ module Sample
 
     {:inputs => options, :jobname => sample} if sample_files
   end
-  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM 
+  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM do |jobname,options|
+    if dependencies.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    {:inputs => options, :jobname => sample} if sample_files
+  end
+  dep_task :strelka, HTS, :strelka, :normal => :BAM_normal, :tumor => :BAM do |jobname,options|
+    if dependencies.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
 
 end

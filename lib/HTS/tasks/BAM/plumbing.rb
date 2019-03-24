@@ -1,7 +1,9 @@
 module HTS
 
+  input :bam_files, :array, "BAM filenames to multiplex"
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   extension :bam
-  task :BAM_multiplex => :binary do |bam_filenames|
+  task :BAM_multiplex => :binary do |bam_filenames,reference|
     args= {}
     bam_filenames = Dir.glob(File.join(bam_filenames.first, "*.bam")) if Array === bam_filenames && bam_filenames.length == 1 && File.directory?(bam_filenames.first)
     args["INPUT"] = bam_filenames
@@ -70,6 +72,7 @@ module HTS
     bam_files = dependencies.flatten.collect{|dep| dep.path}
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
+  extension :bam
   dep_task :BAM_rescore_mutiplex, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
     {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
@@ -101,12 +104,14 @@ module HTS
     bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM}.collect{|dep| dep.path}
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
+  extension :bam
   dep_task :BAM_rescore_realign_by_group, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
     {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce
+  extension :bam
   dep_task :BAM_rescore_realign, HTS, :BAM_rescore do |jobname,options, dependencies|
     {:inputs => options.merge("HTS#uBAM" =>  dependencies.first), :jobname => jobname}
   end
