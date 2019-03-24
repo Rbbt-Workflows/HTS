@@ -42,10 +42,10 @@ module HTS
   extension :vcf
   task :mutect2 => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
+    germline_resource = germline_resource_file germline_resource, reference
+
     reference = reference_file reference
     orig_reference = reference
-
-    germline_resource = germline_resource_file germline_resource, reference
 
     reference = GATK.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
