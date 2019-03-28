@@ -22,18 +22,9 @@ module HTS
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
   extension :vcf
   task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
-    variants_file = case reference
-                    when 'b37', 'hg19', 'hg38', 'hs37d5'
-                      GATK.known_sites[reference]["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
-                    else 
-                      if m = Pathname.new(reference).realpath.to_s.match(/(b37|hg19|hg38|GRCh38|hs37d5)/)
-                        code = m[1]
-                        code = 'hg38' if code == 'GRCh38'
-                        GATK.known_sites[code]["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
-                      else
-                        raise ParameterException.new "Cannot file a suitable variant file for reference: #{Misc.fingerprint reference}"
-                      end
-                    end
+    variants_file = vcf_file reference, "1000g_snps"
+
+    variants_file = GATK.prepare_VCF_AF_only variants_file
 
     reference = reference_file self.recursive_inputs[:reference]
     reference = GATK.prepare_FASTA reference

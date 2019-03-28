@@ -176,8 +176,8 @@ module Sample
 
     {:inputs => options, :jobname => sample} if sample_files
   end
-  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM do |jobname,options|
-    if dependencies.length == 1
+  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    if dependencies.flatten.length == 1
       options[:normal] = nil
     end
     {:inputs => options}
@@ -195,8 +195,109 @@ module Sample
 
     {:inputs => options, :jobname => sample} if sample_files
   end
-  dep_task :strelka, HTS, :strelka, :normal => :BAM_normal, :tumor => :BAM do |jobname,options|
-    if dependencies.length == 1
+  dep_task :strelka, HTS, :strelka, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    if dependencies.flatten.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    raise ParameterException, "No normal sample found" if sample_files.nil?
+    {:inputs => options, :jobname => sample} 
+  end
+  dep_task :sequenza_purity, HTS, :sequenza_purity, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    if dependencies.flatten.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    raise ParameterException, "No normal sample found" if sample_files.nil?
+    {:inputs => options, :jobname => sample} 
+  end
+  dep_task :sequenza_ploidy, HTS, :sequenza_ploidy, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    if dependencies.flatten.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    raise ParameterException, "No normal sample found" if sample_files.nil?
+    {:inputs => options, :jobname => sample} 
+  end
+  dep :sequenza_purity
+  dep_task :varscan, HTS, :varscan_somatic_alt, :normal => :BAM_normal, :tumor => :BAM, :tumor_purity => :sequenza_purity do |jobname,options,dependencies|
+    if dependencies.flatten.length == 2
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    raise ParameterException, "No normal sample found" if sample_files.nil?
+    {:inputs => options, :jobname => sample} 
+  end
+  dep_task :delly, HTS, :delly, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    if dependencies.flatten.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    raise ParameterException, "No normal sample found" if sample_files.nil?
+    {:inputs => options, :jobname => sample} 
+  end
+  dep_task :svABA, HTS, :svABA, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    if dependencies.flatten.length == 1
       options[:normal] = nil
     end
     {:inputs => options}

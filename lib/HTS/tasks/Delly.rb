@@ -4,7 +4,7 @@ module HTS
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
-  extension :bcf
+  extension :vcf
   task :delly => :text do |tumor,normal,reference|
     output = file('output')
     orig_reference = reference

@@ -14,23 +14,23 @@ module HTS
     intervals
   end
 
-  helper :germline_resource_file do |germline_resource,reference|
-    germline_resource = germline_resource.to_s if Symbol === germline_resource
-    case germline_resource
-    when 'gnomad'
-      GATK.known_sites[reference]["af-only-gnomad.vcf.gz"].produce.find
-    when String
-      return germline_resource if Misc.is_filename?(germline_resource) && Open.exists?(germline_resource)
-      gr = GATK.known_sites[reference].glob("*" << germline_resource << "*").first
-      if gr
-        gr
-      else
-        germline_resource
-      end
-    else
-      germline_resource
-    end
-  end
+  #helper :germline_resource_file do |germline_resource,reference|
+  #  germline_resource = germline_resource.to_s if Symbol === germline_resource
+  #  case germline_resource
+  #  when 'gnomad'
+  #    GATK.known_sites[reference.to_s]["af-only-gnomad.vcf.gz"].produce.find
+  #  when String
+  #    return germline_resource if Misc.is_filename?(germline_resource) && Open.exists?(germline_resource)
+  #    gr = GATK.known_sites[reference.to_s].glob("*" << germline_resource << "*").first
+  #    if gr
+  #      gr
+  #    else
+  #      germline_resource
+  #    end
+  #  else
+  #    germline_resource
+  #  end
+  #end
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
@@ -42,7 +42,8 @@ module HTS
   extension :vcf
   task :mutect2 => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
-    germline_resource = germline_resource_file germline_resource, reference
+    germline_resource = vcf_file reference, germline_resource
+    germline_resource = GATK.prepare_VCF_AF_only germline_resource
 
     reference = reference_file reference
     orig_reference = reference

@@ -32,10 +32,82 @@ module GATK
   def self.get_VCF(url, target)
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
-    args = {}
-    args["feature-file"] = target
-    GATK.run_log("IndexFeatureFile", args)
     nil
+  end
+
+  def self.prepare_VCF(file, dir = nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+
+    digest = Misc.digest(Open.realpath(file))
+    basename = File.basename(file)
+
+    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+    if ! File.exists?(linked.replace_extension("tbi")) || Persist.newer?(linked.replace_extension('tbi'), file)
+
+      Misc.in_dir dir do
+        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        args["feature-file"] = linked
+        GATK.run_log("IndexFeatureFile", args)
+      end
+    end
+
+    linked
+  end
+
+  def self.prepare_VCF_AF_only(file, dir = nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+
+    digest = Misc.digest(Open.realpath(file))
+    basename = File.basename(file)
+
+    dir = Rbbt.var.vcf_indices_af_only[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+    if ! File.exists?(linked.replace_extension("tbi")) || Persist.newer?(linked.replace_extension('tbi'), file)
+
+      Misc.in_dir dir do
+
+        if !File.exists?(linked)
+          Open.write(linked + '.tmp') do |fout|
+            TSV.traverse file, :type => :array do |line|
+              out = if line[0] == "#"
+                      line
+                    else
+                      parts = line.split("\t")
+                      info = parts[7].split(";").select{|f| %w(AC AF CAF).include? f.split("=").first } * ";"
+                      info = "NOINFO=true" if info.empty?
+                      parts[7] = info
+                      parts * "\t"
+                    end
+              fout.puts out
+            end
+          end
+
+          if Open.gzip?(linked)
+            CMD.cmd("cat #{linked + '.tmp'} | bgzip > #{linked}")
+            FileUtils.rm linked + '.tmp'
+          else
+            FileUtils.mv linked + '.tmp', linked
+          end
+        end
+
+        args = {}
+        args["feature-file"] = linked
+        GATK.run_log("IndexFeatureFile", args)
+      end
+    end
+
+    linked
   end
 
   Rbbt.claim Rbbt.software.opt.GATK, :install, Rbbt.share.install.software.GATK.find
@@ -174,7 +246,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked.replace_extension("dict")) || Persist.newer?(linked.replace_extension('dict'), file)
+    if ! File.exists?(linked.replace_extension("dict", true)) || Persist.newer?(linked.replace_extension('dict', true), file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)

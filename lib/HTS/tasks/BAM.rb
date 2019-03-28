@@ -118,9 +118,6 @@ module HTS
     reference = GATK.prepare_FASTA reference
     reference_code = self.recursive_inputs[:reference]
 
-    DbSNP["All.vcf.gz.tbi"].produce.find
-    db_SNP = DbSNP["All.vcf.gz"].produce.find
-
     bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
 
     args = {}
@@ -131,8 +128,10 @@ module HTS
     args["output"] = file('recal_data.table')
 
     known_sites = [] 
-    ["dbsnp_138.vcf.gz","Miller_1000G_indels.vcf.gz", "1000G_phase1.indels.vcf.gz"].each do |file|
-      known_sites << GATK.known_sites[reference_code][file].produce.find
+    ["miller_indels", "dbsnp", "1000G_indels"].each do |file|
+      vcf = vcf_file reference, file
+      vcf = GATK.prepare_VCF_AF_only vcf
+      known_sites << vcf
     end
     args["known-sites"] = known_sites
 

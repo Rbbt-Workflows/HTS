@@ -25,9 +25,11 @@ module Delly
       tumor_name = GATK.BAM_sample_name(tumor)
       normal_name = GATK.BAM_sample_name(normal)
       TmpFile.with_file do |sample_file|
-        txt = [[tumor_name, 'tumor'], [normal_name, 'normal']].collect{|p| p * "\t"} * "\n"
-        Open.write(txt, sample_file)
+        txt = [[tumor_name, 'tumor'], [normal_name, 'control']].collect{|p| p * "\t"} * "\n"
+        Open.write(sample_file, txt)
         CMD.cmd_log("#{delly_cmd} filter -f somatic -o #{output}.pre -s #{sample_file} #{output}.call ")
+        CMD.cmd_log("#{delly_cmd} call -g #{reference} -v #{output}.pre -o #{output}.bcf -x #{exclude} #{tumor} #{normal}")
+        CMD.cmd_log("bcftools view #{output}.bcf > #{output}.vcf")
       end
     end
   end

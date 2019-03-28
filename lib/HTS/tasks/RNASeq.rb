@@ -18,4 +18,13 @@ module HTS
     CMD.cmd_log("stringtie #{step(:RNASeqBAM).path} -o #{self.tmp_path}")
     nil
   end
+
+  dep :RNASeqBAM
+  input :organism, :string, "Organism code", Organism.default_code("Hsa")
+  task :htseq_counts => :tsv do |organism|
+    CMD.cmd_log("htseq-count -f bam '#{step(:RNASeqBAM).path}' '#{Organism.gene_set(organism).produce.find}' > #{self.tmp_path}")
+    nil
+  end
+
+
 end

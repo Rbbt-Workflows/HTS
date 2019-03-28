@@ -3,6 +3,9 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
  bin=bin filter="*"{
  }
  lib=lib {
+  sources=sources{
+   HTS_reference.rb
+  }
   tools=tools{
    BWA.rb
    GATK.rb
@@ -25,22 +28,23 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   }
   tasks=HTS/tasks{
    BAM.rb
-   BAM=BAM{
-    plumbing.rb
-    other_aligners.rb
-    util.rb
-   }
-   RNASeq.rb
    CNV.rb
-   sequenza.rb
-   MuTect2.rb
-   VarScan.rb
-   filter.rb
-   Strelka.rb
    Delly.rb
+   MuTect2.rb
+   RNASeq.rb
+   Strelka.rb
+   VarScan.rb
+   control_FREEC.rb
+   filter.rb
+   sample.rb
+   sequenza.rb
    svABA.rb
    test.rb
-   sample.rb
+   BAM=BAM{
+    other_aligners.rb
+    plumbing.rb
+    util.rb
+   }
   }
  }
  test=test {
