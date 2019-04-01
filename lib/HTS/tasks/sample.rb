@@ -69,6 +69,14 @@ module Sample
     end
     nil
   end
+
+  def self.sample_study(sample)
+    load_study_files.each do |study, sample_files|
+      return study if sample_files[sample]
+    end
+    nil
+  end
+  
   
   def self.sample_options(sample)
     load_study_files.each do |study, sample_files|
@@ -84,21 +92,33 @@ module Sample
     IndiferentHash.setup({:sample_name => sample})
   end
 
+  STUDY_OPTIONS = {:organism => :string, :reference => :string, :interval_list => :file, 
+                   :pon => :file, :germline_resource => :file}
   def self.study_options(sample)
+    options = {}
     load_study_files.each do |study, sample_files|
-      next unless Sample.study_dir(study).options.exists?
-      YAML.load(Sample.study_dir(study).options.find)
+      next unless Sample.sample_study(sample) == study
+      options_file = Sample.study_dir(study).options.find
+      next unless options_file.exists?
+      study_options = if File.directory? options_file
+                        input_names = STUDY_OPTIONS.keys
+                        input_types = STUDY_OPTIONS
+                        Workflow.load_inputs(options_file, input_names, input_types)
+                      else
+                        YAML.load(options_file)
+                      end
+      options.merge! study_options
     end
-    {}
+    options
   end
 
-
+  input :by_group, :boolean, "Separate files by read-group if RevertSam is required", true
+  extension :bam
   dep_task :BAM, HTS, :BAM_rescore do |sample,options|
     sample_files = Sample.sample_files sample
 
     options = options.merge(Sample.sample_options(sample))
     options = options.merge(Sample.study_options(sample))
-
     
     if fastq_files = sample_files[:FASTQ]
       if Array === fastq_files.first && fastq_files.first.length > 1
@@ -120,25 +140,67 @@ module Sample
       options = options.merge({"HTS#BAM" => [bam_files].flatten.first})
       {:inputs => options, :jobname => sample}
     elsif orig_bam_files = sample_files["orig.BAM"]
-      options = options.merge({:bam_file => [orig_bam_files].flatten.first})
-      {:task => :BAM_rescore_realign, :inputs => options, :jobname => sample}
+      if options[:by_group]
+        options = options.merge({:bam_file => [orig_bam_files].flatten.first})
+        {:task => :BAM_rescore_realign_by_group, :inputs => options, :jobname => sample}
+      else
+        options = options.merge({:bam_file => [orig_bam_files].flatten.first})
+        {:task => :BAM_rescore_realign, :inputs => options, :jobname => sample}
+      end
     end
   end
 
+  extension :bam
   dep_task :BAM_normal, Sample, :BAM do |sample,options|
     nsample = nil
+    sample_files = nil
     [sample + '_normal', 'normal'].each do |normal_sample|
       nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample
-      break if sample_files
-      sample_files = Sample.sample_files normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
       break if sample_files
     end
-    {:inputs => options, :jobname => nsample}
+
+    raise "Normal sample for #{ sample } not found" if sample_files.nil?
+    {:inputs => options, :jobname => nsample} if sample_files
   end
 
   dep :BAM
-  dep :BAM_normal
-  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM 
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    {:inputs => options, :jobname => sample} if sample_files
+  end
+  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM do |jobname,options|
+    if dependencies.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :BAM_normal do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    {:inputs => options, :jobname => sample} if sample_files
+  end
+  dep_task :strelka, HTS, :strelka, :normal => :BAM_normal, :tumor => :BAM do |jobname,options|
+    if dependencies.length == 1
+      options[:normal] = nil
+    end
+    {:inputs => options}
+  end
+
 
 end

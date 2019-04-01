@@ -185,8 +185,64 @@ module GATK
     linked
   end
 
-  def self.run(command, arg_string = "", sin = nil)
-    arg_string = hash2args(arg_string) if Hash === arg_string
+  SPARK_COMMANDS = %w(
+CollectAllelicCounts
+CountBases
+CountReads
+Pileup
+CalcMetadata
+CollectBaseDistributionByCycle
+CollectInsertSizeMetrics
+CollectMultipleMetrics
+CollectQualityYieldMetrics
+CompareDuplicates
+FlagStat
+MeanQualityByCycle
+QualityScoreDistribution
+PathSeqBwa
+PathSeqFilter
+PathSeqPipeline
+PathSeqScore
+ParallelCopyGCSDirectoryIntoHDFS
+ApplyBQSR
+BQSRPipeline
+BaseRecalibrator
+BwaAndMarkDuplicatesPipeline
+Bwa
+ExtractOriginalAlignmentRecordsByName
+MarkDuplicates
+PrintReads
+___RevertSam
+SortSam
+FindBadGenomicKmers
+HaplotypeCaller
+ReadsPipeline
+CpxVariantReInterpreter
+DiscoverVariantsFromContigAlignmentsSAM
+ExtractSVEvidence
+FindBreakpointEvidence
+StructuralVariationDiscoveryPipeline
+SvDiscoverFromLocalAssemblyContigAlignments
+CountVariants
+PrintVariants
+)
+
+  def self.run(command, args = {}, sin = nil)
+
+    spark = Rbbt::Config.get('spark', :gatk)
+    if spark and SPARK_COMMANDS.include?(command) and Hash === args
+      args_new = {}
+      args.each do |k,v|
+        k = k.downcase if k.length > 1
+        k.gsub!('_', '-')
+        args_new[k] = v
+      end
+      args = args_new
+      command << "Spark"
+    end
+
+    arg_string = hash2args(args) if Hash === args
+
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
     if tmpdir
       CMD.cmd("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
@@ -195,18 +251,28 @@ module GATK
     end
   end
 
-  def self.run_log(*args)
-    io = run(*args)
-    while line = io.gets
-      Log.debug line
-    end
-    io.join
-    nil
-  end
-
-  def self.run_log(command, arg_string = "", sin = nil)
-    arg_string = hash2args(arg_string) if Hash === arg_string
+  def self.run_log(command, args = {}, sin = nil)
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+
+    spark = Rbbt::Config.get('spark', :gatk)
+    if spark and SPARK_COMMANDS.include?(command) and Hash === args
+      args_new = {}
+      args.each do |k,v|
+        k = k.downcase if k.length > 1
+        k = k.gsub('_', '-')
+        args_new[k] = v
+      end
+      args = args_new
+      command << "Spark"
+    end
+
+    arg_string = hash2args(args) if Hash === args
+
+    spark = Rbbt::Config.get('spark', :gatk)
+    if spark == 'true' and SPARK_COMMANDS.include?(command)
+      command << "Spark"
+    end
+
     if tmpdir
       CMD.cmd_log("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else
