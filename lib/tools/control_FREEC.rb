@@ -6,10 +6,14 @@ module ControlFREEC
   
   Rbbt.claim Rbbt.software.opt.ControlFREEC, :install, Rbbt.share.install.software.ControlFREEC.find
 	
-	FREEC_CMD = Rbbt.software.opt.ControlFREEC.src.freec.find
-
+  FREEC_CMD = Rbbt.software.opt.ControlFREEC.src.freec.find
+  FREEC_PLOT_SCRIPT = Rbbt.software.opt.ControlFREEC.scripts.makeGraph.R.find
   def self.run(config_file)
-		CMD.cmd_log("'#{FREEC_CMD}' -conf '#{config_file}'")
+    CMD.cmd_log("'#{FREEC_CMD}' -conf '#{config_file}'")
+  end
+
+  def self.makegraphs(results_path)
+    CMD.cmd_log("cat '#{FREEC_PLOT_SCRIPT}' | R --slave --args 2 '#{results_path}'/*_ratio.txt '#{results_path}'/*_BAF.txt")
   end
 end
 
