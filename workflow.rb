@@ -36,6 +36,7 @@ module HTS
   #end
 
   helper :reference_file do |reference|
+    reference = Open.read(reference).strip if File.exists?(reference) && File.size(reference) < 2000
     case reference
     when 'hg19', 'hg38', 'b37', 'hs37d5'
       Organism["Hsa"][reference][reference + ".fa"].produce.find
@@ -46,6 +47,8 @@ module HTS
 
   helper :vcf_file do |reference, file|
     reference = reference.scan(/(?:b37|hg19|hg38)/).first 
+    file = Open.read(file).strip if File.exists?(file) && File.size(file) < 2000
+
     case file.to_s.downcase
     when 'miller_indels', 'miller'
       Organism["Hsa"][reference].known_sites["Miller_1000G_indels.vcf.gz"].produce.find
@@ -64,6 +67,37 @@ module HTS
     else
       file
     end
+  end
+
+  helper :germline_min_af do |file|
+    file = Open.read(file).strip if File.exists?(file) && File.size(file) < 2000
+    case file.to_s.downcase
+    when 'gnomad'
+      0.0000025
+    when 'miller_indels', 'miller'
+      nil
+    when '1000g_indels'
+      nil
+    when '1000g_snps_hc', '1000g_snps', '1000g'
+      nil
+    when 'dbsnp'
+      nil
+    else
+      nil
+    end
+  end
+
+  helper :intervals_for_reference do |reference|
+    fai = reference + '.fai'
+
+    intervals = StringIO.new 
+    TSV.traverse fai, :type => :array do |line|
+      chr, size, rest = line.split("\t")
+      intervals << ([chr, "1", size] * "\t") << "\n"
+    end
+
+    intervals.rewind
+    intervals
   end
 
 
@@ -143,12 +177,55 @@ module HTS
     end
   end
 
+  helper :fix_spark_args do |command,args|
+    if Hash === args
+      args_new = {}
+      args.each do |k,v|
+        k = k.downcase if k.length > 1
+        k = k.gsub('_', '-')
+        args_new[k] = v
+      end
+      args = args_new
+    end
+
+    case command.to_s
+    when "SortSam"
+      args['--create-output-bam-index'] = false
+    when "MarkDuplicates"
+      args['--create-output-bam-index'] = false
+      args.delete_if{|k,v| k.include? "sort-order" }
+    end
+
+    args
+  end
+
+  helper :gatk_io do |command,args,sin=nil|
+
+    if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
+      args = fix_spark_args command, args
+      command += "Spark"
+    end
+
+    GATK.run(command, args, sin)
+  end
+
+  helper :gatk do |command,args,sin=nil|
+
+    if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
+      args = fix_spark_args command, args
+      command += "Spark"
+    end
+
+    GATK.run_log(command, args, sin)
+  end
+
 end
 
 require 'HTS/tasks/BAM'
 require 'HTS/tasks/filter'
 require 'HTS/tasks/sequenza'
 require 'HTS/tasks/MuTect2'
+require 'HTS/tasks/Haplotype'
 require 'HTS/tasks/VarScan'
 require 'HTS/tasks/Strelka'
 require 'HTS/tasks/test'
@@ -157,5 +234,7 @@ require 'HTS/tasks/Delly'
 require 'HTS/tasks/svABA'
 require 'HTS/tasks/control_FREEC'
 require 'HTS/tasks/RNASeq'
+require 'HTS/tasks/MuSE'
+require 'HTS/tasks/somaticsniper'
 
 require 'HTS/tasks/sample' if defined? Sample

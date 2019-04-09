@@ -27,24 +27,27 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    shard.rb
   }
   tasks=HTS/tasks{
-   BAM.rb
-   CNV.rb
-   Delly.rb
-   MuTect2.rb
-   RNASeq.rb
-   Strelka.rb
-   VarScan.rb
-   control_FREEC.rb
-   filter.rb
-   sample.rb
-   sequenza.rb
-   svABA.rb
-   test.rb
    BAM=BAM{
     other_aligners.rb
     plumbing.rb
     util.rb
    }
+   BAM.rb
+   CNV.rb
+   Delly.rb
+   MuTect2.rb
+   Haplotype.rb
+   RNASeq.rb
+   Strelka.rb
+   MuSE.rb
+   somaticsniper.rb
+   VarScan.rb
+   control_FREEC.rb
+   filter.rb
+   sequenza.rb
+   svABA.rb
+   test.rb
+   sample.rb
   }
  }
  test=test {

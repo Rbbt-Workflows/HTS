@@ -27,7 +27,7 @@ module HTS
     args["SEQUENCING_CENTER"] = sequencing_center
     args["RUN_DATE"] = run_date
 
-    GATK.run_log("FastqToSam", args)
+    gatk("FastqToSam", args)
   end
 
   dep :uBAM, :compute => :produce
@@ -39,7 +39,7 @@ module HTS
     args["OUTPUT"] = self.tmp_path
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
-    GATK.run_log("MarkIlluminaAdapters", args)
+    gatk("MarkIlluminaAdapters", args)
   end
 
   dep :mark_adapters
@@ -56,7 +56,7 @@ module HTS
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 
     Open.rm file('SamToFastq')
-    Misc.with_fifo(file('SamToFastq')) do |s2f_path|
+    Misc.with_fifo(file('SamToFastq.fastq')) do |s2f_path|
 
       args = {}
       args["INPUT"] = step(:mark_adapters).path
@@ -66,7 +66,7 @@ module HTS
       args["INTERLEAVE"] = "true"
       args["NON_PF"] = "true"
 
-      io_s2f = GATK.run("SamToFastq", args)
+      io_s2f = gatk_io("SamToFastq", args)
       t_s2f = Thread.new do
         while line = io_s2f.gets
           Log.debug line
@@ -76,12 +76,14 @@ module HTS
       bwa_mem_args += " -t " << config('cpus', 'bwa', :default => 8) 
       io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
 
+      uBAM = step('uBAM').path
+
       args = {}
       args["ALIGNED_BAM"] = "/dev/stdin"
-      args["UNMAPPED_BAM"] = step('uBAM').path
+      args["UNMAPPED_BAM"] = uBAM
       args["OUTPUT"] = self.tmp_path
       args["R"] = reference
-      args["CREATE_INDEX"] = "true"
+      args["CREATE_INDEX"] = "false"
       args["ADD_MATE_CIGAR"] = "true"
       args["CLIP_ADAPTERS"] = "false"
       args["CLIP_OVERLAPPING_READS"] = "true"
@@ -89,7 +91,9 @@ module HTS
       args["MAX_INSERTIONS_OR_DELETIONS"] = "-1"
       args["PRIMARY_ALIGNMENT_STRATEGY"] = "MostDistant"
       args["ATTRIBUTES_TO_RETAIN"] = "XS"
-      GATK.run_log("MergeBamAlignment", args, io_bwa)
+      args["SORT_ORDER"] = "queryname"
+
+      gatk("MergeBamAlignment", args, io_bwa)
 
       FileUtils.rm_rf s2f_path
     end
@@ -100,12 +104,15 @@ module HTS
   extension :bam
   task :BAM_duplicates => :binary do
     args = {}
+    output = file('out.bam')
     args["I"] = step(:BAM).path
-    args["O"] = self.tmp_path
-    args["M"] = file('metrics.txt')
+    args["O"] = output
+    args["M"] = file('metrics.txt') 
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
-    GATK.run_log("MarkDuplicates", args)
+    gatk("MarkDuplicates", args)
+    Open.mv output, self.path
+    nil
   end
 
 
@@ -136,15 +143,18 @@ module HTS
     args["known-sites"] = known_sites
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
-    GATK.run_log("BaseRecalibrator", args)
+    gatk("BaseRecalibrator", args)
 
+    output = file('out.bam')
     args = {}
     args["input"] = bam_file
-    args["output"] = self.tmp_path
+    args["output"] = output
     args["bqsr-recal-file"] = file('recal_data.table')
     args["intervals"] = interval_list if interval_list
     args["interval-padding"] = 100 if interval_list
-    GATK.run_log("ApplyBQSR", args)
+    gatk("ApplyBQSR", args)
+    FileUtils.mv output, self.path
+    nil
   end
 end
 

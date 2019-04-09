@@ -1,37 +1,6 @@
 require 'tools/shard'
 module HTS
 
-  helper :intervals_for_reference do |reference|
-    fai = reference + '.fai'
-
-    intervals = StringIO.new 
-    TSV.traverse fai, :type => :array do |line|
-      chr, size, rest = line.split("\t")
-      intervals << ([chr, "1", size] * "\t") << "\n"
-    end
-
-    intervals.rewind
-    intervals
-  end
-
-  #helper :germline_resource_file do |germline_resource,reference|
-  #  germline_resource = germline_resource.to_s if Symbol === germline_resource
-  #  case germline_resource
-  #  when 'gnomad'
-  #    GATK.known_sites[reference.to_s]["af-only-gnomad.vcf.gz"].produce.find
-  #  when String
-  #    return germline_resource if Misc.is_filename?(germline_resource) && Open.exists?(germline_resource)
-  #    gr = GATK.known_sites[reference.to_s].glob("*" << germline_resource << "*").first
-  #    if gr
-  #      gr
-  #    else
-  #      germline_resource
-  #    end
-  #  else
-  #    germline_resource
-  #  end
-  #end
-
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
@@ -42,8 +11,10 @@ module HTS
   extension :vcf
   task :mutect2 => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
+    af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
     germline_resource = vcf_file reference, germline_resource
     germline_resource = GATK.prepare_VCF_AF_only germline_resource
+
 
     reference = reference_file reference
     orig_reference = reference
@@ -63,8 +34,10 @@ module HTS
 
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
 
+    output = file('calls.vcf')
+
     args["input"] = [tumor, normal].compact
-    args["output"] = self.tmp_path
+    args["output"] = output
     args["reference"] = reference
     args["tumor-sample"] = tumor_sample
     args["normal-sample"] = normal_sample if normal_sample
@@ -80,6 +53,9 @@ module HTS
     if shard == 'true'
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
+      headervcf_stats = file('tmp.header.stats')
+      contentvcf_stats = file('tmp.content.stats')
+      tmp_stats = file('tmp.stats')
       args["intervals"] ||= nil
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing Mutect2 sharded")
@@ -89,31 +65,56 @@ module HTS
         bar.tick
         `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
         `grep -v "#" #{ioutfile} >> #{contentvcf}` 
+        `head -n 1 "#{ioutfile}.stats" > "#{headervcf_stats}"` unless File.exists? headervcf_stats
+        `tail -n 1 #{ioutfile}.stats >> #{contentvcf_stats}` 
       end
       bar.done
 
-      `cat "#{headervcf}" > "#{self.tmp_path}"`
-      `sort -k 1,2 "#{contentvcf}" | uniq >> "#{self.tmp_path}"`
+      `cat "#{headervcf}" > "#{output}"`
+      `sort -k 1,2 "#{contentvcf}" | uniq >> "#{output}"`
+
+      `cat "#{headervcf_stats}" > "#{tmp_stats}"`
+      `cat "#{contentvcf_stats}" >> "#{tmp_stats}"`
+      stats = TSV.open( tmp_stats, :type => :double, :header_hash => '', :merge => true)
+      stats = stats.to_list{|l| Misc.sum(l.collect{|e| (e.nil? || e.empty?) ? nil : e.to_f }.compact) }
+      Open.write(output + '.stats') do |f|
+        f.puts ["statistic", "value"] * "\t"
+        f.puts ["callable", stats["callable"]] * "\t"
+      end
+      FileUtils.rm Path.setup(files_dir).glob("tmp.*")
       nil
     else
       GATK.run_log("Mutect2", args)
     end
+
+    Open.cp output, self.path
+    nil
   end
 
   dep :mutect2
   dep :contamination, :BAM => :tumor
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   extension :vcf
-  task :mutect2_filtered => :text do
-    args = {}
-    FileUtils.mkdir_p files_dir
+  task :mutect2_filtered => :text do |reference|
+    reference = reference_file reference
+    orig_reference = reference
+
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
 
     tmp = TmpFile.tmp_file
     FileUtils.ln_s step(:mutect2).path, tmp
+    FileUtils.ln_s step(:mutect2).file('calls.vcf.stats'), tmp + '.stats'
+
+    args = {}
+    FileUtils.mkdir_p files_dir
 
     args["variant"] = tmp
     args["output"] = self.tmp_path
+    args["reference"] = reference
     args["contamination-table"] = step(:contamination).path
     GATK.run_log("FilterMutectCalls", args)
+    nil
   end
 
   dep :mutect2_filtered

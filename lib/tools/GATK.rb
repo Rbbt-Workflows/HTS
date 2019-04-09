@@ -48,7 +48,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked.replace_extension("tbi")) || Persist.newer?(linked.replace_extension('tbi'), file)
+    if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
@@ -73,7 +73,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked.replace_extension("tbi")) || Persist.newer?(linked.replace_extension('tbi'), file)
+    if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
 
@@ -220,19 +220,6 @@ module GATK
   end
 
 
-  def self.hash2args(hash)
-    hash.collect do |k,v| 
-      k = '--' + k.to_s unless k[0] == "-"
-      next if v.nil? || FalseClass === v
-      v = nil if TrueClass === v
-      vs = Array === v ? v : [v]
-      vs.collect do |v|
-        v = "'" + v.to_s + "'" unless v[0] == "'" || v[0] == '"' unless v.nil?
-        [k,v].compact * " " 
-      end
-    end.compact.flatten * " "
-  end
-
   def self.prepare_FASTA(file, dir = nil)
     file = file.path if Step === file
     file = file.find if Path === file
@@ -276,7 +263,7 @@ PathSeqFilter
 PathSeqPipeline
 PathSeqScore
 ParallelCopyGCSDirectoryIntoHDFS
-ApplyBQSR
+__ApplyBQSR
 BQSRPipeline
 BaseRecalibrator
 BwaAndMarkDuplicatesPipeline
@@ -284,10 +271,10 @@ Bwa
 ExtractOriginalAlignmentRecordsByName
 MarkDuplicates
 PrintReads
-___RevertSam
+__RevertSam
 SortSam
 FindBadGenomicKmers
-HaplotypeCaller
+__HaplotypeCaller
 ReadsPipeline
 CpxVariantReInterpreter
 DiscoverVariantsFromContigAlignmentsSAM
@@ -299,21 +286,28 @@ CountVariants
 PrintVariants
 )
 
+  def self.hash2args(hash)
+    hash.collect do |k,v| 
+      if k[0] != "-"
+        if k.length == 1
+          k = '-' + k.to_s 
+        else
+          k = '--' + k.to_s 
+        end
+      end
+      next if v.nil? 
+      #v = nil if TrueClass === v
+      vs = Array === v ? v : [v]
+      vs.collect do |v|
+        v = "'" + v.to_s + "'" unless v.to_s[0] == "'" || v.to_s[0] == '"' unless v.nil?
+        [k,v].compact * " " 
+      end
+    end.compact.flatten * " "
+  end
+
   def self.run(command, args = {}, sin = nil)
 
-    spark = Rbbt::Config.get('spark', :gatk)
-    if spark and SPARK_COMMANDS.include?(command) and Hash === args
-      args_new = {}
-      args.each do |k,v|
-        k = k.downcase if k.length > 1
-        k.gsub!('_', '-')
-        args_new[k] = v
-      end
-      args = args_new
-      command << "Spark"
-    end
-
-    arg_string = hash2args(args) if Hash === args
+    arg_string = self.hash2args(args) if Hash === args
 
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
     if tmpdir
@@ -324,27 +318,10 @@ PrintVariants
   end
 
   def self.run_log(command, args = {}, sin = nil)
+
+    arg_string = self.hash2args(args) if Hash === args
+
     tmpdir = Rbbt::Config.get('tmpdir', :gatk)
-
-    spark = Rbbt::Config.get('spark', :gatk)
-    if spark and SPARK_COMMANDS.include?(command) and Hash === args
-      args_new = {}
-      args.each do |k,v|
-        k = k.downcase if k.length > 1
-        k = k.gsub('_', '-')
-        args_new[k] = v
-      end
-      args = args_new
-      command << "Spark"
-    end
-
-    arg_string = hash2args(args) if Hash === args
-
-    spark = Rbbt::Config.get('spark', :gatk)
-    if spark == 'true' and SPARK_COMMANDS.include?(command)
-      command << "Spark"
-    end
-
     if tmpdir
       CMD.cmd_log("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else

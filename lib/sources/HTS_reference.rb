@@ -1,6 +1,36 @@
 require 'rbbt/sources/organism'
 require_relative '../tools/GATK'
 
+module HTS
+  def self.uncompress_FASTA(file, dir = nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+
+    digest = Misc.digest(Open.realpath(file))
+    basename = File.basename(file)
+
+    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+    
+    if linked =~ /.gz$/
+      unzipped_linked = linked.sub(/.gz$/,'')
+      CMD.cmd("zcat #{linked} > #{unzipped_linked}") unless File.exists?(unzipped_linked)
+      dir.glob("*.gz.*").each do |file|
+        unzipped_file = file.sub('.gz.', '.')
+        Open.ln_s file, unzipped_file unless File.exists?(unzipped_file)
+      end
+      unzipped_linked
+    else
+      linked
+    end
+  end
+
+end
+
 module Organism
 
   # -- Claims for hg38

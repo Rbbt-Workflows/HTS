@@ -112,10 +112,11 @@ module Sample
     options
   end
 
-  input :by_group, :boolean, "Separate files by read-group if RevertSam is required", true
+  input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   extension :bam
   dep_task :BAM, HTS, :BAM_rescore do |sample,options|
     sample_files = Sample.sample_files sample
+    raise "Sample #{ sample } not found" if sample_files.nil?
 
     options = options.merge(Sample.sample_options(sample))
     options = options.merge(Sample.study_options(sample))
@@ -164,144 +165,61 @@ module Sample
     {:inputs => options, :jobname => nsample} if sample_files
   end
 
-  dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
+  #{{{ EXPORT HTS METHODS
+
+  {
+    :strelka => :strelka,
+    :varscan => :varscan_somatic,
+    :mutect2_snv => [:mutect2_clean, true],
+    :muse => :muse,
+    :somatic_sniper => :somatic_sniper,
+    :delly => :delly,
+    :svABA => :svABA,
+    :sequenza_purity => :sequenza_purity,
+    :sequenza_ploidy => :sequenza_ploidy,
+  }.each do |task,otask|
+    if Array === otask
+      otask, allow_tumor_only = otask
+    else
+      allow_tumor_only = false
     end
 
-    {:inputs => options, :jobname => sample} if sample_files
-  end
-  dep_task :mutect2_snv, HTS, :mutect2_clean, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
-    if dependencies.flatten.length == 1
-      options[:normal] = nil
-    end
-    {:inputs => options}
-  end
+    if allow_tumor_only
+      dep :BAM, :compute => :bootstrap
+      dep :BAM_normal, :compute => :bootstrap do |sample,options|
+        nsample = nil
+        sample_files = nil
+        [sample + '_normal', 'normal'].each do |normal_sample|
+          nsample = normal_sample
+          sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+          break if sample_files
+        end
 
-  dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
-    end
+        {:inputs => options, :jobname => sample} if sample_files
+      end
+    else
+      dep :BAM, :compute => :bootstrap
+      dep :BAM_normal, :compute => :bootstrap do |sample,options|
+        nsample = nil
+        sample_files = nil
+        [sample + '_normal', 'normal'].each do |normal_sample|
+          nsample = normal_sample
+          sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+          break if sample_files
+        end
 
-    {:inputs => options, :jobname => sample} if sample_files
-  end
-  dep_task :strelka, HTS, :strelka, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
-    if dependencies.flatten.length == 1
-      options[:normal] = nil
+        raise ParameterException, "No normal sample found" if sample_files.nil?
+        {:inputs => options, :jobname => sample} 
+      end
     end
-    {:inputs => options}
-  end
-
-  dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
+    dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+      if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
+        options.delete :normal
+      end
+      {:inputs => options}
     end
-
-    raise ParameterException, "No normal sample found" if sample_files.nil?
-    {:inputs => options, :jobname => sample} 
-  end
-  dep_task :sequenza_purity, HTS, :sequenza_purity, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
-    if dependencies.flatten.length == 1
-      options[:normal] = nil
-    end
-    {:inputs => options}
   end
 
   dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
-    end
-
-    raise ParameterException, "No normal sample found" if sample_files.nil?
-    {:inputs => options, :jobname => sample} 
-  end
-  dep_task :sequenza_ploidy, HTS, :sequenza_ploidy, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
-    if dependencies.flatten.length == 1
-      options[:normal] = nil
-    end
-    {:inputs => options}
-  end
-
-  dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
-    end
-
-    raise ParameterException, "No normal sample found" if sample_files.nil?
-    {:inputs => options, :jobname => sample} 
-  end
-  dep :sequenza_purity
-  dep_task :varscan, HTS, :varscan_somatic_alt, :normal => :BAM_normal, :tumor => :BAM, :tumor_purity => :sequenza_purity do |jobname,options,dependencies|
-    if dependencies.flatten.length == 2
-      options[:normal] = nil
-    end
-    {:inputs => options}
-  end
-
-  dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
-    end
-
-    raise ParameterException, "No normal sample found" if sample_files.nil?
-    {:inputs => options, :jobname => sample} 
-  end
-  dep_task :delly, HTS, :delly, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
-    if dependencies.flatten.length == 1
-      options[:normal] = nil
-    end
-    {:inputs => options}
-  end
-
-  dep :BAM
-  dep :BAM_normal do |sample,options|
-    nsample = nil
-    sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
-      nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
-      break if sample_files
-    end
-
-    raise ParameterException, "No normal sample found" if sample_files.nil?
-    {:inputs => options, :jobname => sample} 
-  end
-  dep_task :svABA, HTS, :svABA, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
-    if dependencies.flatten.length == 1
-      options[:normal] = nil
-    end
-    {:inputs => options}
-  end
-
-
+  dep_task :haplotype, HTS, :haplotype, :BAM => :BAM
 end
