@@ -1,65 +1,67 @@
 module Sample
 
   def self.load_study_files
-    study_files = {}
-    Sample.all_studies.each do |study|
-      dir = Sample.study_dir study
+    @@study_files ||= begin
+                        study_files = {}
+                        Sample.all_studies.each do |study|
+                          dir = Sample.study_dir study
 
-      sample_files = {}
-      dir.glob('WES/*').each do |path|
-        file = File.basename path
-        sample = file.split(".").first
-        fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz")).sort
-        if fastq_files.any?
-          fastq2_files = fastq_files.reject{|f| File.basename(f) =~ /_2\.fastq/ }
-          fastq1_files = fastq_files - fastq2_files
-          sample_files[sample] ||= {}
-          sample_files[sample]["FASTQ"] = [fastq1_files, fastq2_files]
-        end
-        
-        bam_files = path.glob("*.bam")
-        if bam_files.any?
-          sample_files[sample] ||= {}
-          sample_files[sample]["BAM"] = bam_files
-        end
+                          sample_files = {}
+                          dir.glob('WES/*').each do |path|
+                            file = File.basename path
+                            sample = file.split(".").first
+                            fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz")).sort
+                            if fastq_files.any?
+                              fastq2_files = fastq_files.select{|f| File.basename(f) =~ /_2\.fastq/ }
+                              fastq1_files = fastq_files - fastq2_files
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["FASTQ"] = [fastq1_files, fastq2_files]
+                            end
 
-        sample_files[sample] ||= {}
-        sample_files[sample]["BAM"] = path if path =~ /.*\.bam/
+                            bam_files = path.glob("*.bam")
+                            if bam_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["BAM"] = bam_files
+                            end
 
-        ubam_files = path.glob("*.ubam")
-        if ubam_files.any?
-          sample_files[sample] ||= {}
-          sample_files[sample]["uBAM"] = ubam_files
-        end
-        sample_files[sample] ||= {}
-        sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam/
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["BAM"] = path if path =~ /.*\.bam/
 
-        orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam")
-        if orig_files.any?
-          sample_files[sample] ||= {}
-          sample_files[sample]["orig.BAM"] = orig_files
-        end
+                            ubam_files = path.glob("*.ubam")
+                            if ubam_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["uBAM"] = ubam_files
+                            end
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam/
 
-        sample_files[sample] ||= {}
-        sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam/
-      end
+                            orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam")
+                            if orig_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["orig.BAM"] = orig_files
+                            end
 
-      dir.glob('WES.orig/*').each do |path|
-        file = File.basename path
-        sample = file.split(".").first
-        orig_files = path.glob("*.bam")
-        if orig_files.any?
-          sample_files[sample] ||= {}
-          sample_files[sample]["orig.BAM"] = orig_files
-        end
-        sample_files[sample] ||= {}
-        sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/
-      end
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam/
+                          end
 
-      sample_files.delete_if do |sample,info| info.empty? end
-      study_files[study] = sample_files
-    end
-    study_files
+                          dir.glob('WES.orig/*').each do |path|
+                            file = File.basename path
+                            sample = file.split(".").first
+                            orig_files = path.glob("*.bam")
+                            if orig_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["orig.BAM"] = orig_files
+                            end
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/
+                          end
+
+                          sample_files.delete_if do |sample,info| info.empty? end
+                          study_files[study] = sample_files
+                        end
+                        study_files
+                      end
   end
 
   def self.sample_files(sample)
@@ -76,8 +78,8 @@ module Sample
     end
     nil
   end
-  
-  
+
+
   def self.sample_options(sample)
     load_study_files.each do |study, sample_files|
       next unless Sample.study_dir(study).sample_info.exists?
@@ -114,13 +116,13 @@ module Sample
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   extension :bam
-  dep_task :BAM, HTS, :BAM_rescore do |sample,options|
+  dep_task :BAM, HTS, :BAM do |sample,options|
     sample_files = Sample.sample_files sample
     raise "Sample #{ sample } not found" if sample_files.nil?
 
     options = options.merge(Sample.sample_options(sample))
     options = options.merge(Sample.study_options(sample))
-    
+
     if fastq_files = sample_files[:FASTQ]
       if Array === fastq_files.first && fastq_files.first.length > 1
         options = options.merge({:fastq1_files => fastq_files.first, :fastq2_files => (fastq_files.last || [])})
@@ -170,7 +172,7 @@ module Sample
   {
     :strelka => :strelka,
     :varscan => :varscan_somatic,
-    :mutect2_snv => [:mutect2_clean, true],
+    :mutect2 => [:mutect2, true],
     :muse => :muse,
     :somatic_sniper => :somatic_sniper,
     :delly => :delly,
@@ -215,6 +217,7 @@ module Sample
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
       if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
         options.delete :normal
+        options.delete "normal"
       end
       {:inputs => options}
     end
@@ -222,4 +225,46 @@ module Sample
 
   dep :BAM
   dep_task :haplotype, HTS, :haplotype, :BAM => :BAM
+
+
+  dep :strelka, :compute => :bootstrap do |jobname, options|
+    %w(strelka varscan mutect2 somatic_sniper muse).collect do |var_caller|
+      {:task => var_caller, :inputs => options, :jobname => jobname}
+    end
+  end
+  input :only_pass, :boolean, "Consider only PASS variants", true
+  task :caller_comparison => :tsv do |only_pass|
+    caller_variants = {}
+    dependencies.each do |dep|
+      var_caller = dep.task_name
+
+      variants = TSV.traverse dep, :into => [], :type => :list do |chr, values|
+        pos, id, ref, alt, qual, filter, *rest = values
+
+        next if only_pass and ! (filter.split(";").include?("PASS")  || filter == ".")
+
+        [chr, pos, alt] * ":"
+      end
+      caller_variants[var_caller] = variants
+    end
+
+    var_callers = caller_variants.keys.sort
+    tsv = TSV.setup({}, :key_field => "Caller", :fields => ["Unique"] + var_callers, :type => :list, :cast => :to_i)
+    var_callers.each do |c1|
+      m1 = caller_variants[c1]
+      matches = var_callers.collect do |c2|
+        next if c1 == c2
+        m2 = caller_variants[c2]
+        m1 & m2
+      end
+      unique = m1 - matches.flatten
+      tsv[c1] = [unique.length] + matches.collect{|m| m.nil? ? m1.length : m.length}
+    end
+
+    tsv
+  end
+
+  dep :mutect2
+  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf => :mutect2
+
 end

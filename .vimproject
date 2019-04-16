@@ -22,6 +22,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    stringTie.rb
    HISAT.rb
    svABA.rb
+   pfff.rb
    Delly.rb
    scatter.rb
    shard.rb
@@ -58,6 +59,9 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   }
  }
  share=share filter="*"{
+  rbbt_commands=rbbt_commands{
+   bootstrap
+  }
   software=install/software{
    BWA
    Bowtie
@@ -81,6 +85,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    bcftools
    StringTie
    HISAT
+   pfff
   }
  }
  data=data filter="*"{

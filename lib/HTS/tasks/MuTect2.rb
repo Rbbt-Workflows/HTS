@@ -9,7 +9,7 @@ module HTS
   input :germline_resource, :file, "Germline resource", :gnomad, :nofile => true
   input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
   extension :vcf
-  task :mutect2 => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
+  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
     af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
     germline_resource = vcf_file reference, germline_resource
@@ -48,9 +48,10 @@ module HTS
     args["germline-resource"] = germline_resource
     args["af-of-alleles-not-in-resource"] = af_not_in_resource.to_s if af_not_in_resource
 
-    shard = Rbbt::Config.get('shard', :gatk, :mutect, :mutect2)
+    shard = config('shard', :gatk, :mutect, :mutect2)
 
     if shard == 'true'
+      cpus = config('cpus', :shard, :mutect, :mutect2)
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
       headervcf_stats = file('tmp.header.stats')
@@ -60,15 +61,13 @@ module HTS
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing Mutect2 sharded")
 
-      bar.init
-      GATKShard.cmd("Mutect2", args, intervals, 30_000_000) do |ioutfile|
+      GATKShard.cmd("Mutect2", args, intervals, 30_000_000, cpus, bar) do |ioutfile|
         bar.tick
         `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
         `grep -v "#" #{ioutfile} >> #{contentvcf}` 
         `head -n 1 "#{ioutfile}.stats" > "#{headervcf_stats}"` unless File.exists? headervcf_stats
         `tail -n 1 #{ioutfile}.stats >> #{contentvcf_stats}` 
       end
-      bar.done
 
       `cat "#{headervcf}" > "#{output}"`
       `sort -k 1,2 "#{contentvcf}" | uniq >> "#{output}"`
@@ -84,14 +83,14 @@ module HTS
       FileUtils.rm Path.setup(files_dir).glob("tmp.*")
       nil
     else
-      GATK.run_log("Mutect2", args)
+      gatk("Mutect2", args)
     end
 
     Open.cp output, self.path
     nil
   end
 
-  dep :mutect2
+  dep :mutect2_pre
   dep :contamination, :BAM => :tumor
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   extension :vcf
@@ -103,17 +102,22 @@ module HTS
     reference = Samtools.prepare_FASTA orig_reference
 
     tmp = TmpFile.tmp_file
-    FileUtils.ln_s step(:mutect2).path, tmp
-    FileUtils.ln_s step(:mutect2).file('calls.vcf.stats'), tmp + '.stats'
+    FileUtils.ln_s step(:mutect2_pre).path, tmp
+    FileUtils.ln_s step(:mutect2_pre).file('calls.vcf.stats'), tmp + '.stats'
 
-    args = {}
     FileUtils.mkdir_p files_dir
+    args = {}
 
     args["variant"] = tmp
     args["output"] = self.tmp_path
     args["reference"] = reference
-    args["contamination-table"] = step(:contamination).path
-    GATK.run_log("FilterMutectCalls", args)
+    if step(:contamination).path.read.include? "NaN"
+      set_info :missing_contamination, true
+      Log.warn "NaN in contamination file: #{Log.color :blue, self.path}"
+    else
+      args["contamination-table"] = step(:contamination).path 
+    end
+    gatk("FilterMutectCalls", args)
     nil
   end
 
@@ -130,4 +134,22 @@ module HTS
       line
     end
   end
+
+  dep :BAM_artifact_metrics, :compute => :bootstrap
+  dep :mutect2_clean, :compute => :bootstrap
+  extension :vcf
+  task :mutect2_orientation_bias => :text do
+    FileUtils.mkdir_p files_dir
+    args = {}
+
+    args["-P"] = step(:BAM_artifact_metrics).path
+    args["-V"] = step(:mutect2_clean).join.path
+    args["-O"] = self.tmp_path
+    gatk("FilterByOrientationBias", args)
+    nil
+  end
+
+  extension :vcf
+  dep_task :mutect2, HTS, :mutect2_orientation_bias
+
 end

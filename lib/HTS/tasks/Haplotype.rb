@@ -23,37 +23,42 @@ module HTS
     args["--output"] = output
     args["-R"] = reference
     args["--intervals"] = interval_list if interval_list
-    args["-ip"] = 100 if interval_list
+    args["-ip"] = 500 if interval_list
     args["-ERC"] = "GVCF"
     args["--max-alternate-alleles"] = 3
+    args["--create-output-variant-index"] = false
 
-    shard = Rbbt::Config.get('shard', :gatk, :haplotype, :HaplotypeCaller)
+    shard = config('shard', :gatk, :haplotype, :HaplotypeCaller)
 
     if shard == 'true'
+      cpus = config('cpus', :shard, :haplotype, :HaplotypeCaller)
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
       args["--intervals"] ||= nil
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing HaplotypeCaller sharded")
 
-      bar.init
-      GATKShard.cmd("HaplotypeCaller", args, intervals, 30_000_000) do |ioutfile|
+      outfiles = file('output')
+      GATKShard.cmd("HaplotypeCaller", args, intervals, 10_000_000, cpus, bar) do |ioutfile|
         bar.tick
-        `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
-        `grep -v "#" #{ioutfile} >> #{contentvcf}` 
+        Open.mv ioutfile, outfiles[File.basename(ioutfile) + '.vcf']
       end
-      bar.done
 
-      `cat "#{headervcf}" > "#{output}"`
-      `sort -k 1,2 "#{contentvcf}" | uniq >> "#{output}"`
+      contigs = Samtools.reference_contigs reference
+      sorted_parts = outfiles.glob("*.vcf").sort{|a,b| Misc.genomic_location_cmp_contigs(File.basename(a), File.basename(b), contigs, '__')}
 
-      FileUtils.rm Path.setup(files_dir).glob("tmp.*")
+      args = {}
+      args["INPUT"] = sorted_parts
+      args["OUTPUT"] = output
+      gatk("MergeVcfs", args)
+
+      Open.rm_rf outfiles
       nil
     else
-      GATK.run_log("HaplotypeCaller", args)
+      gatk("HaplotypeCaller", args)
     end
 
-    Open.cp output, self.path
+    Open.mv output, self.path
     nil
   end
 end

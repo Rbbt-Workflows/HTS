@@ -22,7 +22,7 @@ module BWA
     file = file.find if Path === file
     file = File.expand_path(file)
 
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
     dir = Rbbt.var.fasta_indices[digest].find if dir.nil?

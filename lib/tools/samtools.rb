@@ -34,7 +34,7 @@ module Samtools
     file = file.find if Path === file
     file = File.expand_path(file)
 
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
     dir = Rbbt.var.bam_indices[digest].find if dir.nil?
@@ -57,7 +57,7 @@ module Samtools
     file = file.find if Path === file
     file = File.expand_path(file)
 
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
     dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
@@ -73,6 +73,14 @@ module Samtools
     end
 
     linked
+  end
+
+  def self.BAM_start(bam_file)
+    CMD.cmd("samtools view '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")
+  end
+
+  def self.reference_contigs(reference)
+    Open.read(reference + '.fai').split("\n").collect{|line| line.split("\t").first}
   end
 end
 

@@ -8,46 +8,52 @@ module HTS
     bam_filenames = bam_filenames.collect{|f| Step === f ? f.path : f}
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
-    sorted = file('sorted.bam')
+    unsorted = file('unsorted.bam')
 
     args= {}
     args["INPUT"] = bam_filenames
-    args["OUTPUT"] = sorted
+    args["OUTPUT"] = unsorted
     args["METRICS_FILE"] = file('metrics.txt')
     args["ASSUME_SORT_ORDER"] = 'queryname'
     gatk("MarkDuplicates", args)
     
-    #args= {}
-    #args["INPUT"] = unsorted
-    #args["OUTPUT"] = sorted
-    #args["SORT_ORDER"] = 'coordinate'
-    #gatk("SortSam", args)
-    #FileUtils.rm unsorted
+    sort = config('spark', :gatk, "MarkDuplicates") != 'true'
 
-    Open.mv sorted, self.path
+    if sort
+      sorted = file('sorted.bam')
+      args= {}
+      args["INPUT"] = unsorted
+      args["OUTPUT"] = sorted
+      args["SORT_ORDER"] = 'coordinate'
+      gatk("SortSam", args)
+      FileUtils.rm unsorted
+      Open.mv sorted, self.path
+    else
+      Open.mv unsorted, self.path
+    end
     nil
   end
 
-  input :ubam_files, :array, "uBAM filenames to multiplex"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
-  extension :bam
-  task :BAM_multi_bwa => :binary do |ubam_filenames,reference|
-    args= {}
-    ubam_filenames = Dir.glob(File.join(ubam_filenames.first, "*.bam") + File.join(ubam_filenames.first, "*.ubam") ) if Array === ubam_filenames && ubam_filenames.length == 1 && File.directory?(ubam_filenames.first)
-    ubam_filenames = ubam_filenames.collect{|f| Step === f ? f.path : f}
-    output = file('out.bam')
+  #input :ubam_files, :array, "uBAM filenames to multiplex"
+  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  #extension :bam
+  #task :BAM_multi_bwa => :binary do |ubam_filenames,reference|
+  #  args= {}
+  #  ubam_filenames = Dir.glob(File.join(ubam_filenames.first, "*.bam") + File.join(ubam_filenames.first, "*.ubam") ) if Array === ubam_filenames && ubam_filenames.length == 1 && File.directory?(ubam_filenames.first)
+  #  ubam_filenames = ubam_filenames.collect{|f| Step === f ? f.path : f}
+  #  output = file('out.bam')
 
-    args["INPUT"] = ubam_filenames
-    args["OUTPUT"] = output
-    args["METRICS_FILE"] = file('metrics.txt')
-    args["ASSUME_SORT_ORDER"] = 'queryname'
+  #  args["INPUT"] = ubam_filenames
+  #  args["OUTPUT"] = output
+  #  args["METRICS_FILE"] = file('metrics.txt')
+  #  args["ASSUME_SORT_ORDER"] = 'queryname'
 
-    FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
-    gatk("MarkDuplicates", args)
-    
-    Open.mv output, self.path
-    nil
-  end
+  #  FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
+  #  gatk("MarkDuplicates", args)
+  #  
+  #  Open.mv output, self.path
+  #  nil
+  #end
 
 
   input :bam_file, :binary, "Bam file"
@@ -84,7 +90,7 @@ module HTS
   input :fastq1_files, :array, "FASTQ files for first mate"
   input :fastq2_files, :array, "FASTQ files for second mate", []
   input :uBAM_files, :array, "uBAM files for second mate", []
-  dep :BAM, :compute => :bootstrap do |jobname,options|
+  dep :BAM_bwa, :compute => :bootstrap do |jobname,options|
     uBAM_files = options[:uBAM_files]
     fastq1_files = options[:fastq1_files]
     if fastq1_files
@@ -112,7 +118,7 @@ module HTS
   extension :bam
   dep_task :BAM_rescore_mutiplex, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#BAM_sorted" =>  mutiplex), :jobname => jobname}
   end
 
 
@@ -144,7 +150,7 @@ module HTS
   extension :bam
   dep_task :BAM_rescore_realign_by_group, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#BAM_sorted" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce

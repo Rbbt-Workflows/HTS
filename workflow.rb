@@ -13,6 +13,7 @@ require 'tools/control_FREEC'
 require 'tools/svABA'
 require 'tools/stringTie'
 require 'tools/HISAT'
+#require 'tools/pfff'
 require 'sources/HTS_reference'
 
 module HTS
@@ -36,7 +37,7 @@ module HTS
   #end
 
   helper :reference_file do |reference|
-    reference = Open.read(reference).strip if File.exists?(reference) && File.size(reference) < 2000
+    reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
     case reference
     when 'hg19', 'hg38', 'b37', 'hs37d5'
       Organism["Hsa"][reference][reference + ".fa"].produce.find
@@ -47,7 +48,7 @@ module HTS
 
   helper :vcf_file do |reference, file|
     reference = reference.scan(/(?:b37|hg19|hg38)/).first 
-    file = Open.read(file).strip if File.exists?(file) && File.size(file) < 2000
+    file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
 
     case file.to_s.downcase
     when 'miller_indels', 'miller'
@@ -70,7 +71,7 @@ module HTS
   end
 
   helper :germline_min_af do |file|
-    file = Open.read(file).strip if File.exists?(file) && File.size(file) < 2000
+    file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
     case file.to_s.downcase
     when 'gnomad'
       0.0000025
@@ -87,19 +88,20 @@ module HTS
     end
   end
 
+  BLACKLISTED_CONTIGS = ['hs37d5', /GL/, /NC_/, /KI/, /decoy/, /chrUn/, /random/]
   helper :intervals_for_reference do |reference|
     fai = reference + '.fai'
 
     intervals = StringIO.new 
     TSV.traverse fai, :type => :array do |line|
       chr, size, rest = line.split("\t")
+      next if BLACKLISTED_CONTIGS.select{|c| Regexp === c ? c.match(chr) : c === chr }.any?
       intervals << ([chr, "1", size] * "\t") << "\n"
     end
 
     intervals.rewind
     intervals
   end
-
 
   helper :monitor_genome do |stream,bgzip=true|
     chromosome_sizes = Persist.persist('chromosome_sizes', :yaml, :organism => nil) do
@@ -189,11 +191,15 @@ module HTS
     end
 
     case command.to_s
-    when "SortSam"
+    when "BaseRecalibrator"
+      args.delete_if{|k,v| k.include? 'interval'}
+    when "SortSam", "ApplyBQSR"
       args['--create-output-bam-index'] = false
     when "MarkDuplicates"
       args['--create-output-bam-index'] = false
       args.delete_if{|k,v| k.include? "sort-order" }
+      args.delete_if{|k,v| k.include? "metrics" }
+      args.delete_if{|k,v| k.include? "create-index" }
     end
 
     args

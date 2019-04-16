@@ -14,12 +14,15 @@ module GATK
   #self.search_paths = {}
   #self.search_paths[:default] = :lib
 
-  begin
-    tmpdir = Rbbt::Config.get('tmpdir', :gatk)
-    if tmpdir && ! File.exists?(tmpdir)
-      Open.mkdir tmpdir
-      File.chmod(0777, tmpdir)
+  def self.tmpdir
+    begin
+      tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+      if tmpdir && ! File.exists?(tmpdir)
+        Open.mkdir tmpdir
+        File.chmod(0777, tmpdir)
+      end
     end
+    tmpdir
   end
 
   def self.BAM_sample_name(bam_file)
@@ -41,10 +44,10 @@ module GATK
     file = File.expand_path(file)
 
 
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
-    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    dir = Rbbt.var.vcf_indices[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
@@ -52,6 +55,7 @@ module GATK
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        args = {}
         args["feature-file"] = linked
         GATK.run_log("IndexFeatureFile", args)
       end
@@ -66,7 +70,7 @@ module GATK
     file = File.expand_path(file)
 
 
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
     dir = Rbbt.var.vcf_indices_af_only[digest].find if dir.nil?
@@ -226,7 +230,7 @@ module GATK
     file = File.expand_path(file)
 
 
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
     dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
@@ -263,7 +267,7 @@ PathSeqFilter
 PathSeqPipeline
 PathSeqScore
 ParallelCopyGCSDirectoryIntoHDFS
-__ApplyBQSR
+ApplyBQSR
 BQSRPipeline
 BaseRecalibrator
 BwaAndMarkDuplicatesPipeline
@@ -309,7 +313,7 @@ PrintVariants
 
     arg_string = self.hash2args(args) if Hash === args
 
-    tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+    tmpdir = self.tmpdir
     if tmpdir
       CMD.cmd("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else
@@ -321,7 +325,7 @@ PrintVariants
 
     arg_string = self.hash2args(args) if Hash === args
 
-    tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+    tmpdir = self.tmpdir
     if tmpdir
       CMD.cmd_log("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else

@@ -43,7 +43,7 @@ module HTS
   input :interval_list, :file, "Interval list", nil, :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,interval_list|
 
-    variants_file = step(:BAM_pileup_sumaries_known_biallelic).path
+    variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path
 
     args = {}
     args["feature-file"] = variants_file
@@ -58,4 +58,31 @@ module HTS
     GATK.run_log("GetPileupSummaries", args)
     nil
   end
+
+  input :tumor, :file, "Tumor BAM", nil, :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  task :BAM_artifact_metrics => :text do |tumor,reference|
+    
+    reference = reference_file reference
+    orig_reference = reference
+
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+
+    tumor = tumor.path if Step === tumor
+
+    tumor = Samtools.prepare_BAM(tumor)
+
+    FileUtils.mkdir_p files_dir
+    args = {}
+
+    args["-I"] = tumor
+    args["-O"] = file('output')
+    args["-R"] = reference
+    args["--FILE_EXTENSION"] = '.txt'
+    gatk("CollectSequencingArtifactMetrics", args)
+    FileUtils.cp file('output' + '.pre_adapter_detail_metrics.txt'), self.path
+    nil
+  end
+
 end
