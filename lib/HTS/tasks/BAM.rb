@@ -166,6 +166,7 @@ module HTS
     #{{{ Recalibration
     shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
     if shard == 'true'
+      contigs = Samtools.reference_contigs reference
       bam_file = Samtools.prepare_BAM(step(:BAM_sorted))
       args["input"] = bam_file
 
@@ -175,12 +176,11 @@ module HTS
       bar = self.progress_bar("Processing BaseRecalibrator sharded")
 
       outfiles = Path.setup(file('outfiles'))
-      GATKShard.cmd("BaseRecalibrator", args, intervals, 10_000_000, cpus, bar) do |ioutfile|
+      GATKShard.cmd("BaseRecalibrator", args, intervals, 10_000_000, cpus, contigs, bar) do |ioutfile|
         bar.tick
         Open.mv ioutfile, outfiles[File.basename(ioutfile + '.report')]
         nil
       end
-
       bar.remove 
 
       args = {}
@@ -208,6 +208,7 @@ module HTS
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
     if shard == 'true'
+      contigs = Samtools.reference_contigs reference
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
@@ -219,7 +220,7 @@ module HTS
       Open.mkdir outfiles
 
       bar = self.progress_bar("Processing ApplyBQSR sharded")
-      GATKShard.cmd("ApplyBQSR", args, intervals, 10_000_000, cpus, bar) do |ioutfile|
+      GATKShard.cmd("ApplyBQSR", args, intervals, 10_000_000, cpus, contigs, bar) do |ioutfile|
         bar.tick
         chr, pos = Samtools.BAM_start ioutfile
         target = outfiles[File.basename(ioutfile) + '.bam']
@@ -228,12 +229,13 @@ module HTS
       end
       bar.remove 
 
-
       TSV.traverse outfiles.glob("*.bam"), :cpus => cpus, :bar => self.progress_bar("Ammending BAM files") do |file|
-        chr, pos = File.basename(file).split("__")
+        start_int, end_int = file.split ","
+        chr_start, pos_start, _eend = start_int.split("__")
+        chr_end, pos_end, _eend = end_int.split("__")
 
-        start = pos.to_i
-        start_chr = chr
+        pos_start = pos_start.to_i
+        pos_end = pos_end.to_i
 
         target = file + '.new'
         Misc.with_fifo(file + '.pipe') do |fpipe|
@@ -247,12 +249,14 @@ module HTS
             while line = header_io.gets
               pipe.write line
             end
+            header_io.close
 
             content_io = CMD.cmd("samtools view '#{file}'", :pipe => true)
             while line = content_io.gets
               id, flags, chr, pos, *rest = line.split("\t")
               pos = pos.to_i
-              next if chr == start_chr && pos < start
+              next if chr == chr_start && pos < pos_start
+              break if chr == chr_end && pos > pos_end
               pipe.write line
             end
             content_io.close

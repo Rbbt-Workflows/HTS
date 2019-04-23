@@ -31,6 +31,7 @@ module HTS
     shard = config('shard', :gatk, :haplotype, :HaplotypeCaller)
 
     if shard == 'true'
+      contigs = Samtools.reference_contigs reference
       cpus = config('cpus', :shard, :haplotype, :HaplotypeCaller)
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
@@ -39,7 +40,7 @@ module HTS
       bar = self.progress_bar("Processing HaplotypeCaller sharded")
 
       outfiles = file('output')
-      GATKShard.cmd("HaplotypeCaller", args, intervals, 10_000_000, cpus, bar) do |ioutfile|
+      GATKShard.cmd("HaplotypeCaller", args, intervals, 10_000_000, cpus, contigs, bar) do |ioutfile|
         bar.tick
         Open.mv ioutfile, outfiles[File.basename(ioutfile) + '.vcf']
       end

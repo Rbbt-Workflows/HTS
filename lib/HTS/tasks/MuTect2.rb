@@ -51,6 +51,7 @@ module HTS
     shard = config('shard', :gatk, :mutect, :mutect2)
 
     if shard == 'true'
+      contigs = Samtools.reference_contigs reference
       cpus = config('cpus', :shard, :mutect, :mutect2)
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
@@ -61,7 +62,7 @@ module HTS
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing Mutect2 sharded")
 
-      GATKShard.cmd("Mutect2", args, intervals, 30_000_000, cpus, bar) do |ioutfile|
+      GATKShard.cmd("Mutect2", args, intervals, 30_000_000, cpus, contigs, bar) do |ioutfile|
         bar.tick
         `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
         `grep -v "#" #{ioutfile} >> #{contentvcf}` 

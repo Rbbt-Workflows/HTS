@@ -45,7 +45,12 @@ module Samtools
 
       Misc.in_dir dir do
         FileUtils.ln_s file, linked unless File.exists?(linked)
-        Samtools.run("index '#{ linked }'")
+        cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+        if cpus
+          Samtools.run("index -@ #{cpus} '#{ linked }'")
+        else
+          Samtools.run("index '#{ linked }'")
+        end
       end
     end
 

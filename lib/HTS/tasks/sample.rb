@@ -169,6 +169,7 @@ module Sample
 
   #{{{ EXPORT HTS METHODS
 
+  CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
   {
     :strelka => :strelka,
     :varscan => :varscan_somatic,
@@ -214,6 +215,7 @@ module Sample
         {:inputs => options, :jobname => sample} 
       end
     end
+    extension :vcf if CALLERS.include?(task.to_s)
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
       if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
         options.delete :normal

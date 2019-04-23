@@ -1,15 +1,21 @@
 class GATKShard
 
-  def self.chunk_intervals(interval_list=nil, chunk_size=10_000_000)
+  def self.chunk_intervals(interval_list=nil, chunk_size=10_000_000, contigs = nil)
     current = []
     current_size = 0
     chunks = []
-    TSV.traverse interval_list, :type => :array do |line|
+
+    intervals = TSV.traverse interval_list, :type => :array, :into => [] do |line|
       next if line =~ /^@/
       chr, start, eend, *rest = line.split("\t")
+      [chr, start.to_i, eend.to_i]
+    end
 
-      start = start.to_i
-      eend = eend.to_i
+    if contigs
+      intervals = intervals.sort{|a,b| Misc.genomic_location_cmp_contigs(a[0,1] * ":", b[0,1] * ":", contigs)}
+    end
+
+    TSV.traverse intervals, :type => :array do |chr,start,eend|
       remaining = eend - start
 
       while remaining > 0
@@ -34,7 +40,7 @@ class GATKShard
   end
 
 
-  def self.cmd(command, args, interval_list, chunk_size = 10_000_000, cpus = nil, bar = nil, &callback)
+  def self.cmd(command, args, interval_list, chunk_size = 10_000_000, cpus = nil, contigs = nil, bar = nil, &callback)
     interval_file_field = args.keys.select{|f| f =~ /interval/i and f !~ /padding/ }.first
     output_field = args.keys.select{|f| f =~ /output/i }.first
     cpus ||= Rbbt::Config.get('cpus', 'shard', :default => 3) 
@@ -43,7 +49,8 @@ class GATKShard
 
     q.callback &callback
 
-    chunks = GATKShard.chunk_intervals(interval_list, chunk_size)
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs)
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 10, contigs) if chunks.length < cpus.to_i
     bar.max = chunks.length if bar
     bar.init if bar
 
@@ -53,7 +60,8 @@ class GATKShard
       q.init do |intervals|
         Log.low "GATKShard processing intervals #{Misc.fingerprint intervals}"
         iargs = args.dup
-        output = File.join(workdir, intervals.first * "__")
+        name = [intervals.first * "__", intervals.last * "__"] * ","
+        output = File.join(workdir, name)
         TmpFile.with_file(intervals.collect{|e| e * "\t"} * "\n", :extension => 'bed') do |interval_file|
           iargs[interval_file_field] = interval_file 
           iargs[output_field] = output 
