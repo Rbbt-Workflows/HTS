@@ -242,5 +242,6 @@ require 'HTS/tasks/control_FREEC'
 require 'HTS/tasks/RNASeq'
 require 'HTS/tasks/MuSE'
 require 'HTS/tasks/somaticsniper'
+require 'HTS/tasks/IGV'
 
 require 'HTS/tasks/sample' if defined? Sample

@@ -266,7 +266,37 @@ module Sample
     tsv
   end
 
-  dep :mutect2
-  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf => :mutect2
+  input :caller, :select, "Caller to use", :mutect2, :select_options => CALLERS
+  dep :mutect2 do |jobname,options|
+    vcaller = options[:caller]
+    {:task => vcaller, :jobname => jobname, :inputs => options}
+  end
+  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :mutect2 do |jobname,options|
+    vcaller = options[:caller]
+    options[:vcf_file] = vcaller.to_sym
+    {:task => :genomic_mutations, :workflow => Sequence, :jobname => jobname, :inputs => options}
+  end
+
+  dep :BAM, :compute => :bootstrap
+  dep :BAM_normal, :compute => :bootstrap do |sample,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    {:inputs => options, :jobname => sample} if sample_files
+  end
+  dep :genomic_mutations
+  dep_task :mutation_BAM_img, HTS, :mutation_BAM_img, :tumor => :BAM, :normal => :BAM_normal, :positions => :genomic_mutations do |jobname,options|
+    if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
+      options.delete :normal
+      options.delete "normal"
+    end
+    {:inputs => options}
+  end
+
 
 end
