@@ -57,6 +57,7 @@ cpus = cpus.to_i
   :BAM_sorted => (spark || shard) ? 1 : cpus,
   :BAM_rescore => (spark || shard) ? 1 : cpus,
   :BAM => (spark || shard) ? 1 : cpus,
+  :contamination => cpus,
   :mutect2 => (spark || shard) ? 1 : cpus,
 }.each do |task,ndeps|
   Step.prepare_dependencies task_jobs, task, ndeps

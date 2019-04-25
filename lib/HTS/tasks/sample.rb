@@ -218,8 +218,7 @@ module Sample
     extension :vcf if CALLERS.include?(task.to_s)
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
       if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
-        options.delete :normal
-        options.delete "normal"
+        options[:normal] = nil
       end
       {:inputs => options}
     end
@@ -292,8 +291,7 @@ module Sample
   dep :genomic_mutations
   dep_task :mutation_BAM_img, HTS, :mutation_BAM_img, :tumor => :BAM, :normal => :BAM_normal, :positions => :genomic_mutations do |jobname,options|
     if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
-      options.delete :normal
-      options.delete "normal"
+      options[:normal] = nil
     end
     {:inputs => options}
   end
