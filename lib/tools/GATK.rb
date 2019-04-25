@@ -51,7 +51,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".idx") || Persist.newer?(linked + '.idx', file)
+    if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
@@ -77,7 +77,7 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".idx") || Persist.newer?(linked + '.idx', file)
+    if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
 

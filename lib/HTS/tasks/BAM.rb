@@ -231,7 +231,8 @@ module HTS
       bar.remove 
 
       TSV.traverse outfiles.glob("*.bam"), :cpus => cpus, :bar => self.progress_bar("Ammending BAM files") do |file|
-        start_int, end_int = file.split ","
+        start_int, end_int = File.basename(file).split ","
+
         chr_start, pos_start, _eend = start_int.split("__")
         chr_end, pos_end, _eend = end_int.split("__")
 
@@ -268,7 +269,7 @@ module HTS
       end 
 
       contigs = Samtools.reference_contigs reference
-      sorted_parts = outfiles.glob("*.bam").sort{|a,b| Misc.genomic_location_cmp_contigs(File.basename(a), File.basename(b), contigs, '__')}
+      sorted_parts = outfiles.glob("*.bam").sort{|a,b| Misc.genomic_location_cmp_contigs(File.basename(a).split(",").first, File.basename(b).split(",").first, contigs, '__')}
 
       args = {}
       args["I"] = sorted_parts
