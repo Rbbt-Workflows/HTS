@@ -36,13 +36,13 @@ maxPanelHeight #{panel_height}
   eend = pos.to_i + 50
 
   ["goto #{chr}:#{start}-#{eend}",
-  "snapshot #{chr}:#{pos}:#{alt}.png"]
+  "snapshot #{chr}:#{pos}:#{alt}.svg"]
 
 end * "\n"
 }
 exit
     EOF
-    files_dir.glob("*")
+    Dir.glob(File.join(files_dir, "*"))
   end
 
 end

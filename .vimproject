@@ -47,6 +47,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    filter.rb
    sequenza.rb
    svABA.rb
+   IGV.rb
    test.rb
    sample.rb
   }
@@ -61,6 +62,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
  share=share filter="*"{
   rbbt_commands=rbbt_commands{
    bootstrap
+   bootstrap2
   }
   software=install/software{
    BWA

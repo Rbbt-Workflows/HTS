@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/workflow'
+require 'rbbt/workflow/usage'
+
+$0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Bootstrap HTS samples
+
+$ #{$0} [options] <Study> <task>
+
+-h--help Print this help
+-c--cpus* Number of concurrent processes to use
+EOF
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.doc
+  end
+  exit 0
+end
+
+study, task = ARGV
+study ||= "QUINTANA"
+task ||= "mutect2"
+
+cpus = options[:cpus] || 30
+
+Workflow.require_workflow "Sample"
+Workflow.require_workflow "HTS"
+require 'HTS/tasks/sample'
+
+study_files  = Sample.load_study_files[study]
+
+samples = study_files.keys.reject{|s| s.to_s =~ /normal$/}
+
+# get job args
+job_options = Sample.get_SOPT(Sample.tasks[task.to_sym])
+
+task_jobs = samples.collect{|s| Sample.job(task, s, job_options)}
+
+bwa_cpus = Rbbt::Config.get(:cpus, :bwa, :default => 3).to_i
+bwa_cpus = 15
+spark = Rbbt::Config.get(:spark, :gatk, :default => true)
+shard = Rbbt::Config.get(:shard, :gatk, :default => true)
+
+require 'rbbt/workflow/prepare'
+cpus = cpus.to_i
+{
+  :mark_adapters => cpus,
+  :BAM_bwa => (cpus.to_f / bwa_cpus).ceil,
+  :BAM_sorted => (spark || shard) ? 1 : cpus,
+  :BAM_rescore => (spark || shard) ? 1 : cpus,
+  :BAM => (spark || shard) ? 1 : cpus,
+  :mutect2 => (spark || shard) ? 1 : cpus,
+}.each do |task,ndeps|
+  Step.prepare_dependencies task_jobs, task, ndeps
+end
+
+task_jobs.each do |job|
+  job.produce
+end

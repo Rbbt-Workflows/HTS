@@ -46,10 +46,6 @@ module HTS
     variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path
 
     args = {}
-    args["feature-file"] = variants_file
-    GATK.run_log("IndexFeatureFile", args)
-
-    args = {}
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
     args["output"] = self.tmp_path
@@ -82,6 +78,22 @@ module HTS
     args["--FILE_EXTENSION"] = '.txt'
     gatk("CollectSequencingArtifactMetrics", args)
     FileUtils.cp file('output' + '.pre_adapter_detail_metrics.txt'), self.path
+    nil
+  end
+
+  input :bam, :file, "Tumor BAM", nil, :nofile => true
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :BAM_coverage => :text do |bam,interval_list|
+    args = {}
+
+    bam = Samtools.prepare_BAM(bam)
+
+    args["--input"] = bam
+    args["--intervals"] = interval_list if interval_list
+    args["--interval-merging-rule"] = "OVERLAPPING_ONLY"
+    args["--format"] = "TSV"
+    args["-O"] = self.tmp_path
+    gatk("CollectReadCounts", args)
     nil
   end
 

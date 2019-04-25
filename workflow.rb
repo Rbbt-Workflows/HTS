@@ -88,19 +88,42 @@ module HTS
     end
   end
 
+  #helper :intervals_for_reference do |reference|
+  #  fai = reference + '.fai'
+
+  #  intervals = StringIO.new 
+  #  TSV.traverse fai, :type => :array do |line|
+  #    chr, size, rest = line.split("\t")
+  #    next if BLACKLISTED_CONTIGS.select{|c| Regexp === c ? c.match(chr) : c === chr }.any?
+  #    intervals << ([chr, "1", size] * "\t") << "\n"
+  #  end
+
+  #  intervals.rewind
+  #  intervals
+  #end
+
   BLACKLISTED_CONTIGS = ['hs37d5', /GL/, /NC_/, /KI/, /decoy/, /chrUn/, /random/]
   helper :intervals_for_reference do |reference|
-    fai = reference + '.fai'
-
-    intervals = StringIO.new 
-    TSV.traverse fai, :type => :array do |line|
-      chr, size, rest = line.split("\t")
-      next if BLACKLISTED_CONTIGS.select{|c| Regexp === c ? c.match(chr) : c === chr }.any?
-      intervals << ([chr, "1", size] * "\t") << "\n"
+    output = reference + '.byNS.interval_list' 
+    unless File.exists?(output)
+      args = {}
+      args["REFERENCE"] = reference
+      args["OUTPUT"] = output
+      gatk("ScatterIntervalsByNs", args)
     end
 
-    intervals.rewind
-    intervals
+    StringIO.new(Open.read(output).split("\n").reject{|line|
+      if line =~ /^@SQ/ 
+        true
+      else
+        chr = line.split("\t").first
+        if BLACKLISTED_CONTIGS.select{|c| Regexp === c ? c.match(chr) : c === chr }.any?
+          true
+        else
+          line =~ /Nmer$/
+        end
+      end
+    }.collect{|line| line.split("\t").values_at(0,1,2) * "\t"} * "\n")
   end
 
   helper :monitor_genome do |stream,bgzip=true|

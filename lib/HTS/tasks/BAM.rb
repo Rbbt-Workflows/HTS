@@ -172,6 +172,7 @@ module HTS
 
       cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
       args["intervals"] ||= nil
+      args["interval-padding"] ||= 100 
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing BaseRecalibrator sharded")
 
@@ -213,7 +214,7 @@ module HTS
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
       args["intervals"] ||= nil
-      args["interval-padding"] = 0
+      args["interval-padding"] ||= 100 
       intervals = (interval_list || intervals_for_reference(reference))
 
       outfiles = Path.setup(file('outfiles'))

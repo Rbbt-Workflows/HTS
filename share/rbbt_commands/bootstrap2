@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/workflow'
+require 'rbbt/workflow/usage'
+
+$0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Bootstrap HTS samples
+
+$ #{$0} [options] <Study> <task>
+
+-h--help Print this help
+-c--cpus* Number of concurrent processes to use
+EOF
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.doc
+  end
+  exit 0
+end
+
+study, task = ARGV
+study ||= "QUINTANA"
+task ||= "mutect2"
+
+cpus = options[:cpus] || 30
+
+Rbbt::Config.load_file Rbbt.etc.config_profile.HTS.find
+Rbbt::Config.set :forget_dep_tasks, false, :forget_dep_tasks
+
+Workflow.require_workflow "Sample"
+Workflow.require_workflow "HTS"
+require 'HTS/tasks/sample'
+
+workdir = '/data/tmp/HTS_workdir'
+HTS.workdir = workdir
+
+study_files  = Sample.load_study_files[study]
+
+samples = study_files.keys.reject{|s| s.to_s =~ /normal$/}
+
+samples.each do |sample|
+  Open.mkdir workdir
+
+  job = Sample.job(task, sample)
+  job.produce
+
+  Open.rm_rf workdir
+end

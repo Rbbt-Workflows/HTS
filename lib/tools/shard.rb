@@ -1,13 +1,15 @@
 class GATKShard
 
-  def self.chunk_intervals(interval_list=nil, chunk_size=10_000_000, contigs = nil)
+  def self.chunk_intervals(interval_list=nil, chunk_size=10_000_000, contigs = nil, break_interval = false)
     current = []
     current_size = 0
     chunks = []
 
     intervals = TSV.traverse interval_list, :type => :array, :into => [] do |line|
-      next if line =~ /^@/
+      next if line =~ /^@/ 
       chr, start, eend, *rest = line.split("\t")
+      next unless start =~ /^\d+$/
+      next unless eend =~ /^\d+$/
       [chr, start.to_i, eend.to_i]
     end
 
@@ -15,16 +17,22 @@ class GATKShard
       intervals = intervals.sort{|a,b| Misc.genomic_location_cmp_contigs(a[0,1] * ":", b[0,1] * ":", contigs)}
     end
 
+    last_eend = 0
+    gap = 500
     TSV.traverse intervals, :type => :array do |chr,start,eend|
       remaining = eend - start
 
       while remaining > 0
-        size = [chunk_size, remaining].min
+        if break_interval
+          size = [chunk_size, remaining].min
+        else
+          size = remaining
+        end
 
         current << [chr, start.to_s, (start + size).to_s ]
         current_size += size
 
-        if current_size >= chunk_size
+        if current_size >= chunk_size && last_eend + 500 < start 
           chunks << current
           current = []
           current_size = 0
@@ -33,6 +41,7 @@ class GATKShard
         remaining = remaining - size
         start += size
       end
+      last_eend = eend
     end
     chunks << current if current.any?
 

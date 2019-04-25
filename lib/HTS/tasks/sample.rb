@@ -298,5 +298,10 @@ module Sample
     {:inputs => options}
   end
 
+  dep :BAM
+  dep_task :BAM_coverage, HTS, :BAM_coverage, :bam => :BAM do |jobname,options|
+    options = options.merge(Sample.study_options(jobname))
+    {:inputs => options}
+  end
 
 end
