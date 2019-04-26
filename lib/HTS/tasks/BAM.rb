@@ -265,7 +265,6 @@ module HTS
           end
           thr.join
         end
-        Open.mv file, file + '.old'
         Open.mv target, file
       end 
 
@@ -279,7 +278,7 @@ module HTS
       args["CREATE_MD5_FILE"] = 'false'
       gatk("GatherBamFiles", args)
 
-      #Open.rm_rf outfiles
+      Open.rm_rf outfiles
     else
       bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_sorted)) : step(:BAM_sorted).path
 
