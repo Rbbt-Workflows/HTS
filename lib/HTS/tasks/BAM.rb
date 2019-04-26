@@ -234,7 +234,7 @@ module HTS
         start_int, end_int = File.basename(file).split ","
 
         chr_start, pos_start, _eend = start_int.split("__")
-        chr_end, pos_end, _eend = end_int.split("__")
+        chr_end, __start, pos_end = end_int.split("__")
 
         pos_start = pos_start.to_i
         pos_end = pos_end.to_i
@@ -265,6 +265,7 @@ module HTS
           end
           thr.join
         end
+        Open.mv file, file + '.old'
         Open.mv target, file
       end 
 
@@ -278,7 +279,7 @@ module HTS
       args["CREATE_MD5_FILE"] = 'false'
       gatk("GatherBamFiles", args)
 
-      Open.rm_rf outfiles
+      #Open.rm_rf outfiles
     else
       bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_sorted)) : step(:BAM_sorted).path
 
@@ -297,3 +298,4 @@ end
 require 'HTS/tasks/BAM/plumbing'
 require 'HTS/tasks/BAM/other_aligners'
 require 'HTS/tasks/BAM/util'
+require 'HTS/tasks/BAM/filter'

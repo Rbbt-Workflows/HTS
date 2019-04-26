@@ -251,20 +251,11 @@ module HTS
 end
 
 require 'HTS/tasks/BAM'
-require 'HTS/tasks/filter'
 require 'HTS/tasks/sequenza'
-require 'HTS/tasks/MuTect2'
-require 'HTS/tasks/Haplotype'
-require 'HTS/tasks/VarScan'
-require 'HTS/tasks/Strelka'
-require 'HTS/tasks/test'
 require 'HTS/tasks/CNV'
-require 'HTS/tasks/Delly'
-require 'HTS/tasks/svABA'
-require 'HTS/tasks/control_FREEC'
+require 'HTS/tasks/VCF'
+require 'HTS/tasks/test'
 require 'HTS/tasks/RNASeq'
-require 'HTS/tasks/MuSE'
-require 'HTS/tasks/somaticsniper'
 require 'HTS/tasks/IGV'
 
 require 'HTS/tasks/sample' if defined? Sample
