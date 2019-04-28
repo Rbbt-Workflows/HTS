@@ -114,14 +114,19 @@ module Sample
     options
   end
 
+  def self.add_sample_options(sample,options)
+    options = options.merge(Sample.sample_options(sample))
+    options = options.merge(Sample.study_options(sample))
+    options
+  end
+
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   extension :bam
   dep_task :BAM, HTS, :BAM do |sample,options|
     sample_files = Sample.sample_files sample
     raise "Sample #{ sample } not found" if sample_files.nil?
 
-    options = options.merge(Sample.sample_options(sample))
-    options = options.merge(Sample.study_options(sample))
+    options = add_sample_options sample, options
 
     if fastq_files = sample_files[:FASTQ]
       if Array === fastq_files.first && fastq_files.first.length > 1
@@ -198,6 +203,8 @@ module Sample
           break if sample_files
         end
 
+        options = add_sample_options nsample, options
+
         {:inputs => options, :jobname => sample} if sample_files
       end
     else
@@ -212,11 +219,15 @@ module Sample
         end
 
         raise ParameterException, "No normal sample found" if sample_files.nil?
+        options = add_sample_options sample, options
+
         {:inputs => options, :jobname => sample} 
       end
     end
     extension :vcf if CALLERS.include?(task.to_s)
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+      options = add_sample_options jobname, options
+
       if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
         options[:normal] = nil
       end

@@ -50,7 +50,7 @@ module HTS
     args["variant"] = variants_file
     args["output"] = self.tmp_path
     args["intervals"] = interval_list ? interval_list : variants_file
-    args["interval-padding"] = 100 if interval_list
+    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
     GATK.run_log("GetPileupSummaries", args)
     nil
   end
@@ -101,41 +101,39 @@ module HTS
   input :bam_2, :file, "BAM file", nil, :nofile => true
   task :compare_BAM => :tsv do |bam_1,bam_2|
     reads_1 = file('reads_1')
-    Open.write(reads_1, %w(read chr pos) * "\t" + "\n")
-    CMD.cmd("samtools view #{bam_1} | cut -f 1,3,4 >> #{reads_1}")
+    Open.write(reads_1, %w(read flags chr pos qual) * "\t" + "\n")
+    CMD.cmd("samtools view #{bam_1} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_1}")
 
     reads_2 = file('reads_2')
-    Open.write(reads_2, %w(read chr pos) * "\t" + "\n")
-    CMD.cmd("samtools view #{bam_2} | cut -f 1,3,4 >> #{reads_2}")
+    Open.write(reads_2, %w(read flags chr pos qual) * "\t" + "\n")
+    CMD.cmd("samtools view #{bam_2} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_2}")
     
     first = []
     last = []
     common = []
-    TSV.traverse TSV.paste_streams([reads_1, reads_2], :header_hash => "", :same_fields => true, :sort => true), :type => :array do |line|
+    TSV.traverse TSV.paste_streams([reads_1, reads_2], :header_hash => "", :same_fields => true, :sort => true), :type => :array, :bar => self.progress_bar("Comparing BAM files") do |line|
       next if line =~ /^chr/
       next if line =~ /^#/
-      read, chr, pos = line.split("\t", -1)
+      read, flag, chr, pos, *rest = line.split("\t", -1)
+      aln = [read, chr, pos, flag] * ":"
       case
       when chr[0] == "|"
-        first << read
+        first << aln
       when chr[-1] == "|"
-        last << read
+        last << aln
       else
-        common << [read, [chr, pos]]
+        common << [aln, rest]
       end
     end
 
-
-    
-
+    iif first
+    iif last
+    iif common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
     tsv = TSV.setup({}, "Statistic~Value#:type=:single")
     tsv["Missing"] = first.length
     tsv["Extra"] = last.length
-    tsv["Extra"] = last.length
     tsv["Common"] = common.length
-    common.each{|mutation,parts| iii parts.select{|p| p.split("|").uniq.length != 1}} if common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any?}.length > 0
     tsv["Common but different"] = common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any?}.length
     tsv
   end
-
 end

@@ -150,7 +150,7 @@ module HTS
     args = {}
     args["reference"] = reference
     args["intervals"] = interval_list if interval_list
-    args["interval-padding"] = 100 if interval_list
+    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
     args["output"] = file('recal_data.table')
 
     known_sites = [] 
@@ -172,12 +172,12 @@ module HTS
 
       cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
       args["intervals"] ||= nil
-      args["interval-padding"] ||= 100 
+      args["interval-padding"] ||= GATKShard::GAP_SIZE 
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing BaseRecalibrator sharded")
 
-      outfiles = Path.setup(file('outfiles'))
-      GATKShard.cmd("BaseRecalibrator", args, intervals, 10_000_000, cpus, contigs, bar) do |ioutfile|
+      outfiles = Path.setup(file('outfiles_recall'))
+      GATKShard.cmd("BaseRecalibrator", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
         Open.mv ioutfile, outfiles[File.basename(ioutfile + '.report')]
         nil
@@ -188,7 +188,7 @@ module HTS
       args["I"] = outfiles.glob("*")
       args["O"] = file('recal_data.table')
       gatk("GatherBQSRReports", args)
-      Open.rm_rf outfiles
+      #Open.rm_rf outfiles
       nil
     else
       bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_sorted)) : step(:BAM_sorted).path
@@ -204,7 +204,7 @@ module HTS
     args["output"] = output
     args["bqsr-recal-file"] = file('recal_data.table')
     args["intervals"] = interval_list if interval_list
-    args["interval-padding"] = 100 if interval_list
+    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
 
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
@@ -214,14 +214,14 @@ module HTS
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
       args["intervals"] ||= nil
-      args["interval-padding"] ||= 100 
+      args["interval-padding"] ||= GATKShard::GAP_SIZE 
       intervals = (interval_list || intervals_for_reference(reference))
 
       outfiles = Path.setup(file('outfiles'))
       Open.mkdir outfiles
 
       bar = self.progress_bar("Processing ApplyBQSR sharded")
-      GATKShard.cmd("ApplyBQSR", args, intervals, 10_000_000, cpus, contigs, bar) do |ioutfile|
+      GATKShard.cmd("ApplyBQSR", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
         chr, pos = Samtools.BAM_start ioutfile
         target = outfiles[File.basename(ioutfile) + '.bam']
@@ -230,43 +230,43 @@ module HTS
       end
       bar.remove 
 
-      TSV.traverse outfiles.glob("*.bam"), :cpus => cpus, :bar => self.progress_bar("Ammending BAM files") do |file|
-        start_int, end_int = File.basename(file).split ","
+      #TSV.traverse outfiles.glob("*.bam"), :cpus => cpus, :bar => self.progress_bar("Ammending BAM files") do |file|
+      #  start_int, end_int = File.basename(file).split ","
 
-        chr_start, pos_start, _eend = start_int.split("__")
-        chr_end, __start, pos_end = end_int.split("__")
+      #  chr_start, pos_start, _eend = start_int.split("__")
+      #  chr_end, __start, pos_end = end_int.split("__")
 
-        pos_start = pos_start.to_i
-        pos_end = pos_end.to_i
+      #  pos_start = pos_start.to_i
+      #  pos_end = pos_end.to_i
 
-        target = file + '.new'
-        Misc.with_fifo(file + '.pipe') do |fpipe|
-          thr = Thread.new do
-            CMD.cmd("samtools view -b '#{fpipe}' > #{target}")
-          end
+      #  target = file + '.new'
+      #  Misc.with_fifo(file + '.pipe') do |fpipe|
+      #    thr = Thread.new do
+      #      CMD.cmd("samtools view -b '#{fpipe}' > #{target}")
+      #    end
 
-          Open.write(fpipe) do |pipe|
+      #    Open.write(fpipe) do |pipe|
 
-            header_io = CMD.cmd("samtools view -H '#{file}'", :pipe => true)
-            while line = header_io.gets
-              pipe.write line
-            end
-            header_io.close
+      #      header_io = CMD.cmd("samtools view -H '#{file}'", :pipe => true)
+      #      while line = header_io.gets
+      #        pipe.write line
+      #      end
+      #      header_io.close
 
-            content_io = CMD.cmd("samtools view '#{file}'", :pipe => true)
-            while line = content_io.gets
-              id, flags, chr, pos, *rest = line.split("\t")
-              pos = pos.to_i
-              next if chr == chr_start && pos < pos_start
-              break if chr == chr_end && pos > pos_end
-              pipe.write line
-            end
-            content_io.close
-          end
-          thr.join
-        end
-        Open.mv target, file
-      end 
+      #      content_io = CMD.cmd("samtools view '#{file}'", :pipe => true)
+      #      while line = content_io.gets
+      #        id, flags, chr, pos, *rest = line.split("\t")
+      #        pos = pos.to_i
+      #        next if chr == chr_start && pos < pos_start
+      #        break if chr == chr_end && pos > pos_end
+      #        pipe.write line
+      #      end
+      #      content_io.close
+      #    end
+      #    thr.join
+      #  end
+      #  Open.mv target, file
+      #end 
 
       contigs = Samtools.reference_contigs reference
       sorted_parts = outfiles.glob("*.bam").sort{|a,b| Misc.genomic_location_cmp_contigs(File.basename(a).split(",").first, File.basename(b).split(",").first, contigs, '__')}

@@ -57,11 +57,13 @@ module HTS
       end
     end
     tsv = TSV.setup({}, "Statistic~Value#:type=:single")
+
+    iif first
+    iif last
+    iif common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
     tsv["Missing"] = first.length
     tsv["Extra"] = last.length
-    tsv["Extra"] = last.length
     tsv["Common"] = common.length
-    common.each{|mutation,parts| iii parts.select{|p| p.split("|").uniq.length != 1}} if common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any?}.length > 0
     tsv["Common but different"] = common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any?}.length
     tsv
   end

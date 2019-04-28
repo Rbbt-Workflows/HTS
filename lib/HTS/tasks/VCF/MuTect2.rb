@@ -42,7 +42,7 @@ module HTS
     args["tumor-sample"] = tumor_sample
     args["normal-sample"] = normal_sample if normal_sample
     args["intervals"] = interval_list if interval_list
-    args["interval-padding"] = 1000 if interval_list
+    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
     args["panel-of-normals"] = pon if pon
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
@@ -54,7 +54,7 @@ module HTS
       contigs = Samtools.reference_contigs reference
       cpus = config('cpus', :shard, :mutect, :mutect2)
       headervcf = file('tmp.header')
-      args["interval-padding"] ||= 1000 
+      args["interval-padding"] ||= GATKShard::GAP_SIZE 
       contentvcf = file('tmp.content')
       headervcf_stats = file('tmp.header.stats')
       contentvcf_stats = file('tmp.content.stats')
@@ -63,7 +63,7 @@ module HTS
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing Mutect2 sharded")
 
-      GATKShard.cmd("Mutect2", args, intervals, 30_000_000, cpus, contigs, bar) do |ioutfile|
+      GATKShard.cmd("Mutect2", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
         `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
         `grep -v "#" #{ioutfile} >> #{contentvcf}` 

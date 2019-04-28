@@ -40,7 +40,7 @@ module HTS
       bar = self.progress_bar("Processing HaplotypeCaller sharded")
 
       outfiles = file('output')
-      GATKShard.cmd("HaplotypeCaller", args, intervals, 10_000_000, cpus, contigs, bar) do |ioutfile|
+      GATKShard.cmd("HaplotypeCaller", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
         Open.mv ioutfile, outfiles[File.basename(ioutfile) + '.vcf']
       end

@@ -109,6 +109,7 @@ module HTS
       args = {}
       args["REFERENCE"] = reference
       args["OUTPUT"] = output
+      args["MAX_TO_MERGE"] = GATKShard::GAP_SIZE
       gatk("ScatterIntervalsByNs", args)
     end
 
