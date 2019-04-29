@@ -309,8 +309,30 @@ module Sample
 
   dep :BAM
   dep_task :BAM_coverage, HTS, :BAM_coverage, :bam => :BAM do |jobname,options|
-    options = options.merge(Sample.study_options(jobname))
+    options = add_sample_options jobname, options
     {:inputs => options}
   end
+
+  dep :BAM
+  dep_task :BAM_qualimap, HTS, :BAM_qualimap, :bam => :BAM, :interval_list => :placeholder do |jobname,options|
+    options = add_sample_options jobname, options
+    {:inputs => options}
+  end
+
+  dep :BAM_normal
+  dep_task :BAM_qualimap_normal, HTS, :BAM_qualimap, :bam => :BAM_normal, :interval_list => nil do |jobname,options|
+    nsample = nil
+    sample_files = nil
+    [sample + '_normal', 'normal'].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      break if sample_files
+    end
+    if nsample
+      options = add_sample_options nsample, options 
+      {:inputs => options}
+    end
+  end
+
 
 end

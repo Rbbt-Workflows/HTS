@@ -7,12 +7,13 @@ require 'tools/samtools'
 require 'tools/GATK'
 
 class TestShard < Test::Unit::TestCase
-  def __test_interval_file
+  def test_interval_file
     interval_file = Path.setup("/data/Patients/Bellmunt/data/Padded.b37.bed")
-    GATKShard.process_intervals interval_file, 1000 do |intervals|
-      assert Array === intervals
-      break
+    intervals = GATKShard.chunk_intervals interval_file
+    intervals.each do |i|
+      iif i
     end
+    iii intervals.length
   end
   
   def __test_interval_string

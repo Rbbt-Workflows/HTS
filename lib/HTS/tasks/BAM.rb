@@ -188,7 +188,7 @@ module HTS
       args["I"] = outfiles.glob("*")
       args["O"] = file('recal_data.table')
       gatk("GatherBQSRReports", args)
-      #Open.rm_rf outfiles
+      Open.rm_rf outfiles
       nil
     else
       bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_sorted)) : step(:BAM_sorted).path
@@ -229,44 +229,6 @@ module HTS
         nil
       end
       bar.remove 
-
-      #TSV.traverse outfiles.glob("*.bam"), :cpus => cpus, :bar => self.progress_bar("Ammending BAM files") do |file|
-      #  start_int, end_int = File.basename(file).split ","
-
-      #  chr_start, pos_start, _eend = start_int.split("__")
-      #  chr_end, __start, pos_end = end_int.split("__")
-
-      #  pos_start = pos_start.to_i
-      #  pos_end = pos_end.to_i
-
-      #  target = file + '.new'
-      #  Misc.with_fifo(file + '.pipe') do |fpipe|
-      #    thr = Thread.new do
-      #      CMD.cmd("samtools view -b '#{fpipe}' > #{target}")
-      #    end
-
-      #    Open.write(fpipe) do |pipe|
-
-      #      header_io = CMD.cmd("samtools view -H '#{file}'", :pipe => true)
-      #      while line = header_io.gets
-      #        pipe.write line
-      #      end
-      #      header_io.close
-
-      #      content_io = CMD.cmd("samtools view '#{file}'", :pipe => true)
-      #      while line = content_io.gets
-      #        id, flags, chr, pos, *rest = line.split("\t")
-      #        pos = pos.to_i
-      #        next if chr == chr_start && pos < pos_start
-      #        break if chr == chr_end && pos > pos_end
-      #        pipe.write line
-      #      end
-      #      content_io.close
-      #    end
-      #    thr.join
-      #  end
-      #  Open.mv target, file
-      #end 
 
       contigs = Samtools.reference_contigs reference
       sorted_parts = outfiles.glob("*.bam").sort{|a,b| Misc.genomic_location_cmp_contigs(File.basename(a).split(",").first, File.basename(b).split(",").first, contigs, '__')}

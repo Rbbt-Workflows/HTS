@@ -31,8 +31,7 @@ task ||= "mutect2"
 
 cpus = options[:cpus] || 30
 
-Rbbt::Config.load_file Rbbt.etc.config_profile.HTS.find
-Rbbt::Config.set :forget_dep_tasks, false, :forget_dep_tasks
+Rbbt::Config.set :forget_dep_tasks, true, :forget_dep_tasks
 
 Workflow.require_workflow "Sample"
 Workflow.require_workflow "HTS"

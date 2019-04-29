@@ -97,6 +97,26 @@ module HTS
     nil
   end
 
+  input :bam, :file, "Tumor BAM", nil, :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  task :BAM_summary => :text do |bam,reference|
+    args = {}
+
+    reference = reference_file reference
+    orig_reference = reference
+
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+    bam = Samtools.prepare_BAM(bam)
+
+    args["--INPUT"] = bam
+    args["--REFERENCE_SEQUENCE"] = reference
+    args["-O"] = self.tmp_path
+    gatk("CollectAlignmentSummaryMetrics", args)
+    nil
+  end
+
+
   input :bam_1, :file, "BAM file", nil, :nofile => true
   input :bam_2, :file, "BAM file", nil, :nofile => true
   task :compare_BAM => :tsv do |bam_1,bam_2|
@@ -135,5 +155,37 @@ module HTS
     tsv["Common"] = common.length
     tsv["Common but different"] = common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any?}.length
     tsv
+  end
+
+
+  input :bam, :file, "BAM file", nil, :nofile => true
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :BAM_qualimap => :text do |bam,interval_list|
+    bam = Samtools.prepare_BAM(bam)
+    outdir = files_dir
+    if interval_list and interval_list.include? '.bed'
+      TmpFile.with_file(:extension => 'bed') do |fint|
+        Open.write(fint) do |f|
+          TSV.traverse interval_list, :type => :array do |line|
+            next if line =~ /^(@|browser|track)/
+            chr, start, eend, name, score, strand, *rest = line.split("\t")
+            parts = ["-"] * 6
+            parts[0] = chr
+            parts[1] = start
+            parts[2] = eend
+            parts[3] = name || "-"
+            parts[4] = score || "1000"
+            parts[5] = strand || "."
+            f.puts parts * "\t"
+          end
+        end
+        CMD.cmd_log("qualimap bamqc -bam '#{bam}' --java-mem-size=4G -gff '#{fint}' -outdir '#{outdir}' ")
+      end
+    else
+      CMD.cmd_log("qualimap bamqc -bam '#{bam}' --java-mem-size=4G -outdir '#{outdir}' ")
+    end
+
+    Open.cp File.join(outdir, "genome_results.txt"), self.tmp_path
+    nil
   end
 end
