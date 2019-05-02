@@ -60,7 +60,7 @@ module HTS
 
     iif first
     iif last
-    iif common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
+    iii common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
     tsv["Missing"] = first.length
     tsv["Extra"] = last.length
     tsv["Common"] = common.length

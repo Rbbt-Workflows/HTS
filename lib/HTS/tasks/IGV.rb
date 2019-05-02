@@ -36,7 +36,7 @@ maxPanelHeight #{panel_height}
   eend = pos.to_i + 50
 
   ["goto #{chr}:#{start}-#{eend}",
-  "snapshot #{chr}:#{pos}:#{alt}.svg"]
+  "snapshot #{chr}:#{pos}:#{alt}.png"]
 
 end * "\n"
 }

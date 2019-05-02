@@ -65,6 +65,8 @@ module HTS
       else
         Organism["Hsa"][reference].known_sites["dbsnp_138.vcf.gz"].produce.find
       end
+    when 'none'
+      nil
     else
       file
     end
@@ -82,6 +84,8 @@ module HTS
     when '1000g_snps_hc', '1000g_snps', '1000g'
       nil
     when 'dbsnp'
+      nil
+    when 'none'
       nil
     else
       nil

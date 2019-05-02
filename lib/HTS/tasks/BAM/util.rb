@@ -135,7 +135,7 @@ module HTS
       next if line =~ /^chr/
       next if line =~ /^#/
       read, flag, chr, pos, *rest = line.split("\t", -1)
-      aln = [read, chr, pos, flag] * ":"
+      aln = [read, chr, pos, flag] * "_"
       case
       when chr[0] == "|"
         first << aln
@@ -146,9 +146,9 @@ module HTS
       end
     end
 
-    iif first
-    iif last
-    iif common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
+    iii first
+    iii last
+    iii common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
     tsv = TSV.setup({}, "Statistic~Value#:type=:single")
     tsv["Missing"] = first.length
     tsv["Extra"] = last.length

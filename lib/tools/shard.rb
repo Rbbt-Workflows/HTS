@@ -1,6 +1,6 @@
 class GATKShard
 
-  GAP_SIZE = 5_000
+  GAP_SIZE = 1_000
   CHUNK_SIZE = 10_000_000
 
   def self.chunk_intervals(interval_list=nil, chunk_size=10_000_000, contigs = nil, break_interval = false)
@@ -22,7 +22,7 @@ class GATKShard
     current_size = 0
     last_eend = 0
     last_chr = nil
-    gap = GATKShard::GAP_SIZE * 2
+    gap = GATKShard::GAP_SIZE * 4
     TSV.traverse intervals, :type => :array do |chr,start,eend|
       remaining = eend - start
       last_chr = chr if last_chr.nil?
@@ -66,7 +66,8 @@ class GATKShard
     q.callback &callback
 
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs)
-    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 10, contigs) if chunks.length < cpus.to_i
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 10, contigs) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 100, contigs) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
     bar.max = chunks.length if bar
     bar.init if bar
 

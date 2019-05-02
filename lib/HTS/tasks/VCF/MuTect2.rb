@@ -12,9 +12,8 @@ module HTS
   task :mutect2_pre => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
     af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
-    germline_resource = vcf_file reference, germline_resource
-    germline_resource = GATK.prepare_VCF_AF_only germline_resource
-
+    germline_resource = vcf_file reference, germline_resource if germline_resource
+    germline_resource = GATK.prepare_VCF_AF_only germline_resource if germline_resource
 
     reference = reference_file reference
     orig_reference = reference
@@ -46,7 +45,7 @@ module HTS
     args["panel-of-normals"] = pon if pon
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
-    args["af-of-alleles-not-in-resource"] = af_not_in_resource.to_s if af_not_in_resource
+    args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
 
     shard = config('shard', :gatk, :mutect, :mutect2)
 
