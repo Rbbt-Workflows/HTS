@@ -115,8 +115,8 @@ module Sample
   end
 
   def self.add_sample_options(sample,options)
-    options = options.merge(Sample.sample_options(sample))
-    options = options.merge(Sample.study_options(sample))
+    options = Sample.sample_options(sample).merge(options)
+    options = Sample.study_options(sample).merge(options)
     options
   end
 

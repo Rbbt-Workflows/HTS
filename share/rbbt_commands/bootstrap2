@@ -35,6 +35,7 @@ Rbbt::Config.set :forget_dep_tasks, true, :forget_dep_tasks
 
 Workflow.require_workflow "Sample"
 Workflow.require_workflow "HTS"
+Workflow.require_workflow "HLA"
 require 'HTS/tasks/sample'
 
 workdir = '/data/tmp/HTS_workdir'
