@@ -15,6 +15,8 @@ module HTS
     germline_resource = vcf_file reference, germline_resource if germline_resource
     germline_resource = GATK.prepare_VCF_AF_only germline_resource if germline_resource
 
+    pon = GATK.prepare_VCF_AF_only pon if pon
+
     reference = reference_file reference
     orig_reference = reference
 
@@ -69,6 +71,7 @@ module HTS
         `head -n 1 "#{ioutfile}.stats" > "#{headervcf_stats}"` unless File.exists? headervcf_stats
         `tail -n 1 #{ioutfile}.stats >> #{contentvcf_stats}` 
       end
+      bar.remove 
 
       `cat "#{headervcf}" > "#{output}"`
       `sort -k 1,2 "#{contentvcf}" | uniq >> "#{output}"`

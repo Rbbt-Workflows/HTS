@@ -87,7 +87,7 @@ module GATK
               out = if line[0] == "#"
                       line
                     else
-                      parts = line.split("\t")
+                      parts = line.split("\t", -1)
                       info = parts[7].split(";").select{|f| %w(AC AF CAF).include? f.split("=").first } * ";"
                       info = "NOINFO=true" if info.empty?
                       parts[7] = info
