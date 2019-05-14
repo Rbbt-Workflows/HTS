@@ -58,6 +58,7 @@ module HTS
     end
     tsv = TSV.setup({}, "Statistic~Value#:type=:single")
 
+    iii common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any?}
     tsv["Missing"] = first.length
     tsv["Extra"] = last.length
     tsv["Common"] = common.length

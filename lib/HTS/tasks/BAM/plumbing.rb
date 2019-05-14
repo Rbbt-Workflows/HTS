@@ -111,7 +111,7 @@ module HTS
       raise "No FASTQ or uBAM files for #{ jobname }"
     end
   end
-  dep :BAM_multiplex, :compute => :produce do |jobname, options,dependencies|
+  dep :BAM_multiplex do |jobname, options,dependencies|
     bam_files = dependencies.flatten.collect{|dep| dep}
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
@@ -120,7 +120,6 @@ module HTS
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
     {:inputs => options.merge("HTS#BAM_sorted" =>  mutiplex), :jobname => jobname}
   end
-
 
   dep :revert_BAM, :compute => :produce
   dep :BAM, :compute => :produce, 
@@ -143,7 +142,7 @@ module HTS
       {:task => :BAM, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, read_group] * "."}
     end
   end
-  dep :BAM_multiplex, :compute => :produce do |jobname, options,dependencies|
+  dep :BAM_multiplex do |jobname, options,dependencies|
     bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM}.collect{|dep| dep.path}
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
