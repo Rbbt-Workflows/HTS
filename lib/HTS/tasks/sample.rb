@@ -198,13 +198,13 @@ module Sample
   def self.study_options(sample, sstudy = nil)
     if sample.include?(":") and sstudy.nil?
       study, _sep, ssample  = sample.partition(":")
-      return sample_options(ssample, study)
+      return study_options(ssample, study)
     end
 
     options = {}
     load_study_files.each do |study, sample_files|
       next if sstudy && study.to_s != sstudy.to_s
-      next unless Sample.sample_study(sample) == study
+      next unless sstudy || Sample.sample_study(sample) == study
       options_file = Sample.study_dir(study).options.find
       next unless options_file.exists?
       study_options = if File.directory? options_file

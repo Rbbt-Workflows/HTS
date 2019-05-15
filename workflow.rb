@@ -207,50 +207,81 @@ module HTS
     end
   end
 
+  helper :fix_file_for_spark do |file|
+    if String === file and File.exists?(file) and file.include?(":")
+      new_file = TmpFile.tmp_file
+      extension = File.basename(file).split(".")[1]
+      new_file << "." << extension if extension and extension.length <= 4
+      Open.mkdir File.dirname(new_file)
+      Open.ln_s file, new_file
+      new_file
+    else
+      file
+    end
+  end
+
   helper :fix_spark_args do |command,args|
+    fixed_files = []
     if Hash === args
       args_new = {}
       args.each do |k,v|
         k = k.downcase if k.length > 1
         k = k.gsub('_', '-')
+        v = if Array === v
+              new = v.collect{|f| fix_file_for_spark(f) }
+              fixed_files = new - v
+              new
+            else
+              new = fix_file_for_spark(v)
+              fixed_files << new if new != v
+              new
+            end
         args_new[k] = v
       end
       args = args_new
-    end
 
-    case command.to_s
-    when "BaseRecalibrator"
+      case command.to_s
+      when "BaseRecalibrator"
       args.delete_if{|k,v| k.include? 'interval'}
-    when "SortSam", "ApplyBQSR"
-      args['--create-output-bam-index'] = false
-    when "MarkDuplicates"
-      args['--create-output-bam-index'] = false
-      args.delete_if{|k,v| k.include? "sort-order" }
-      args.delete_if{|k,v| k.include? "metrics" }
-      args.delete_if{|k,v| k.include? "create-index" }
+      when "SortSam", "ApplyBQSR"
+        args['--create-output-bam-index'] = false
+      when "MarkDuplicates"
+        args['--create-output-bam-index'] = false
+        args.delete_if{|k,v| k.include? "sort-order" }
+        args.delete_if{|k,v| k.include? "metrics" }
+        args.delete_if{|k,v| k.include? "create-index" }
+      end
     end
 
-    args
+    [args, fixed_files]
   end
 
   helper :gatk_io do |command,args,sin=nil|
 
     if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
-      args = fix_spark_args command, args
+      args, fixed_files = fix_spark_args command, args
       command += "Spark"
     end
 
-    GATK.run(command, args, sin)
+    begin
+      GATK.run(command, args, sin)
+    ensure
+      fixed_files.each{|f| Open.rm f } if fixed_files
+    end
   end
 
   helper :gatk do |command,args,sin=nil|
 
     if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
-      args = fix_spark_args command, args
+      args, fixed_files = fix_spark_args command, args
       command += "Spark"
     end
 
-    GATK.run_log(command, args, sin)
+    begin
+      GATK.run_log(command, args, sin)
+    ensure
+      fixed_files.each{|f| Open.rm f } if fixed_files
+    end
   end
 
 end

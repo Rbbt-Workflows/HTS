@@ -77,9 +77,10 @@ module Sample
       dep :BAM_normal, :compute => :bootstrap do |sample,options|
         nsample = nil
         sample_files = nil
-        [sample + '_normal', 'normal'].each do |normal_sample|
+        sample_study = Sample.sample_study(sample)
+        [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
           nsample = normal_sample
-          sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+          sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
           break if sample_files
         end
 
@@ -90,11 +91,13 @@ module Sample
       dep :BAM_normal, :compute => :bootstrap do |sample,options|
         nsample = nil
         sample_files = nil
-        [sample + '_normal', 'normal'].each do |normal_sample|
+        sample_study = Sample.sample_study(sample)
+        [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
           nsample = normal_sample
-          sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+          sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
           break if sample_files
         end
+
 
         raise ParameterException, "No normal sample found" if sample_files.nil?
 
