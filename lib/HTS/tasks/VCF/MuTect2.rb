@@ -11,6 +11,8 @@ module HTS
   extension :vcf
   task :mutect2_pre => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
 
+    interval_list = nil if interval_list == "none"
+
     af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
     germline_resource = vcf_file reference, germline_resource if germline_resource
     germline_resource = GATK.prepare_VCF_AF_only germline_resource if germline_resource

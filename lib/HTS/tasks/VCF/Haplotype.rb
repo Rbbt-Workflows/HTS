@@ -5,6 +5,8 @@ module HTS
   extension :vcf
   task :haplotype => :text do |bam,reference,interval_list|
 
+    interval_list = nil if interval_list == "none"
+
     reference = reference_file reference
     orig_reference = reference
 

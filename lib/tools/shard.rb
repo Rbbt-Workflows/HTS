@@ -13,7 +13,13 @@ class GATKShard
     end
 
     if contigs
-      intervals = intervals.sort{|a,b| Misc.genomic_location_cmp_contigs(a[0,1] * ":", b[0,1] * ":", contigs)}
+      # Deal with contigs with ":" characters
+      contigs = contigs.collect{|s| s.gsub(":","__")}
+      intervals = intervals.sort do |a,b| 
+        astr = a[0,1].collect{|s| s.gsub(":","__")} * ":"
+        bstr = b[0,1].collect{|s| s.gsub(":","__")} * ":"
+        Misc.genomic_location_cmp_contigs(astr, bstr, contigs)
+      end
     end
 
     chunks = []
@@ -34,7 +40,7 @@ class GATKShard
           size = remaining
         end
 
-        if chr != last_chr || (current_size >= chunk_size && start > last_eend + gap)
+        if current_size >= chunk_size && (chr != last_chr || (start > last_eend + gap))
           chunks << current
           current = []
           current_size = 0

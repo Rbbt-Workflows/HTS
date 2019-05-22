@@ -33,6 +33,7 @@ module BWA
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file + '.alt', dir[basename] unless File.exists?(linked + '.alt')
         CMD.cmd("'#{BWA_CMD}' index '#{ linked }'")
       end
     end

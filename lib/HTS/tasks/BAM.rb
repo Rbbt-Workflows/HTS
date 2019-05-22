@@ -143,6 +143,8 @@ module HTS
   input :interval_list, :file, "Interval list", nil, :nofile => true
   task :BAM_rescore => :binary do |interval_list|
 
+    interval_list = nil if interval_list == "none"
+
     reference = reference_file self.recursive_inputs[:reference]
     reference = GATK.prepare_FASTA reference
     reference_code = self.recursive_inputs[:reference]
