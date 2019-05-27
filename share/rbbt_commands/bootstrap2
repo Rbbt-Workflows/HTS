@@ -53,7 +53,7 @@ TSV.traverse samples, :bar => "Bootstrapping samples" do |sample|
     job.produce
   rescue Exception
     raise $! unless options[:no_fail]
-    Log.exception $1
+    Log.exception $!
     Log.warn "Error in job #{job.path}"
   end
 

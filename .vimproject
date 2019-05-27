@@ -24,6 +24,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    svABA.rb
    pfff.rb
    Delly.rb
+   FuSeq.rb
    scatter.rb
    shard.rb
   }
@@ -96,6 +97,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    StringTie
    HISAT
    pfff
+   FuSeq
   }
  }
  data=data filter="*"{

@@ -30,7 +30,7 @@ class GATKShard
     last_chr = nil
     gap = GATKShard::GAP_SIZE * 4
     TSV.traverse intervals, :type => :array do |chr,start,eend|
-      remaining = eend - start
+      remaining = eend - start + 1
       last_chr = chr if last_chr.nil?
 
       while remaining > 0

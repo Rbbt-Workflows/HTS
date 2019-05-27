@@ -121,21 +121,21 @@ module HTS
   input :bam_2, :file, "BAM file", nil, :nofile => true
   task :compare_BAM => :tsv do |bam_1,bam_2|
     reads_1 = file('reads_1')
-    Open.write(reads_1, %w(read flags chr pos qual) * "\t" + "\n")
+    Open.write(reads_1, %w(read chr pos qual) * "\t" + "\n")
     CMD.cmd("samtools view #{bam_1} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_1}")
 
     reads_2 = file('reads_2')
-    Open.write(reads_2, %w(read flags chr pos qual) * "\t" + "\n")
+    Open.write(reads_2, %w(read chr pos qual) * "\t" + "\n")
     CMD.cmd("samtools view #{bam_2} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_2}")
     
     first = []
     last = []
     common = []
     TSV.traverse TSV.paste_streams([reads_1, reads_2], :header_hash => "", :same_fields => true, :sort => true), :type => :array, :bar => self.progress_bar("Comparing BAM files") do |line|
-      next if line =~ /^chr/
+      next if line =~ /^read/
       next if line =~ /^#/
-      read, flag, chr, pos, *rest = line.split("\t", -1)
-      aln = [read, chr, pos, flag] * "_"
+      read, chr, pos, qual, *rest = line.split("\t", -1)
+      aln = [read, chr, pos, qual] * "_"
       case
       when chr[0] == "|"
         first << aln
@@ -146,9 +146,10 @@ module HTS
       end
     end
 
-    iii first
-    iii last
-    iii common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
+    iif first
+    iif last
+    iif common.select{|mutation,parts| parts.select{|p| p.split("|").uniq.length != 1}.any? }
+
     tsv = TSV.setup({}, "Statistic~Value#:type=:single")
     tsv["Missing"] = first.length
     tsv["Extra"] = last.length

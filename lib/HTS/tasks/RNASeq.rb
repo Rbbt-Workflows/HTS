@@ -1,3 +1,5 @@
+require 'tools/FuSeq'
+
 module Salmon
   def self.prepare_CDNA_FASTA(file, dir = nil)
     file = file.path if Step === file
@@ -24,6 +26,7 @@ module Salmon
   end
 
 end
+
 module HTS
 
 
@@ -64,8 +67,4 @@ module HTS
     Open.cp output["quant.sf"], self.tmp_path
     nil
   end
-
-
-
-
 end

@@ -187,7 +187,7 @@ module HTS
       bar.remove 
 
       args = {}
-      args["I"] = outfiles.glob("*")
+      args["I"] = outfiles.glob("*.report")
       args["O"] = file('recal_data.table')
       gatk("GatherBQSRReports", args)
       Open.rm_rf outfiles

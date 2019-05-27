@@ -49,6 +49,9 @@ module HTS
     args["panel-of-normals"] = pon if pon
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
+
+    # UPDATE FOR GATK 4.1.2
+    #args["af-of-alleles-not-in-resource"] = "-1"
     args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
 
     shard = config('shard', :gatk, :mutect, :mutect2)
