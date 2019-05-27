@@ -65,7 +65,7 @@ module HTS
         args["CLIPPING_ATTRIBUTE"] = "XT"
         args["CLIPPING_ACTION"] = "2"
         args["INTERLEAVE"] = "true"
-        args["NON_PF"] = "true"
+        #args["NON_PF"] = "true"
 
         io_s2f = gatk_io("SamToFastq", args)
         t_s2f = Thread.new do

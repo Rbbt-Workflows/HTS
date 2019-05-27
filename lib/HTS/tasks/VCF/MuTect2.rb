@@ -51,8 +51,7 @@ module HTS
     args["germline-resource"] = germline_resource
 
     # UPDATE FOR GATK 4.1.2
-    #args["af-of-alleles-not-in-resource"] = "-1"
-    args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
+    #args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
 
     shard = config('shard', :gatk, :mutect, :mutect2)
 
@@ -99,9 +98,17 @@ module HTS
     nil
   end
 
-  dep :mutect2_pre
-  dep :contamination, :BAM => :tumor
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :tumor, :file, "Tumor BAM", nil, :nofile => true
+  input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
+  dep :mutect2_pre
+  dep :contamination, :BAM => :normal, :compute => true
+  dep :contamination, :BAM => :tumor do |jobname,options,dependencies|
+    options[:matched] = dependencies.select{|dep| dep.task_name.to_sym == :contamination}.first.step(:BAM_pileup_sumaries).path
+    options[:BAM] = options[:tumor]
+    {:inputs => options}
+  end
+  dep :BAM_orientation_model, :BAM => :tumor
   extension :vcf
   task :mutect2_filtered => :text do |reference|
     reference = reference_file reference
@@ -117,14 +124,18 @@ module HTS
     FileUtils.mkdir_p files_dir
     args = {}
 
+    contamination = dependencies.select{|dep| dep.task_name.to_sym == :contamination}.last
+
     args["variant"] = tmp
     args["output"] = self.tmp_path
     args["reference"] = reference
+    args["--orientation-bias-artifact-priors"] = step(:BAM_orientation_model).path
     if step(:contamination).path.read.include? "NaN"
       set_info :missing_contamination, true
       Log.warn "NaN in contamination file: #{Log.color :blue, self.path}"
     else
-      args["contamination-table"] = step(:contamination).path 
+      args["tumor-segmentation"] = contamination.file('segments.tsv')
+      args["contamination-table"] = contamination.path
     end
     gatk("FilterMutectCalls", args)
     nil
@@ -144,21 +155,21 @@ module HTS
     end
   end
 
-  dep :BAM_artifact_metrics, :compute => :bootstrap
-  dep :mutect2_clean, :compute => :bootstrap
-  extension :vcf
-  task :mutect2_orientation_bias => :text do
-    FileUtils.mkdir_p files_dir
-    args = {}
+  #dep :BAM_artifact_metrics, :compute => :bootstrap
+  #dep :mutect2_clean, :compute => :bootstrap
+  #extension :vcf
+  #task :mutect2_orientation_bias => :text do
+  #  FileUtils.mkdir_p files_dir
+  #  args = {}
 
-    args["-P"] = step(:BAM_artifact_metrics).path
-    args["-V"] = step(:mutect2_clean).join.path
-    args["-O"] = self.tmp_path
-    gatk("FilterByOrientationBias", args)
-    nil
-  end
+  #  args["-P"] = step(:BAM_artifact_metrics).path
+  #  args["-V"] = step(:mutect2_clean).join.path
+  #  args["-O"] = self.tmp_path
+  #  gatk("FilterByOrientationBias", args)
+  #  nil
+  #end
 
   extension :vcf
-  dep_task :mutect2, HTS, :mutect2_orientation_bias
+  dep_task :mutect2, HTS, :mutect2_clean
 
 end

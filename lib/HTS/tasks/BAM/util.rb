@@ -1,10 +1,31 @@
 module HTS
 
+  dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
+  input :BAM, :file, "BAM file", nil, :nofile => true
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :BAM_pileup_sumaries => :text do |bam,interval_list|
+
+    variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path
+
+    args = {}
+    args["input"] = Samtools.prepare_BAM bam 
+    args["variant"] = variants_file
+    args["output"] = self.tmp_path
+    args["intervals"] = interval_list ? interval_list : variants_file
+    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
+    GATK.run_log("GetPileupSummaries", args)
+    nil
+  end
+
   dep :BAM_pileup_sumaries
-  task :contamination => :text do
+  input :matched, :file, "Matched contamiation table"
+  task :contamination => :text do |matched|
     args = {}
     args["input"] = step(:BAM_pileup_sumaries).path
     args["output"] = self.tmp_path
+    args["matched"] = matched if matched
+    Open.mkdir files_dir
+    args["segments"] = file('segments.tsv')
     GATK.run_log("CalculateContamination", args)
   end
 
@@ -38,48 +59,32 @@ module HTS
     nil
   end
 
-  dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
-  input :BAM, :file, "BAM file", nil, :nofile => true
-  input :interval_list, :file, "Interval list", nil, :nofile => true
-  task :BAM_pileup_sumaries => :text do |bam,interval_list|
 
-    variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path
+  #input :tumor, :file, "Tumor BAM", nil, :nofile => true
+  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  #task :BAM_artifact_metrics => :text do |tumor,reference|
+  #  
+  #  reference = reference_file reference
+  #  orig_reference = reference
 
-    args = {}
-    args["input"] = Samtools.prepare_BAM bam 
-    args["variant"] = variants_file
-    args["output"] = self.tmp_path
-    args["intervals"] = interval_list ? interval_list : variants_file
-    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
-    GATK.run_log("GetPileupSummaries", args)
-    nil
-  end
+  #  reference = GATK.prepare_FASTA orig_reference
+  #  reference = Samtools.prepare_FASTA orig_reference
 
-  input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
-  task :BAM_artifact_metrics => :text do |tumor,reference|
-    
-    reference = reference_file reference
-    orig_reference = reference
+  #  tumor = tumor.path if Step === tumor
 
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
+  #  tumor = Samtools.prepare_BAM(tumor)
 
-    tumor = tumor.path if Step === tumor
+  #  FileUtils.mkdir_p files_dir
+  #  args = {}
 
-    tumor = Samtools.prepare_BAM(tumor)
-
-    FileUtils.mkdir_p files_dir
-    args = {}
-
-    args["-I"] = tumor
-    args["-O"] = file('output')
-    args["-R"] = reference
-    args["--FILE_EXTENSION"] = '.txt'
-    gatk("CollectSequencingArtifactMetrics", args)
-    FileUtils.cp file('output' + '.pre_adapter_detail_metrics.txt'), self.path
-    nil
-  end
+  #  args["-I"] = tumor
+  #  args["-O"] = file('output')
+  #  args["-R"] = reference
+  #  args["--FILE_EXTENSION"] = '.txt'
+  #  gatk("CollectSequencingArtifactMetrics", args)
+  #  FileUtils.cp file('output' + '.pre_adapter_detail_metrics.txt'), self.path
+  #  nil
+  #end
 
   input :bam, :file, "Tumor BAM", nil, :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
@@ -96,6 +101,38 @@ module HTS
     gatk("CollectReadCounts", args)
     nil
   end
+
+  input :BAM, :file, "Tumor BAM", nil, :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  extension "tar.gz"
+  task :BAM_F1R2 => :binary do |bam,reference|
+    args = {}
+
+    reference = reference_file reference
+    orig_reference = reference
+
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+    bam = Samtools.prepare_BAM(bam)
+
+    args["--input"] = bam
+    args["--reference"] = reference
+    args["--output"] = self.tmp_path
+    gatk("CollectF1R2Counts", args)
+    nil
+  end
+
+  dep :BAM_F1R2
+  extension "tar.gz"
+  task :BAM_orientation_model => :text do
+    args = {}
+
+    args["--input"] = step(:BAM_F1R2).path
+    args["--output"] = self.tmp_path
+    gatk("LearnReadOrientationModel", args)
+    nil
+  end
+
 
   input :bam, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
