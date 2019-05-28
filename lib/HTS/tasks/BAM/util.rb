@@ -5,7 +5,7 @@ module HTS
   input :interval_list, :file, "Interval list", nil, :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,interval_list|
 
-    variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path
+    variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path, file('index')
 
     args = {}
     args["input"] = Samtools.prepare_BAM bam 

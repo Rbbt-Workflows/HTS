@@ -102,9 +102,14 @@ module HTS
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   dep :mutect2_pre
-  dep :contamination, :BAM => :normal, :compute => true
+  dep :contamination, :BAM => :normal, :compute => true do |jobname,options,dependencies|
+    if options[:normal]
+      {:inputs => options}
+    end
+  end
   dep :contamination, :BAM => :tumor do |jobname,options,dependencies|
-    options[:matched] = dependencies.select{|dep| dep.task_name.to_sym == :contamination}.first.step(:BAM_pileup_sumaries).path
+    matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination}.first
+    options[:matched] = matched_dep.step(:BAM_pileup_sumaries).path if matched_dep
     options[:BAM] = options[:tumor]
     {:inputs => options}
   end
