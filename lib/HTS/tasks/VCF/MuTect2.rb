@@ -104,6 +104,7 @@ module HTS
   dep :mutect2_pre
   dep :contamination, :BAM => :normal, :compute => true do |jobname,options,dependencies|
     if options[:normal]
+      options[:BAM] = options[:normal]
       {:inputs => options}
     end
   end

@@ -30,16 +30,21 @@ end
 module HTS
 
 
-  input :fastq1, :file, "FASTQ 1 file", nil, :nofile => true
-  input :fastq2, :file, "FASTQ 2 file", nil, :nofile => true
+  input :fastq1, :array, "FASTQ 1 file", nil, :nofile => true
+  input :fastq2, :array, "FASTQ 2 file", nil, :nofile => true
+  input :organism, :string, "Organism code", Organism.default_code("Hsa")
   extension :bam
-  task :RNA_BAM => :binary do |fastq1, fastq2|
-    if fastq2
-      args = "-1 #{fastq1} -2 #{fastq2}"
-    else
-      args = "-U #{fastq1}"
-    end
-    CMD.cmd_log("hisat -S #{self.tmp_path} #{args}")
+  task :RNA_BAM => :binary do |fastq1, fastq2,organism,reference|
+    cpus = config("cpus", :hisat_build, :hisat)
+    samtools_cpus = config("cpus", :samtools_index, :samtools, :index, :default => nil)
+
+    organism = Organism.organism_for_build(reference) if organism.nil? and reference
+    index = HISAT.build_gft_index(organism, :reference => reference, :cpus => cpus)
+
+    sam = file('out.sam')
+    CMD.cmd_log("hisat2 -p #{cpus || 1} --dta -x #{index} -1 #{fastq1*","} -2 #{fastq2*""} -S #{sam}")
+    CMD.cmd_log("samtools -@ #{samtools_cpus || 1} -o #{self.tmp_path} #{sam} ")
+    Open.rm sam
     nil
   end
 
@@ -66,5 +71,27 @@ module HTS
     CMD.cmd_log("salmon quant -l A --index #{cdna}.idx -1 #{fastq1} -2 #{fastq2} --output #{output}")
     Open.cp output["quant.sf"], self.tmp_path
     nil
+  end
+
+
+  input :fastq1, :file, "FASTQ 1 file", nil, :nofile => true
+  input :fastq2, :file, "FASTQ 2 file", nil, :nofile => true
+  input :organism, :string, "Organism code", Organism.default_code("Hsa")
+  input :kmer, :integer, "K-mer size", nil
+  task :FuSeq => :text do |fastq1,fastq2,organism,kmer|
+    output = file('output')
+    cpus = config(:cpus, :FuSeq, :fuseq, :default => 1) 
+    FuSeq.run [fastq1, fastq2].compact, organism, kmer, cpus, output
+    "Done"
+  end
+
+  dep :FuSeq
+  task :FuSeq_process => :tsv do
+    organism = step(:FuSeq).recursive_inputs[:organism]
+    output = file('output')
+
+    FuSeq.process step(:FuSeq).file('output'), organism, output
+
+    TSV.open file('output/fusions.FuSeq'), :header_hash => '', :merge => true, :key_field => "fusionName"
   end
 end

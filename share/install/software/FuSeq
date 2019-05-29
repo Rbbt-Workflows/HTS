@@ -1,0 +1,24 @@
+#!/bin/bash
+
+name='FuSeq'
+url="https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/FuSeq_v1.1.0_linux_x86-64.tar.gz"
+
+prepare_pkg "$name" "$url" 
+mv `build_dir`/linux/ `opt_dir $name`
+mv `build_dir`/R/ `opt_dir $name`
+mv `build_dir`/createAnno/ `opt_dir $name`
+setup "$name"
+mkdir  `opt_dir $name`/lib/.crap
+mv  `opt_dir $name`/lib/librt.so.1 `opt_dir $name`/lib/.crap
+mv  `opt_dir $name`/lib/libm.* `opt_dir $name`/lib/.crap
+
+mkdir  `opt_dir $name`/data/
+wget "https://github.com/nghiavtr/FuSeq/releases/download/v0.1.0/Homo_sapiens.GRCh37.75.txAnno.RData" -O  `opt_dir $name`/data/txAnno.GRCh37.75.Rdata
+wget "https://github.com/nghiavtr/FuSeq/releases/download/v1.1.0/Homo_sapiens.GRCh38.94.txAnno.RData" -O  `opt_dir $name`/data/txAnno.GRCh38.94.Rdata
+
+(cd "`opt_dir $name`";
+istr="/path/to";
+ostr="$PWD/R";
+awk '/filter by gene distance/{print "  for (attr in c(\"front_querypos\", \"front_len\", \"back_querypos\", \"matchedPos\", \"back_hitpos\", \"front_hitpos\")){ myFusion[[attr]] = as.numeric(myFusion[[attr]]);}" }{print $0}' R/processSplitRead.R > tmp;
+mv tmp R/processSplitRead.R;
+eval "sed -i -e 's#"$istr"#"$ostr"#g' R/FuSeq.R";)

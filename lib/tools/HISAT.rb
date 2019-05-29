@@ -12,8 +12,48 @@ module HISAT
   #self.search_paths = {}
   #self.search_paths[:default] = :lib
 
-
   Rbbt.claim Rbbt.software.opt.HISAT, :install, Rbbt.share.install.software.HISAT.find
+
+
+  def self.build_gft_index(organism, options = {})
+    reference, cpus = options.values_at :reference, :cpus
+    cpus ||= Rbbt::Config.get("cpus", :hisat_build, :hisat)
+
+    file = Organism.gene_set(organism).produce.find
+    reference = case Organism.hg_build(organism)
+                when 'hg19'
+                  Rbbt.share.organisms.Hsa.b37["b37.fa"].produce.find
+                when 'hg38'
+                  Rbbt.share.organisms.Hsa.hg38["hg38.fa"].produce.find
+                end if reference.nil?
+
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+    digest = Misc.file2md5(file)
+    basename = File.basename(file)
+
+    dir = Rbbt.var.vcf_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+
+    linked = dir[basename].find
+    if ! File.exists?(linked + ".idx") || Persist.newer?(linked + '.idx', file)
+
+      Misc.in_dir dir do
+        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        CMD.cmd_log("bash -c 'extract_splice_sites.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.ss'")
+        #CMD.cmd_log("bash -c 'extract_exons.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.exon'")
+        #CMD.cmd_log("hisat2-build -p #{cpus} --ss #{linked}.ss --exon #{linked}.exon #{reference} #{linked}.idx ")
+        CMD.cmd_log("hisat2-build -p #{cpus || 1} --ss #{linked}.ss #{reference} #{linked}.idx ")
+      end
+    end
+
+    linked + '.idx'
+
+  end
+
 end
 
 if __FILE__ == $0

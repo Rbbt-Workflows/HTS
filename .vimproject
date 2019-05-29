@@ -30,9 +30,8 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   }
   tasks=HTS/tasks{
    CNV.rb
-   IGV.rb
-   RNASeq.rb
    sequenza.rb
+   RNASeq.rb
    BAM.rb
    BAM=BAM{
     filter.rb
@@ -53,7 +52,10 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     control_FREEC.rb
     svABA.rb
    }
+   IGV.rb
+
    test.rb
+
    sample.rb
    sample=sample{
     DNA.rb
