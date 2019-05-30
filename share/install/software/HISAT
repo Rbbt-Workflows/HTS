@@ -1,6 +1,6 @@
 #!/bin/bash
 
 name='HISAT'
-url="https://github.com/infphilo/hisat.git"
+url="http://ccb.jhu.edu/software/hisat2/dl/hisat2-2.1.0-source.zip"
 
-install_git "$name" "$url" 
+install_src "$name" "$url" 

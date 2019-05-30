@@ -7,11 +7,11 @@ module HTS
   extension :vcf
   task :somatic_sniper => :text do |tumor, normal, reference, quality|
     reference = reference_file reference
+
     orig_reference = reference
 
     reference = GATK.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
-
     reference = HTS.uncompress_FASTA orig_reference
 
     args = {}

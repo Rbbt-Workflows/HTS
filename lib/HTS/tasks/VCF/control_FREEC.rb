@@ -16,8 +16,9 @@ module HTS
 		FileUtils.mkdir_p output
 
 		referencePath = reference_file(reference)	
-                chrFilesPath = File.dirname(reference_file(reference)) + "s"
-		chrLenFilePath = referencePath + ".fai" 
+
+    chrFilesPath = File.dirname(reference_file(reference)) + "s"
+    chrLenFilePath = referencePath + ".fai" 
 
     script = <<-EOF
 [general]

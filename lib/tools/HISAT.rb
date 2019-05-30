@@ -15,17 +15,10 @@ module HISAT
   Rbbt.claim Rbbt.software.opt.HISAT, :install, Rbbt.share.install.software.HISAT.find
 
 
-  def self.build_gft_index(organism, options = {})
-    reference, cpus = options.values_at :reference, :cpus
+  def self.build_gft_index(organism, reference, cpus = nil)
     cpus ||= Rbbt::Config.get("cpus", :hisat_build, :hisat)
 
-    file = Organism.gene_set(organism).produce.find
-    reference = case Organism.hg_build(organism)
-                when 'hg19'
-                  Rbbt.share.organisms.Hsa.b37["b37.fa"].produce.find
-                when 'hg38'
-                  Rbbt.share.organisms.Hsa.hg38["hg38.fa"].produce.find
-                end if reference.nil?
+    file = HTS.gtf_file(organism)
 
     file = file.path if Step === file
     file = file.find if Path === file
@@ -34,7 +27,7 @@ module HISAT
     digest = Misc.file2md5(file)
     basename = File.basename(file)
 
-    dir = Rbbt.var.vcf_indices[digest].find if dir.nil?
+    dir = Rbbt.var.HISAT_indices[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
 
 
@@ -44,16 +37,19 @@ module HISAT
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
         CMD.cmd_log("bash -c 'extract_splice_sites.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.ss'")
-        #CMD.cmd_log("bash -c 'extract_exons.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.exon'")
-        #CMD.cmd_log("hisat2-build -p #{cpus} --ss #{linked}.ss --exon #{linked}.exon #{reference} #{linked}.idx ")
-        CMD.cmd_log("hisat2-build -p #{cpus || 1} --ss #{linked}.ss #{reference} #{linked}.idx ")
+        CMD.cmd_log("bash -c 'extract_exons.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.exon'")
+
+        if Organism.hg_build(organism) == 'hg38'
+          CMD.cmd_log(%(sed -i 's/^\\([0-9A-Z]\\)/chr\\1/' #{linked}.ss))
+          CMD.cmd_log(%(sed -i 's/^\\([0-9A-Z]\\)/chr\\1/' #{linked}.exon))
+        end
+
+        CMD.cmd_log("hisat2-build -p #{cpus || 1} --ss #{linked}.ss --exon #{linked}.exon #{reference} #{linked}.idx ")
       end
     end
 
     linked + '.idx'
-
   end
-
 end
 
 if __FILE__ == $0

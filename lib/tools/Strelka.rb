@@ -19,9 +19,7 @@ module Strelka
   Rbbt.claim Rbbt.software.opt.Strelka, :install, Rbbt.share.install.software.Strelka.find
 
   def self.runSomatic(tumor, normal, reference, output, cpus = 3)
-    #cmd_config = Rbbt.software.opt.Strelka_bin.bin["configureStrelkaSomaticWorkflow.py"].find
-    cmd_config = Rbbt.software.opt.Strelka.produce.bin["configureStrelkaSomaticWorkflow.py"].find
-
+    cmd_config ="configureStrelkaSomaticWorkflow.py"
 
     if normal.nil?
       CMD.cmd_log("'#{ cmd_config }' --tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}'")
@@ -38,7 +36,6 @@ end
 
 if __FILE__ == $0
   Log.severity = 0 
-  iii Rbbt.software.opt.Strelka_bin.produce(true).path
 
   normal = "~/.rbbt/software/opt/Strelka_bin/data/normal.bam"
   tumor = "~/.rbbt/software/opt/Strelka_bin/data/tumor.bam"

@@ -7,8 +7,7 @@ module HTS
     file = file.find if Path === file
     file = File.expand_path(file)
 
-
-    digest = Misc.digest(Open.realpath(file))
+    digest = Misc.file2md5(file)
     basename = File.basename(file)
 
     dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
@@ -27,6 +26,47 @@ module HTS
     else
       linked
     end
+  end
+
+  def self.gtf_file(organism)
+    reference, organism = [organism, Organism.organism_for_build(organism)] if %w(hg19 hg38 b37).include? organism
+
+    reference = case Organism.hg_build(organism)
+                when 'hg19'
+                  'b37'
+                when 'hg38'
+                  'hg38'
+                end if reference.nil?
+
+    file = Organism.gene_set(organism).produce.find
+
+    return file unless reference == "hg38"
+
+    file = File.expand_path(file)
+
+    digest = Misc.file2md5(file)
+    basename = File.basename(file)
+
+    dir = Rbbt.var.gtf_files[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+
+    if ! File.exists?(linked + ".fixed.gtf") || Persist.newer?(linked + '.fixed.gtf', file)
+      Open.open(linked) do |sout|
+        Open.open(linked + '.fixed.gtf') do |sin|
+          TSV.traverse sout, :into => sin do |line|
+            if line =~ /^[0-9A-Z]/
+              'chr' << line
+            else 
+              line
+            end
+          end
+        end
+      end
+    end
+
+    linked + 'fixed.gtf'
   end
 
 end

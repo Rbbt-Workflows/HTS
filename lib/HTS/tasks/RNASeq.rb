@@ -6,7 +6,6 @@ module Salmon
     file = file.find if Path === file
     file = File.expand_path(file)
 
-
     digest = Misc.digest(Open.realpath(file))
     basename = File.basename(file)
 
@@ -33,13 +32,30 @@ module HTS
   input :fastq1, :array, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :array, "FASTQ 2 file", nil, :nofile => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
+  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38), :nofile => true
   extension :bam
-  task :RNA_BAM => :binary do |fastq1, fastq2,organism,reference|
+  task :hisat => :binary do |fastq1, fastq2,organism,reference|
     cpus = config("cpus", :hisat_build, :hisat)
     samtools_cpus = config("cpus", :samtools_index, :samtools, :index, :default => nil)
 
+    reference = 'b37' if reference.nil? && organism.nil?
     organism = Organism.organism_for_build(reference) if organism.nil? and reference
-    index = HISAT.build_gft_index(organism, :reference => reference, :cpus => cpus)
+    reference = case Organism.hg_build(organism)
+                when 'hg19'
+                  'b37'
+                when 'hg38'
+                  'hg38'
+                end
+
+    reference = reference_file(reference) 
+
+    reference = GATK.prepare_FASTA reference
+    reference = Samtools.prepare_FASTA reference
+    reference = HTS.uncompress_FASTA reference
+
+    index = HISAT.build_gft_index(organism, reference, cpus)
+
+    set_info :organism, organism
 
     sam = file('out.sam')
     CMD.cmd_log("hisat2 -p #{cpus || 1} --dta -x #{index} -1 #{fastq1*","} -2 #{fastq2*""} -S #{sam}")
@@ -48,9 +64,13 @@ module HTS
     nil
   end
 
-  dep :RNA_BAM
+  dep :hisat
+  extension :gtf
   task :stringtie => :tsv do
-    CMD.cmd_log("stringtie #{step(:RNASeqBAM).path} -o #{self.tmp_path}")
+    organism = self.recursive_inputs[:organism] || step(:hisat).info[:organism]
+    cpus = config("cpus", :hisat_build, :hisat)
+    gft_file = HTS.gtf_file(Organism.gene_set(organism).produce.find)
+    CMD.cmd_log("stringtie -e -B -p #{cpus} -G #{gft_file} -o #{self.tmp_path} #{step(:hisat).path}")
     nil
   end
 
