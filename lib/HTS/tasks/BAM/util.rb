@@ -1,5 +1,24 @@
 module HTS
 
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
+  extension :vcf
+  task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
+    variants_file = vcf_file reference, "1000g_snps"
+
+    variants_file = GATK.prepare_VCF_AF_only variants_file
+
+    reference = reference_file self.recursive_inputs[:reference]
+    reference = GATK.prepare_FASTA reference
+
+    args = {}
+    args["reference"] = reference
+    args["variant"] = variants_file
+    args["restrict-alleles-to"] = 'BIALLELIC'
+    args["output"] = tmp_path
+    GATK.run_log("SelectVariants", args)
+    nil
+  end
+
   dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   input :BAM, :file, "BAM file", nil, :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
@@ -38,25 +57,6 @@ module HTS
     reference = Samtools.prepare_FASTA orig_reference
 
     monitor_cmd_genome "samtools mpileup -f '#{reference}' -Q 20 '#{bam}'", false, true
-  end
-
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
-  extension :vcf
-  task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
-    variants_file = vcf_file reference, "1000g_snps"
-
-    variants_file = GATK.prepare_VCF_AF_only variants_file
-
-    reference = reference_file self.recursive_inputs[:reference]
-    reference = GATK.prepare_FASTA reference
-
-    args = {}
-    args["reference"] = reference
-    args["variant"] = variants_file
-    args["restrict-alleles-to"] = 'BIALLELIC'
-    args["output"] = tmp_path
-    GATK.run_log("SelectVariants", args)
-    nil
   end
 
 

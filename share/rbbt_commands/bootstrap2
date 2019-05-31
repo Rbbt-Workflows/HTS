@@ -15,6 +15,7 @@ $ #{$0} [options] <Study> <task>
 
 -h--help Print this help
 -nf--no_fail Keep going even if a job fails
+-Hw--HTS_workdir* HTS workdir
 EOF
 if options[:help]
   if defined? rbbt_usage
@@ -38,7 +39,7 @@ Workflow.require_workflow "HTS"
 Workflow.require_workflow "HLA"
 require 'HTS/tasks/sample'
 
-workdir = '/data/tmp/HTS_workdir'
+workdir = options[:HTS_workdir] || '/data/tmp/HTS_workdir'
 HTS.workdir = workdir
 
 study_files  = Sample.load_study_files[study]

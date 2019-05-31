@@ -54,6 +54,8 @@ module Sample
 
   #{{{ EXPORT HTS METHODS
 
+  #{{{ genomic_mutations and variant callers
+  
   CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
   {
     :strelka => :strelka,
@@ -98,7 +100,6 @@ module Sample
           break if sample_files
         end
 
-
         raise ParameterException, "No normal sample found" if sample_files.nil?
 
         {:inputs => options, :jobname => sample} 
@@ -117,7 +118,6 @@ module Sample
 
   dep :BAM
   dep_task :haplotype, HTS, :haplotype, :BAM => :BAM
-
 
   dep :strelka, :compute => :bootstrap do |jobname, options|
     %w(strelka varscan mutect2 somatic_sniper muse).collect do |var_caller|
@@ -161,19 +161,36 @@ module Sample
     vcaller = options[:caller]
     {:task => vcaller, :jobname => jobname, :inputs => options}
   end
-  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :mutect2 do |jobname,options|
+  dep_task :HTS_genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :mutect2 do |jobname,options|
     vcaller = options[:caller]
     options[:vcf_file] = vcaller.to_sym
     {:task => :genomic_mutations, :workflow => Sequence, :jobname => jobname, :inputs => options}
   end
 
+  Sample.import_task Sample, :genomic_mutations, :orig_genomic_mutations
+
+  dep :HTS_genomic_mutations do |jobname,options,dependencies|
+    sample_files = Sample.sample_files jobname
+    if sample_files.include? "VCF"
+      {:task => :orig_genomic_mutations, :inputs => options, :jobname => jobname}
+    else
+      {:task => :HTS_genomic_mutations, :inputs => options, :jobname => jobname}
+    end
+  end
+  task :genomic_mutations => :array do
+    TSV.get_stream dependencies.select{|dep| dep.done?}.first
+  end
+
+  #{{{
+
   dep :BAM, :compute => :bootstrap
   dep :BAM_normal, :compute => :bootstrap do |sample,options|
     nsample = nil
     sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
+    sample_study = Sample.sample_study(sample)
+    [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
       nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
       break if sample_files
     end
 
@@ -203,11 +220,13 @@ module Sample
   dep_task :BAM_qualimap_normal, HTS, :BAM_qualimap, :bam => :BAM_normal, :interval_list => nil do |jobname,options|
     nsample = nil
     sample_files = nil
-    [sample + '_normal', 'normal'].each do |normal_sample|
+    sample_study = Sample.sample_study(sample)
+    [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
       nsample = normal_sample
-      sample_files = Sample.sample_files normal_sample if Sample.sample_study(sample) == Sample.sample_study(nsample)
+      sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
       break if sample_files
     end
+
     if nsample
       options = add_sample_options nsample, options 
       {:inputs => options}

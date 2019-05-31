@@ -3,22 +3,40 @@ require 'pathname'
 require 'fileutils'
 module HTS
 
-	input :outputDir, :file, "output folder path. If relative, it will be stored in job results folder path", nil, :nofile => true
 	input :sample_mateFile, :file, "File with mapped reads from tumor sample", nil, :nofile => true
 	input :control_mateFile, :file, "File with mapped reads from control sample", nil, :nofile => true
-	input :snpFile, :file, "File containing known SNP", nil, :nofile => true
-	input :makePileup, :file, "SNP positions to create a mini pileup file from the initial BAM file provided in mateFileFolder", nil, :nofile => true
 	input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38s GRCh38 hs37d5), :nofile => true
-	input :captureRegions, :file, "List of Intervals for the capture regions", nil, :nofile => true
+	input :snpFile, :file, "File containing known SNP", nil, :nofile => true
+	input :intervals, :file, "List of Intervals for the capture regions", nil, :nofile => true
+  dep :BAM_pileup_sumaries_known_biallelic
   extension :vcf
-  task :control_freeC => :text do |outputDir, sample_mateFile, control_mateFile, snpFile, makePileup, reference, captureRegions|
-		output = (Pathname.new outputDir).relative? ? file(outputDir): outPutDir
-		FileUtils.mkdir_p output
+  task :control_freeC => :tsv do |sample_mateFile, control_mateFile, reference, snpFile, intervals|
+    output = file('output')
+    Open.mkdir output
 
-		referencePath = reference_file(reference)	
 
-    chrFilesPath = File.dirname(reference_file(reference)) + "s"
-    chrLenFilePath = referencePath + ".fai" 
+    snpFile = vcf_file reference, snpFile if snpFile
+    referencePath = BWA.prepare_FASTA(reference_file(reference))
+    makePileup = step(:BAM_pileup_sumaries_known_biallelic).path
+
+    chrFilesPath = HTS.unfold_FASTA(referencePath)
+
+    if intervals
+      new = file('reference.fai')
+      contigs = Open.read(intervals).split("\n").collect{|l| l.split("\t").first}.uniq
+      Open.open(new, :mode => 'w') do |fout|
+        TSV.traverse referencePath + ".fai",  :type => :array do |line|
+          parts = line.split("\t")
+          next unless contigs.include? parts.first
+          fout.puts line
+        end
+      end
+      chrLenFilePath = new
+    else
+      chrLenFilePath = referencePath + ".fai" 
+    end
+
+    sex = 'XX'
 
     script = <<-EOF
 [general]
@@ -30,10 +48,10 @@ ploidy = 2
 outputDir = #{output}
 maxThreads = 48
 minimalSubclonePresence = 30
-sex=XY
+sex=#{sex}
 breakPointType=2
 breakPointThreshold=0.8
-noisyData=TRUE
+noisyData=FALSE
 printNA=FALSE
 readCountThreshold=50
 
@@ -58,18 +76,22 @@ fastaFile = #{referencePath}
 
 [target]
 
-captureRegions = #{captureRegions}
+captureRegions = #{intervals}
 		EOF
 		
     IO::write(output + "/config_file.txt", script)
     ControlFREEC.run(output + "/config_file.txt")
-    "DONE"
+    result = output.glob("*.bam_ratio.txt").first
+    TSV.open result, :type => :list, :header_hash => '', :key_field => 'Gene'
   end
 
   dep :control_freeC
   extension :png
-  task :plot_freec_results => :binary do
-    output = step(:control_freeC)
-    ControlFREEC.makegraphs(output)
+  task :plot_freec_results => :string do
+    output = file('output')
+    input = step(:control_freeC).file('output')
+    ControlFREEC.makegraphs(input, output)
+    Open.cp output.glob("*.bam_ratio.txt.png").first, self.tmp_path
+    nil
   end
 end

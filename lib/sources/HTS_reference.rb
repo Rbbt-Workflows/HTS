@@ -28,6 +28,30 @@ module HTS
     end
   end
 
+  def self.unfold_FASTA(file, dir = nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+    digest = Misc.file2md5(file)
+    basename = File.basename(file)
+
+    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+
+    dir = linked + ".by_contig"
+    if ! File.exists?(dir) || Persist.newer?(dir, file)
+      Open.mkdir dir
+      Misc.in_dir dir do
+        CMD.cmd_log(CMD.bash("awk '/^>chr/ {OUT=substr(\\$1,2) \".fa\"}; {print >> OUT; close(OUT)}' #{CMD.gzip_pipe(linked)}"))
+      end
+    end
+
+    dir
+  end
+
   def self.gtf_file(organism)
     reference, organism = [organism, Organism.organism_for_build(organism)] if %w(hg19 hg38 b37).include? organism
 
@@ -54,7 +78,7 @@ module HTS
 
     if ! File.exists?(linked + ".fixed.gtf") || Persist.newer?(linked + '.fixed.gtf', file)
       Open.open(linked) do |sout|
-        Open.open(linked + '.fixed.gtf') do |sin|
+        Open.open(linked + '.fixed.gtf', :mode => 'w') do |sin|
           TSV.traverse sout, :into => sin do |line|
             if line =~ /^[0-9A-Z]/
               'chr' << line

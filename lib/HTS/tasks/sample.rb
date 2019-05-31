@@ -5,8 +5,27 @@ module Sample
                         study_files = {}
                         Sample.all_studies.each do |study|
                           dir = Sample.study_dir study
-
                           sample_files = {}
+
+                          dir.glob('genotypes/*').each do |path|
+                            file = File.basename path
+                            sample = file.split(".").first
+
+                            if File.directory?(path)
+                              vcf_files = path.glob("*.vcf.*")
+                              if vcf_files.any?
+                                sample_files[sample] ||= {}
+                                sample_files[sample]["VCF"] = vcf_files
+                              end
+                            else
+                              if path =~ /\.vcf*/
+                                sample_files[sample] ||= {}
+                                sample_files[sample]["VCF"] ||= []
+                                sample_files[sample]["VCF"] << [path]
+                              end
+                            end
+                          end
+
                           dir.glob('WES/*').each do |path|
                             file = File.basename path
                             sample = file.split(".").first
