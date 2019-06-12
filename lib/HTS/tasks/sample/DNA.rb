@@ -44,11 +44,11 @@ module Sample
     sample_study = Sample.sample_study(sample)
     [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
       nsample = normal_sample
+      
       sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
       break if sample_files
     end
 
-    raise "Normal sample for #{ sample } not found" if sample_files.nil?
     {:inputs => options, :jobname => nsample} if sample_files
   end
 
@@ -116,8 +116,13 @@ module Sample
     end
   end
 
-  dep :BAM
-  dep_task :haplotype, HTS, :haplotype, :BAM => :BAM
+  dep :BAM, :compute => [:produce, :canfail]
+  dep :BAM_normal, :compute => [:produce, :canfail]
+  dep_task :haplotype, HTS, :haplotype, :BAM => :BAM_normal do |jobname, options, dependencies|
+    options = add_sample_options jobname, options
+    options[:BAM] = :BAM if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.first.nil?
+    {:inputs => options, :jobname => jobname}
+  end
 
   dep :strelka, :compute => :bootstrap do |jobname, options|
     %w(strelka varscan mutect2 somatic_sniper muse).collect do |var_caller|
@@ -157,29 +162,29 @@ module Sample
   end
 
   input :caller, :select, "Caller to use", :mutect2, :select_options => CALLERS
-  dep :mutect2 do |jobname,options|
-    vcaller = options[:caller]
-    {:task => vcaller, :jobname => jobname, :inputs => options}
-  end
-  dep_task :HTS_genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :mutect2 do |jobname,options|
-    vcaller = options[:caller]
-    options[:vcf_file] = vcaller.to_sym
-    {:task => :genomic_mutations, :workflow => Sequence, :jobname => jobname, :inputs => options}
-  end
-
-  Sample.import_task Sample, :genomic_mutations, :orig_genomic_mutations
-
-  dep :HTS_genomic_mutations do |jobname,options,dependencies|
-    sample_files = Sample.sample_files jobname
+  dep Sample, :mutect2 do |sample,options|
+    sample_files = Sample.sample_files sample
     if sample_files.include? "VCF"
-      {:task => :orig_genomic_mutations, :inputs => options, :jobname => jobname}
+      nil
     else
-      {:task => :HTS_genomic_mutations, :inputs => options, :jobname => jobname}
+      {:task => :HTS_genomic_mutations, :inputs => options, :jobname => sample}
+      vcaller = options[:caller]
+      options[:vcf_file] = vcaller.to_sym
+      {:task => vcaller, :jobname => sample, :inputs => options}
     end
   end
-  task :genomic_mutations => :array do
-    TSV.get_stream dependencies.select{|dep| dep.done?}.first
+  extension "vcf"
+  task :vcf_file => :text do 
+    sample_files = Sample.sample_files self.clean_name
+    if sample_files.include? "VCF"
+      TSV.get_stream sample_files["VCF"].first
+    else
+      TSV.get_stream dependencies.first.path
+    end
   end
+
+  dep :vcf_file 
+  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :vcf_file 
 
   #{{{
 

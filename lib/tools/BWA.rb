@@ -1,10 +1,11 @@
 require 'rbbt-util'
 require 'rbbt/resource'
 require 'tools/samtools'
+require 'rbbt/sources/organism'
 
 module BWA
   extend Resource
-  self.subdir = 'share/databases/BWA'
+  self.subdir = 'organism/databases/BWA'
 
   #def self.organism(org="Hsa")
   #  Organism.default_code(org)
@@ -33,7 +34,7 @@ module BWA
 
       Misc.in_dir dir do
         FileUtils.ln_s file, linked unless File.exists?(linked)
-        FileUtils.ln_s file + '.alt', linked + '.alt' unless File.exists?(linked + '.alt')
+        FileUtils.ln_s file + '.alt', linked + '.alt' if File.exists?(file + '.alt') || ! File.exists?(linked + '.alt') 
         CMD.cmd("'#{BWA_CMD}' index '#{ linked }'")
       end
     end
@@ -45,7 +46,7 @@ module BWA
 
   BWA_CMD = Rbbt.software.opt.BWA.produce.bwa.find
 
-  BWA.claim BWA.references.hg19["hg19.fa"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg19["hg19.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
     TmpFile.with_file do |directory|
@@ -65,7 +66,7 @@ module BWA
     nil
   end
 
-  BWA.claim BWA.references.b37["b37.fa"], :proc do |target|
+  Organism.claim Organism["Hsa"].b37["b37.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/human_g1k_v37_decoy.fasta.gz"
@@ -81,15 +82,17 @@ module BWA
     nil
   end
  
-  BWA.claim BWA.references.hg38["hg38.fa"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38["hg38.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
     CMD.cmd("wget '#{url}' -O #{target}")
+    url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt"
+    CMD.cmd("wget '#{url}' -O #{target}.alt")
     nil
   end
 
-  BWA.claim BWA.references.hs37d5["hs37d5.fa"], :proc do |target|
+  Organism.claim Organism["Hsa"].hs37d5["hs37d5.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "https://storage.googleapis.com/genomics-public-data/references/hs37d5/hs37d5.fa.gz"
@@ -102,6 +105,13 @@ module BWA
       end
       CMD.cmd("#{Samtools::samtools_cmd} faidx #{target}")
     end
+    nil
+  end
+
+  Organism.claim Organism["Mmu"].GRCm38["GRCm38.fa"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://ftp.ensembl.org/pub/release-96/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz"
+    CMD.cmd("wget '#{url}' -O #{target}.gz")
     nil
   end
 end

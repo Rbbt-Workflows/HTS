@@ -11,7 +11,7 @@ options = SOPT.setup <<EOF
 
 Bootstrap HTS samples
 
-$ #{$0} [options] <Study> <task>
+$ #{$0} [options] <Study> <task> [<sample> ...]
 
 -h--help Print this help
 -nf--no_fail Keep going even if a job fails
@@ -26,7 +26,7 @@ if options[:help]
   exit 0
 end
 
-study, task = ARGV
+study, task, *samples = ARGV
 study ||= "QUINTANA"
 task ||= "mutect2"
 
@@ -44,7 +44,7 @@ HTS.workdir = workdir
 
 study_files  = Sample.load_study_files[study]
 
-samples = study_files.keys.reject{|s| s.to_s =~ /normal$/}
+samples = study_files.keys.reject{|s| s.to_s =~ /normal$/} if samples.empty?
 
 TSV.traverse samples, :bar => "Bootstrapping samples" do |sample|
   Open.mkdir workdir

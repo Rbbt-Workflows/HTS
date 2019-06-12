@@ -73,24 +73,26 @@ module HTS
 
     dir = Rbbt.var.gtf_files[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
+    Open.mkdir dir
 
     linked = dir[basename].find
+    Open.ln_s file, linked
 
     if ! File.exists?(linked + ".fixed.gtf") || Persist.newer?(linked + '.fixed.gtf', file)
       Open.open(linked) do |sout|
         Open.open(linked + '.fixed.gtf', :mode => 'w') do |sin|
-          TSV.traverse sout, :into => sin do |line|
+          TSV.traverse sout, :type => :array do |line|
             if line =~ /^[0-9A-Z]/
-              'chr' << line
+              sin.puts 'chr' << line
             else 
-              line
+              sin.puts line
             end
           end
         end
       end
     end
 
-    linked + 'fixed.gtf'
+    linked + '.fixed.gtf'
   end
 
 end

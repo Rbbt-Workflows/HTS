@@ -41,6 +41,8 @@ module HTS
     case reference
     when 'hg19', 'hg38', 'b37', 'hs37d5'
       Organism["Hsa"][reference][reference + ".fa"].produce.find
+    when 'mm10', 'GRCm38'
+      Organism["Mmu"].GRCm38["GRCm38.fa"].produce.find
     else
       reference
     end
@@ -287,6 +289,7 @@ module HTS
 end
 
 require 'HTS/tasks/BAM'
+require 'HTS/tasks/RNASeq'
 require 'HTS/tasks/sequenza'
 require 'HTS/tasks/CNV'
 require 'HTS/tasks/VCF'

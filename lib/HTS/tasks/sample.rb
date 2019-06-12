@@ -21,7 +21,7 @@ module Sample
                               if path =~ /\.vcf*/
                                 sample_files[sample] ||= {}
                                 sample_files[sample]["VCF"] ||= []
-                                sample_files[sample]["VCF"] << [path]
+                                sample_files[sample]["VCF"] << path
                               end
                             end
                           end

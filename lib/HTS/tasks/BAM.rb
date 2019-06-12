@@ -147,7 +147,6 @@ module HTS
 
     reference = reference_file self.recursive_inputs[:reference]
     reference = GATK.prepare_FASTA reference
-    reference_code = self.recursive_inputs[:reference]
 
     args = {}
     args["reference"] = reference

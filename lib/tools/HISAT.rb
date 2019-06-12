@@ -15,7 +15,7 @@ module HISAT
   Rbbt.claim Rbbt.software.opt.HISAT, :install, Rbbt.share.install.software.HISAT.find
 
 
-  def self.build_gft_index(organism, reference, cpus = nil)
+  def self.build_gft_index(organism, cpus = nil)
     cpus ||= Rbbt::Config.get("cpus", :hisat_build, :hisat)
 
     file = HTS.gtf_file(organism)
@@ -27,12 +27,26 @@ module HISAT
     digest = Misc.file2md5(file)
     basename = File.basename(file)
 
+    reference = case Organism.hg_build(organism)
+                when 'hg19'
+                  'b37'
+                when 'hg38'
+                  'hg38'
+                end
+
+    reference = HTS.helpers[:reference_file].call(reference) 
+
+    reference = GATK.prepare_FASTA reference
+    reference = Samtools.prepare_FASTA reference
+    reference = HTS.uncompress_FASTA reference
+
+
     dir = Rbbt.var.HISAT_indices[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
 
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".idx") || Persist.newer?(linked + '.idx', file)
+    if ! File.exists?(linked + ".idx.1.ht2") || Persist.newer?(linked + '.idx.1.ht2', file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
