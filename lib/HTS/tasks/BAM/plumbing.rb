@@ -71,11 +71,9 @@ module HTS
       args["OUTPUT_BY_READGROUP"] = "false"
     end
     
-    args["SANITIZE"] = "false"
+    args["SANITIZE"] = "true"
     args["MAX_DISCARD_FRACTION"] = "0.005"
-    args["ATTRIBUTE_TO_CLEAR"] = "XA"
-    args["ATTRIBUTE_TO_CLEAR"] = "BD"
-    args["ATTRIBUTE_TO_CLEAR"] = "BI"
+    args["ATTRIBUTE_TO_CLEAR"] = ["XA", "BD", "XS", "BI"]
     args["SORT_ORDER"] = "queryname"
     args["RESTORE_ORIGINAL_QUALITIES"] = "true"
     args["REMOVE_DUPLICATE_INFORMATION"] = "true"
