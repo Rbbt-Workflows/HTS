@@ -16,7 +16,6 @@ module HTS
     af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
     germline_resource = vcf_file reference, germline_resource if germline_resource
     germline_resource = GATK.prepare_VCF_AF_only germline_resource if germline_resource
-
     pon = GATK.prepare_VCF_AF_only pon if pon
 
     reference = reference_file reference
@@ -65,6 +64,7 @@ module HTS
       contentvcf_stats = file('tmp.content.stats')
       tmp_stats = file('tmp.stats')
       args["intervals"] ||= nil
+      args["bam-output"] = nil
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing Mutect2 sharded")
 
@@ -102,13 +102,13 @@ module HTS
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   dep :mutect2_pre
-  dep :contamination, :BAM => :normal, :compute => true do |jobname,options,dependencies|
+  dep :contamination, :BAM => :normal, :compute => :canfail do |jobname,options,dependencies|
     if options[:normal]
       options[:BAM] = options[:normal]
       {:inputs => options}
     end
   end
-  dep :contamination, :BAM => :tumor do |jobname,options,dependencies|
+  dep :contamination, :BAM => :tumor, :compute => :canfail do |jobname,options,dependencies|
     matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination}.first
     options[:matched] = matched_dep.step(:BAM_pileup_sumaries).path if matched_dep
     options[:BAM] = options[:tumor]
@@ -131,14 +131,15 @@ module HTS
     args = {}
 
     contamination = dependencies.select{|dep| dep.task_name.to_sym == :contamination}.last
+    contamination = nil if contamination.error?
 
     args["variant"] = tmp
     args["output"] = self.tmp_path
     args["reference"] = reference
     args["--orientation-bias-artifact-priors"] = step(:BAM_orientation_model).path
-    if step(:contamination).path.read.include? "NaN"
+    if contamination.nil? || contamination.path.read.include?("NaN")
       set_info :missing_contamination, true
-      Log.warn "NaN in contamination file: #{Log.color :blue, self.path}"
+      Log.warn "NaN in contamination file or file missing: #{Log.color :blue, self.path}"
     else
       args["tumor-segmentation"] = contamination.file('segments.tsv')
       args["contamination-table"] = contamination.path

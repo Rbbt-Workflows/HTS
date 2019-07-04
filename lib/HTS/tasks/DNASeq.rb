@@ -1,0 +1,5 @@
+require 'HTS/tasks/DNASeq/BAM'
+require 'HTS/tasks/DNASeq/plumbing'
+require 'HTS/tasks/DNASeq/other_aligners'
+require 'HTS/tasks/DNASeq/util'
+require 'HTS/tasks/DNASeq/filter'

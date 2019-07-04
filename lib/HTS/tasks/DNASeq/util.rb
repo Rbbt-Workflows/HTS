@@ -3,7 +3,13 @@ module HTS
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
   extension :vcf
   task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
-    variants_file = vcf_file reference, "1000g_snps"
+    case reference.sub('_noalt','')
+    when 'b37', 'hg19', 'hg38', 'GRCh38'
+      variants_file = vcf_file reference, "1000g_snps"
+    when 'mm10', 'GRCm38'
+      raise RbbtException, "No Pileup Summaries for mouse"
+      variants_file = vcf_file reference, "mm10_variation"
+    end
 
     variants_file = GATK.prepare_VCF_AF_only variants_file
 
@@ -32,7 +38,11 @@ module HTS
     args["output"] = self.tmp_path
     args["intervals"] = interval_list ? interval_list : variants_file
     args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
-    GATK.run_log("GetPileupSummaries", args)
+    begin
+      GATK.run_log("GetPileupSummaries", args)
+    rescue ProcessFailed
+      raise RbbtException, "GetPileupSummaries failed"
+    end
     nil
   end
 

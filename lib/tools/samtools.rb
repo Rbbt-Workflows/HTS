@@ -87,6 +87,12 @@ module Samtools
   def self.reference_contigs(reference)
     Open.read(reference + '.fai').split("\n").collect{|line| line.split("\t").first}
   end
+
+  def self.bam_contigs(bam)
+    bam = bam.path if Step === bam
+    bam = bam.find if Path === bam
+    CMD.cmd("samtools view -H '#{bam}' | grep ^@SQ | cut -f 2 |sed 's/SN://'").read.split("\n")
+  end
 end
 
 if __FILE__ == $0

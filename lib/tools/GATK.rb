@@ -1,6 +1,7 @@
 require 'rbbt-util'
 require 'rbbt/resource'
 require 'rbbt/workflow'
+require 'rbbt/sources/organism'
 
 Workflow.require_workflow "DbSNP"
 module GATK
@@ -85,7 +86,11 @@ module GATK
           Open.write(linked + '.tmp') do |fout|
             TSV.traverse file, :type => :array do |line|
               out = if line[0] == "#"
-                      line
+                      if line =~ /^#CHROM/
+                        "##INFO=<ID=NOINFO,Number=0,Type=Flag,Description=\"\">" + "\n" + line
+                      else
+                        line
+                      end
                     else
                       parts = line.split("\t", -1)
                       info = parts[7].split(";").select{|f| %w(AC AF CAF).include? f.split("=").first } * ";"
@@ -141,66 +146,66 @@ module GATK
   end
 
   
-  GATK.claim GATK.known_sites.hg38["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hg38["1000G_phase1.indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38.known_sites["1000G_phase1.indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/1000G_omni2.5.hg38.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hg38["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38.known_sites["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/1000G_phase1.snps.high_confidence.hg38.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-	GATK.claim GATK.known_sites.hg38["af-only-gnomad.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38.known_sites["af-only-gnomad.vcf.gz"], :proc do |target|
 		url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/Mutect2/af-only-gnomad.hg38.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hg38["dbsnp_146.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38.known_sites["dbsnp_146.vcf.gz"], :proc do |target|
 		url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/dbsnp_146.hg38.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
   # -- Claims for b37
   
-  GATK.claim GATK.known_sites.b37["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].b37.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.b37["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].b37.known_sites["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.b37["1000G_phase1.indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].b37.known_sites["1000G_phase1.indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.indels.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-	GATK.claim GATK.known_sites.b37["af-only-gnomad.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].b37.known_sites["af-only-gnomad.vcf.gz"], :proc do |target|
 		url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/Mutect2/af-only-gnomad.raw.sites.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.b37["dbsnp_138.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].b37.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
   # -- Claims for hg19
 
-  GATK.claim GATK.known_sites.hg19["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg19.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hg19["dbsnp_138.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg19.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf.gz"
     GATK.get_VCF(url, target)
   end
@@ -208,18 +213,30 @@ module GATK
 
 #-- Claims for  hs37d5
 
-  GATK.claim GATK.known_sites.hs37d5["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hs37d5.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hs37d5["1000G_phase1.indels.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hs37d5.known_sites["1000G_phase1.indels.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
-  GATK.claim GATK.known_sites.hs37d5["dbsnp_138.vcf.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hs37d5.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz"
+    GATK.get_VCF(url, target)
+  end
+
+  # -- Claims for mm10
+
+  Organism.claim Organism["Mmu"].GRCm38.known_sites["Ensembl.vcf.gz"], :proc do |target|
+    url = "ftp://ftp.ensembl.org/pub/release-96/variation/vcf/mus_musculus/mus_musculus.vcf.gz"
+    GATK.get_VCF(url, target)
+  end
+
+  Organism.claim Organism["Mmu"].GRCm38.known_sites["Ensembl.structural.vcf.gz"], :proc do |target|
+    url = "ftp://ftp.ensembl.org/pub/release-96/variation/vcf/mus_musculus/mus_musculus_structural_variations.vcf.gz"
     GATK.get_VCF(url, target)
   end
 

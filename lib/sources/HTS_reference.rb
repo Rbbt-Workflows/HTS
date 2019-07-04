@@ -53,15 +53,16 @@ module HTS
   end
 
   def self.gtf_file(organism)
-    reference, organism = [organism, Organism.organism_for_build(organism)] if %w(hg19 hg38 b37).include? organism
+    reference, organism = [organism, nil] if %w(hg19 hg38 b37 mm10).include?(organism)
 
     reference = case Organism.hg_build(organism)
                 when 'hg19'
                   'b37'
-                when 'hg38'
-                  'hg38'
+                else
+                  Organism.hg_build(organism)
                 end if reference.nil?
 
+    organism = Organism.organism_for_build(reference) if organism.nil?
     file = Organism.gene_set(organism).produce.find
 
     return file unless reference == "hg38"
@@ -101,11 +102,27 @@ module Organism
 
   # -- Claims for hg38
   
-  Organism.claim Organism["Hsa"].hg38["hg38.fa"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38_noalt["hg38_noalt.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
+    url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/hg38.analysisSet.chroms.tar.gz"
+    TmpFile.with_file do |tmpdir|
+      Open.mkdir tmpdir
+      Misc.in_dir(tmpdir) do
+        CMD.cmd_log("wget '#{url}' -O file.tar.gz; tar xvfz file.tar.gz")
+        CMD.cmd("cat */*.fa | bgzip > #{target}.gz")
+      end
+    end
+    nil
+  end
+
+  Organism.claim Organism["Hsa"].hg38["hg38.fa"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
-    CMD.cmd("wget '#{url}' -O #{target}")
+    target.sub!(/\.gz$/,'')
+    CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")
+    url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt"
+    CMD.cmd_log("wget '#{url}' -O #{target}.alt")
     nil
   end
 
@@ -140,7 +157,7 @@ module Organism
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/human_g1k_v37_decoy.fasta.gz"
-    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
+    CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
     nil
   end
  
@@ -176,7 +193,7 @@ module Organism
     url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
     TmpFile.with_file do |directory|
       Misc.in_dir directory do
-        CMD.cmd("wget '#{url}' -O - | tar xvfz -")
+        CMD.cmd_log("wget '#{url}' -O - | tar xvfz -")
         CMD.cmd("cat *.fz > '#{target}' ")
       end
     end
@@ -199,7 +216,7 @@ module Organism
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "https://storage.googleapis.com/genomics-public-data/references/hs37d5/hs37d5.fa.gz"
-    CMD.cmd("wget '#{url}' -O  - | gunzip -c > #{target}")
+    CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
     nil
   end
 
@@ -218,4 +235,13 @@ module Organism
     GATK.get_VCF(url, target)
   end
 
+  # -- Claims for  hs37d5
+  
+  Organism.claim Organism["Mmu"].GRCm38["GRCm38.fa"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://ftp.ensembl.org/pub/release-96/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz"
+    target.sub!(/\.gz$/,'')
+    CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")
+    nil
+  end
 end

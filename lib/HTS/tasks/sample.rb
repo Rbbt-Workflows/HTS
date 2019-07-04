@@ -1,5 +1,15 @@
 module Sample
 
+  class << self
+    alias original_task_info task_info
+
+    def task_info(*args)
+      info = original_task_info(*args)
+      info[:input_defaults] = {}
+      info
+    end
+  end
+
   def self.load_study_files_DNA
     @@study_files_DNA ||= begin
                         study_files = {}
@@ -221,6 +231,7 @@ module Sample
     end
 
     options = {}
+    IndiferentHash.setup options
     load_study_files.each do |study, sample_files|
       next if sstudy && study.to_s != sstudy.to_s
       next unless sstudy || Sample.sample_study(sample) == study

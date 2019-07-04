@@ -13,6 +13,7 @@ require 'tools/control_FREEC'
 require 'tools/svABA'
 require 'tools/stringTie'
 require 'tools/HISAT'
+require 'tools/STAR'
 #require 'tools/pfff'
 require 'sources/HTS_reference'
 
@@ -38,7 +39,7 @@ module HTS
 
   helper :reference_file do |reference|
     reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
-    case reference
+    case reference.sub('_noalt','')
     when 'hg19', 'hg38', 'b37', 'hs37d5'
       Organism["Hsa"][reference][reference + ".fa"].produce.find
     when 'mm10', 'GRCm38'
@@ -49,28 +50,42 @@ module HTS
   end
 
   helper :vcf_file do |reference, file|
-    reference = reference.scan(/(?:b37|hg19|hg38)/).first 
+    reference = reference.scan(/(?:b37|hg19|hg38|mm10|GRCm38|GRCh38)(?:_noalt)?/).first 
     file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
 
-    case file.to_s.downcase
-    when 'miller_indels', 'miller'
-      Organism["Hsa"][reference].known_sites["Miller_1000G_indels.vcf.gz"].produce.find
-    when '1000g_indels'
-      Organism["Hsa"][reference].known_sites["1000G_phase1.indels.vcf.gz"].produce.find
-    when '1000g_snps_hc', '1000g_snps', '1000g'
-      Organism["Hsa"][reference].known_sites["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
-    when 'gnomad'
-      Organism["Hsa"][reference].known_sites["af-only-gnomad.vcf.gz"].produce.find
-    when 'dbsnp'
-      if reference == "hg38"
-        Organism["Hsa"][reference].known_sites["dbsnp_146.vcf.gz"].produce.find
+    reference = reference.sub('_noalt','')
+
+    case reference
+    when 'b37', 'hg19', 'hg38', 'GRCh38'
+      case file.to_s.downcase
+      when 'miller_indels', 'miller'
+        Organism["Hsa"][reference].known_sites["Miller_1000G_indels.vcf.gz"].produce.find
+      when '1000g_indels'
+        Organism["Hsa"][reference].known_sites["1000G_phase1.indels.vcf.gz"].produce.find
+      when '1000g_snps_hc', '1000g_snps', '1000g'
+        Organism["Hsa"][reference].known_sites["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
+      when 'gnomad'
+        Organism["Hsa"][reference].known_sites["af-only-gnomad.vcf.gz"].produce.find
+      when 'dbsnp'
+        if reference =~ /hg38/
+          Organism["Hsa"][reference].known_sites["dbsnp_146.vcf.gz"].produce.find
+        else
+          Organism["Hsa"][reference].known_sites["dbsnp_138.vcf.gz"].produce.find
+        end
       else
-        Organism["Hsa"][reference].known_sites["dbsnp_138.vcf.gz"].produce.find
+        Open.exists?(file.to_s) ? file : nil
       end
-    when 'none'
-      nil
-    else
-      file
+    when 'mm10', 'GRCm38'
+      case file.to_s.downcase
+      when 'mm10_variation', 'grcm38_variation'
+        Organism["Mmu"]['GRCm38'].known_sites["Ensembl.vcf.gz"].produce.find
+      when 'mm10_structural', 'grcm38_variation'
+        Organism["Mmu"]['GRCm38'].known_sites["Ensembl.structural.vcf.gz"].produce.find
+      when 'none'
+        nil
+      else
+        Open.exists?(file.to_s) ? file : nil
+      end
     end
   end
 
@@ -212,8 +227,8 @@ module HTS
   helper :fix_file_for_spark do |file|
     if String === file and File.exists?(file) and file.include?(":")
       new_file = TmpFile.tmp_file
-      extension = File.basename(file).split(".")[1]
-      new_file << "." << extension if extension and extension.length <= 4
+      extension = Path.get_extension(file)
+      new_file << "." << extension if extension 
       Open.mkdir File.dirname(new_file)
       Open.ln_s file, new_file
       new_file
@@ -288,7 +303,7 @@ module HTS
 
 end
 
-require 'HTS/tasks/BAM'
+require 'HTS/tasks/DNASeq'
 require 'HTS/tasks/RNASeq'
 require 'HTS/tasks/sequenza'
 require 'HTS/tasks/CNV'

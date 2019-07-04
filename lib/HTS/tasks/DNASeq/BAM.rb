@@ -74,7 +74,7 @@ module HTS
           end
         end
 
-        bwa_mem_args += " -t " << config('cpus', 'bwa', :default => 8) 
+        bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1")
         io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
         Misc.consume_stream io_bwa, true, bwa_bam
 
@@ -155,10 +155,18 @@ module HTS
     args["output"] = file('recal_data.table')
 
     known_sites = [] 
-    ["miller_indels", "dbsnp", "1000G_indels"].each do |file|
+    known_site_codes = if reference.include?('mm10') || reference.include?('GRCm38')
+                    ["mm10_variation", "mm10_structural"]
+                  else
+                    ["miller_indels", "dbsnp", "1000G_indels"]
+                  end
+    known_site_codes.each do |file|
       vcf = vcf_file reference, file
+      next if vcf.nil?
+      vcf = GATK.prepare_VCF vcf 
       known_sites << vcf
     end
+
     args["known-sites"] = known_sites
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
@@ -166,7 +174,7 @@ module HTS
     #{{{ Recalibration
     shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
     if shard == 'true'
-      contigs = Samtools.reference_contigs reference
+      contigs = Samtools.bam_contigs(step(:BAM_sorted))
       bam_file = Samtools.prepare_BAM(step(:BAM_sorted))
       args["input"] = bam_file
 
@@ -209,7 +217,7 @@ module HTS
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
     if shard == 'true'
-      contigs = Samtools.reference_contigs reference
+      contigs = Samtools.bam_contigs(step(:BAM_sorted))
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
@@ -230,7 +238,6 @@ module HTS
       end
       bar.remove 
 
-      contigs = Samtools.reference_contigs reference
       sorted_parts = outfiles.glob("*.bam").sort{|a,b| Misc.genomic_location_cmp_contigs(File.basename(a).split(",").first, File.basename(b).split(",").first, contigs, '__')}
 
       args = {}
@@ -256,7 +263,3 @@ module HTS
   dep_task :BAM, HTS, :BAM_rescore
 end
 
-require 'HTS/tasks/BAM/plumbing'
-require 'HTS/tasks/BAM/other_aligners'
-require 'HTS/tasks/BAM/util'
-require 'HTS/tasks/BAM/filter'

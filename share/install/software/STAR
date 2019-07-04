@@ -1,0 +1,7 @@
+#!/bin/bash
+
+name='STAR'
+url="https://github.com/alexdobin/STAR.git"
+
+install_git "$name" "$url" 
+ln -s "$(opt_dir $name)/source/STAR" $OPT_DIR/bin/STAR

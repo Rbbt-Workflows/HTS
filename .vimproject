@@ -21,6 +21,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    control_FREEC.rb
    stringTie.rb
    HISAT.rb
+   STAR.rb
    svABA.rb
    pfff.rb
    Delly.rb
@@ -32,8 +33,14 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    CNV.rb
    sequenza.rb
    RNASeq.rb
-   BAM.rb
-   BAM=BAM{
+   RNASeq=RNASeq{
+    BAM.rb
+    salmon.rb
+    FuSeq.rb
+   }
+   DNASeq.rb
+   DNASeq=DNASeq{
+    BAM.rb
     filter.rb
     other_aligners.rb
     plumbing.rb
@@ -98,6 +105,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    bcftools
    StringTie
    HISAT
+   STAR
    pfff
    FuSeq
   }

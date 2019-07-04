@@ -32,6 +32,8 @@ module HISAT
                   'b37'
                 when 'hg38'
                   'hg38'
+                else
+                  Organism.hg_build(organism)
                 end
 
     reference = HTS.helpers[:reference_file].call(reference) 
