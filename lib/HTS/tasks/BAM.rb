@@ -157,7 +157,6 @@ module HTS
     known_sites = [] 
     ["miller_indels", "dbsnp", "1000G_indels"].each do |file|
       vcf = vcf_file reference, file
-      vcf = GATK.prepare_VCF_AF_only vcf
       known_sites << vcf
     end
     args["known-sites"] = known_sites
