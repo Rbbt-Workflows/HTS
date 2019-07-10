@@ -240,7 +240,11 @@ module Sample
       study_options = if File.directory? options_file
                         input_names = STUDY_OPTIONS.keys
                         input_types = STUDY_OPTIONS
-                        Workflow.load_inputs(options_file, input_names, input_types)
+                        options = Workflow.load_inputs(options_file, input_names, input_types)
+                        Dir.glob(File.join(options_file, "*#*")).each do |od|
+                          options[File.basename(od)] = od
+                        end
+                        options 
                       else
                         YAML.load(options_file)
                       end
@@ -252,8 +256,19 @@ module Sample
   def self.add_sample_options(sample,options)
     options = Sample.sample_options(sample).merge(options)
     options = Sample.study_options(sample).merge(options)
+    load_sample_workflow(sample)
     IndiferentHash.setup options
     options
+  end
+
+  def self.load_study_workflow(study)
+    wf_file = Sample.study_dir(study)["workflow.rb"]
+    require wf_file.find if wf_file.exists?
+  end
+
+  def self.load_sample_workflow(sample)
+    study = sample_study(sample)
+    load_study_workflow(study)
   end
 
   task :organism => :string do
@@ -262,6 +277,7 @@ module Sample
     options[:organism] || Organism.organism_for_build(options[:reference] || 'b37') || Organism.default_code("Hsa")
   end
 
+  CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
 end
 
 require 'HTS/tasks/sample/DNA'

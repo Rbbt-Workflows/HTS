@@ -56,7 +56,6 @@ module Sample
 
   #{{{ genomic_mutations and variant callers
   
-  CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
   {
     :strelka => :strelka,
     :varscan => :varscan_somatic,
@@ -238,5 +237,7 @@ module Sample
     end
   end
 
+  dep :vcf_file
+  dep_task :expanded_vcf, Sequence, :expanded_vcf, :vcf_file => :vcf_file
 
 end

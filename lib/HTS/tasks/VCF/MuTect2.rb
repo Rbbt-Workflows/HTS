@@ -162,20 +162,6 @@ module HTS
     end
   end
 
-  #dep :BAM_artifact_metrics, :compute => :bootstrap
-  #dep :mutect2_clean, :compute => :bootstrap
-  #extension :vcf
-  #task :mutect2_orientation_bias => :text do
-  #  FileUtils.mkdir_p files_dir
-  #  args = {}
-
-  #  args["-P"] = step(:BAM_artifact_metrics).path
-  #  args["-V"] = step(:mutect2_clean).join.path
-  #  args["-O"] = self.tmp_path
-  #  gatk("FilterByOrientationBias", args)
-  #  nil
-  #end
-
   extension :vcf
   dep_task :mutect2, HTS, :mutect2_clean
 

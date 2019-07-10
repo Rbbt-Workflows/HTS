@@ -125,7 +125,6 @@ module Sample
     {:inputs => options, :jobname => nsample} if sample_files
   end
 
-  CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
   {
     :strelka => :strelka,
     :varscan => :varscan_somatic,
@@ -188,5 +187,9 @@ module Sample
       {:inputs => options}
     end
   end
+
+  dep :RNA_mutect2
+  dep_task :expanded_vcf_RNA, Sequence, :expanded_vcf, :vcf_file => :RNA_mutect2
+
 
 end
