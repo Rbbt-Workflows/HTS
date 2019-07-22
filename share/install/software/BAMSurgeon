@@ -1,0 +1,8 @@
+#!/bin/bash
+
+name='BAMSurgeon'
+url="https://github.com/adamewing/bamsurgeon.git"
+
+get_git "$name" "$url"
+compile "$name"
+move_opt "$name"

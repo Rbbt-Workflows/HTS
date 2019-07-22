@@ -14,6 +14,7 @@ require 'tools/svABA'
 require 'tools/stringTie'
 require 'tools/HISAT'
 require 'tools/STAR'
+require 'tools/BAMSurgeon'
 #require 'tools/pfff'
 require 'sources/HTS_reference'
 
@@ -311,5 +312,5 @@ require 'HTS/tasks/VCF'
 require 'HTS/tasks/test'
 require 'HTS/tasks/RNASeq'
 require 'HTS/tasks/IGV'
-
+require 'HTS/tasks/BAMSurgeon'
 require 'HTS/tasks/sample' if defined? Sample
