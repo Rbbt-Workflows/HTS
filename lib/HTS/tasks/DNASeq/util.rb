@@ -60,7 +60,7 @@ module HTS
 
 
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
   extension 'pileup.gz'
   task :pileup => :text do |bam,reference|
     orig_reference = reference_file(reference)
@@ -113,7 +113,7 @@ module HTS
   end
 
   input :BAM, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
   extension "tar.gz"
   task :BAM_F1R2 => :binary do |bam,reference|
     args = {}
@@ -235,5 +235,42 @@ module HTS
 
     Open.cp File.join(outdir, "genome_results.txt"), self.tmp_path
     nil
+  end
+
+  input :BAM, :file, "BAM file", nil, :nofile => true
+  input :positions, :array, "Genomic position"
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
+  task :BAM_position_pileup => :tsv do |bam,positions,reference|
+    bam = Samtools.prepare_BAM(bam)
+    reference = reference_file reference
+    reference = GATK.prepare_FASTA reference
+    reference = Samtools.prepare_FASTA reference
+
+    Open.mkdir files_dir
+    output = file('output')
+    TmpFile.with_file nil, true, :extension => 'bed' do |intervals|
+      Open.write(intervals) do |file|
+        positions.each do |position|
+          chr, pos = position.split(":")
+          file.puts [chr, pos.to_i - 1, pos.to_i] * "\t"
+        end
+      end
+
+      args = {}
+      args["input"] = bam
+      args["reference"] = reference
+      args["intervals"] = intervals
+      args["output"] = output
+      GATK.run_log("CollectAllelicCounts", args)
+    end
+
+    tsv = TSV.setup({}, "Genomic Position~Alt count,Ref count,Alt,Ref#:type=:list")
+    TSV.traverse output, :type => :array, :into => tsv do |line|
+      next if line =~ /^(?:@|CONTIG)/ 
+      contig, pos, r_count, a_count, r, a = line.split("\t")
+    
+      position = [contig, pos] * ":"
+      [position, [a_count, r_count, a, r]]
+    end
   end
 end
