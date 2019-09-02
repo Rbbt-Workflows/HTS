@@ -7,6 +7,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    HTS_reference.rb
   }
   tools=tools{
+   BAMSurgeon.rb
    BWA.rb
    GATK.rb
    Bowtie.rb
