@@ -56,7 +56,7 @@ module HTS
   #end
 
 
-  input :bam_file, :binary, "Bam file"
+  input :bam_file, :binary, "Bam file", nil, :nofile => true
   input :by_group, :boolean, "Separate files by read-group", false
   task :revert_BAM => :binary do |bam_file,by_group|
     args = {}

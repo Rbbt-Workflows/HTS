@@ -56,7 +56,9 @@ module HTS
     i[:reference] = reference
     i[:procs] = config :cpus, :BAMSurgeon, :bamsurgeon, :bam_surgeon, :default => 1
 
-    BAMSurgeon.add_snvs(i)
+    Misc.in_dir file('workdir') do
+      BAMSurgeon.add_snvs(i)
+    end
     nil
   end
 
@@ -73,15 +75,12 @@ module HTS
   input :maxmuts, :float, "maximum number of mutations to make ", nil
   input :cnvfile, :file, "tabix-indexed list of genome-wide absolute copy number values", nil, :nofile => true
   input :aligner, :select, "aligner", "mem", :select_options => %w(mem backtrack novoalign gsnap STAR bowtie2 tmap bwakit), :nofile => true
-
   task :BAMSurgeon_add_struct_vars => :binary do |varfile,bamfile,outbam,reference,maxlibsize,kmer,svfrac,require_exact,minctglen,maxmuts,cnvfile,aligner|
-    if outbam.nil?
-      inputs[:outbam]= self.tmp_path
-    end
     reference = reference_file reference
     bam = Samtools.prepare_BAM(bam) if bam
     reference = Samtools.prepare_FASTA(reference)
-    inputs[:reference] = reference
-    BAMSurgeon.add_struct_vars(inputs)
+    i = inputs.to_hash
+    i[:reference] = reference
+    BAMSurgeon.add_struct_vars(i)
   end
 end
