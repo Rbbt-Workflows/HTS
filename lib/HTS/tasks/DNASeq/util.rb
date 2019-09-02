@@ -273,4 +273,19 @@ module HTS
       [position, [a_count, r_count, a, r]]
     end
   end
+
+  input :BAM, :file, "BAM file", nil, :nofile => true
+  extension :bam
+  task :sort_BAM => :binary do |bam|
+    Open.mkdir files_dir 
+    sorted = file('sorted.bam')
+    
+    args = {}
+    args["INPUT"] = bam
+    args["OUTPUT"] = sorted
+    args["SORT_ORDER"] = 'coordinate'
+    gatk("SortSam", args)
+    Open.mv sorted, self.path
+    nil
+  end
 end

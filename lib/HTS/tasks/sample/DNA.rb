@@ -240,4 +240,8 @@ module Sample
   dep :vcf_file
   dep_task :expanded_vcf, Sequence, :expanded_vcf, :vcf_file => :vcf_file
 
+
+  dep_task :plot_freec_results, HTS, :plot_freec_results
+
+
 end

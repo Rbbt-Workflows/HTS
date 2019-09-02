@@ -191,7 +191,7 @@ module Sample
   dep :RNA_mutect2
   dep_task :expanded_vcf_RNA, Sequence, :expanded_vcf, :vcf_file => :RNA_mutect2
 
-  dep_task :FuSeq, HTS, :FuSeq do |sample,options|
+  dep_task :FuSeq, HTS, :FuSeq_process do |sample,options|
     sample_files = Sample.sample_files sample
     raise "Sample #{ sample } not found" if sample_files.nil?
 

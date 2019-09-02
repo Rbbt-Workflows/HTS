@@ -85,14 +85,9 @@ module FuSeq
 
     sqlite = FuSeq.prepare_sqlite(gtf_file)
 
-    hg_build = case Organism.hg_build organism
-               when 'hg19'
-                 "GRCh37"
-               when 'hg38'
-                 "GRCh38"
-               end
+    grc_build = Organism.GRC_build organism
 
-    annot = Rbbt.software.opt.FuSeq.data.glob("*" << hg_build << "*").first
+    annot = Rbbt.software.opt.FuSeq.data.glob("*" << grc_build << "*").first
 
     Open.mkdir output
     params = Rbbt.software.opt.FuSeq.R["params.txt"].find

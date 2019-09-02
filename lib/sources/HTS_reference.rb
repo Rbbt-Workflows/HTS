@@ -45,7 +45,7 @@ module HTS
     if ! File.exists?(dir) || Persist.newer?(dir, file)
       Open.mkdir dir
       Misc.in_dir dir do
-        CMD.cmd_log(CMD.bash("awk '/^>chr/ {OUT=substr(\\$1,2) \".fa\"}; {print >> OUT; close(OUT)}' #{CMD.gzip_pipe(linked)}"))
+        CMD.cmd_log(CMD.bash("awk '/^>/ {OUT=substr(\\$1,2) \".fa\"}; {print >> OUT; close(OUT)}' #{CMD.gzip_pipe(linked)}"))
       end
     end
 
