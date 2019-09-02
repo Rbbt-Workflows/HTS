@@ -1,6 +1,7 @@
 require 'rbbt-util'
 require 'rbbt/workflow'
 require_relative '../tools/samtools'
+require 'pry'
 module Strelka
   # ToDo pull files out of directory
   
@@ -20,7 +21,7 @@ module Strelka
 
   def self.runSomatic(tumor, normal, reference, output, cpus = 3)
     cmd_config ="configureStrelkaSomaticWorkflow.py"
-
+    binding.pry
     if normal.nil?
       CMD.cmd_log("'#{ cmd_config }' --tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}'")
     else

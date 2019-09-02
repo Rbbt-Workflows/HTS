@@ -25,9 +25,10 @@ module HTS
 
     Open.mkdir files_dir
     int_fie = file('intermediate')
-    CMD.cmd_log("MuSE call -O #{int_fie} -f #{reference} #{tumor} #{normal}")
+    muse = Rbbt.software.opt.MuSE.MuSE.find
+    CMD.cmd_log("#{muse} call -O #{int_fie} -f #{reference} #{tumor} #{normal}")
 
-    CMD.cmd_log("MuSE sump -I #{int_fie}.MuSE.txt -E -D #{germline_resource} -O #{self.tmp_path}")
+    CMD.cmd_log("#{muse} sump -I #{int_fie}.MuSE.txt -E -O #{self.tmp_path}")
     nil
   end
 end

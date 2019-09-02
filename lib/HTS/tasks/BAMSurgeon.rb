@@ -12,7 +12,7 @@ module HTS
   input :coverdiff, :float, "allow difference in input and output coverage", 0.1
   input :procs, :float, "split into multiple processes", 1
   input :picardjar, :file, "path to picard.jar", nil, :nofile => true
-  input :mindepth, :float, "minimum read depth to make mutation", 10
+  input :mindepth, :string, "minimum read depth to make mutation", "10"
   input :maxdepth, :float, "maximum read depth to make mutation", 2000
   input :minmutreads, :float , "minimum number of mutated reads to output per site", nil
   input :avoidreads, :file, "file of read names to avoid (mutations will be skipped if overlap)", nil, :nofile => true
@@ -26,6 +26,7 @@ module HTS
     bam = Samtools.prepare_BAM(bam) if bam
     reference = Samtools.prepare_FASTA(reference)
     inputs[:reference] = reference
+    iii inputs.to_hash
     BAMSurgeon.add_indels(inputs)
   end
 
@@ -41,7 +42,7 @@ module HTS
   input :haplosize, :float, "haplotype size", 0
   input :procs, :float, "split into multiple processes", 1
   input :picardjar, :file, "path to picard.jar", nil, :nofile => true
-  input :mindepth, :float, "minimum read depth to make mutation", 10
+  input :mindepth, :integer, "minimum read depth to make mutation", 10
   input :maxdepth, :float, "maximum read depth to make mutation", 2000
   input :minmutreads, :float , "minimum number of mutated reads to output per site", nil
   input :avoidreads, :file, "file of read names to avoid (mutations will be skipped if overlap)", nil, :nofile => true

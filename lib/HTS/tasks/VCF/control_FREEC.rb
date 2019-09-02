@@ -8,9 +8,10 @@ module HTS
 	input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38s GRCh38 hs37d5), :nofile => true
 	input :snpFile, :file, "File containing known SNP", nil, :nofile => true
 	input :intervals, :file, "List of Intervals for the capture regions", nil, :nofile => true
+    input :mate_orientation,:string, "0 (for single ends), RF (Illumina mate-pairs), FR (Illumina paired-ends), FF (SOLiD mate-pairs)" "FR" 
   dep :BAM_pileup_sumaries_known_biallelic
   extension :vcf
-  task :control_freeC => :tsv do |sample_mateFile, control_mateFile, reference, snpFile, intervals|
+  task :control_freeC => :tsv do |sample_mateFile, control_mateFile, reference, snpFile, intervals, mate_orientation|
     output = file('output')
     Open.mkdir output
 
@@ -59,13 +60,13 @@ readCountThreshold=50
 
 mateFile = #{sample_mateFile} 
 inputFormat = BAM
-mateOrientation = FR
+mateOrientation = #{mate_orientation}
 
 [control]
 
 mateFile = #{control_mateFile} 
 inputFormat = BAM
-mateOrientation = FR
+mateOrientation = #{mate_orientation}
 
 [BAF]
 
