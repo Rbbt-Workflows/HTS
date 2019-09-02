@@ -9,6 +9,7 @@ module ControlFREEC
   FREEC_CMD = Rbbt.software.opt.ControlFREEC.src.freec.find
   FREEC_PLOT_SCRIPT = Rbbt.software.opt.ControlFREEC.scripts["makeGraph.R"].find
   def self.run(config_file)
+    iii config_file
     CMD.cmd_log("'#{FREEC_CMD}' -conf '#{config_file}'")
   end
 

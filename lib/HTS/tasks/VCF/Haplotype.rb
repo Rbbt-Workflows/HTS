@@ -29,7 +29,6 @@ module HTS
     args["-ERC"] = "GVCF"
     args["--max-alternate-alleles"] = 3
     args["--create-output-variant-index"] = false
-
     shard = config('shard', :gatk, :haplotype, :HaplotypeCaller)
 
     if shard == 'true'

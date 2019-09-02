@@ -13,13 +13,13 @@ module BAMSurgeon
   end
 
   def self.add_snvs(args)
-    addindels_cmd = Rbbt.software.opt.BAMSurgeon.bin["addsnv.py"].find
-    CMD.cmd_log("#{addindels_cmd}", args.to_hash.merge('add_option_dashes' => true))
+    addsnvs_cmd = Rbbt.software.opt.BAMSurgeon.bin["addsnv.py"].find
+    CMD.cmd_log("#{addsnvs_cmd}", args.to_hash.merge('add_option_dashes' => true))
   end
 
   def self.add_struct_vars(args)
-    addindels_cmd = Rbbt.software.opt.BAMSurgeon.bin["addsv.py"].find
-    CMD.cmd_log("#{addindels_cmd}", args.to_hash.merge('add_option_dashes' => true))
+    addsvs_cmd = Rbbt.software.opt.BAMSurgeon.bin["addsv.py"].find
+    CMD.cmd_log("#{addsvs_cmd}", args.to_hash.merge('add_option_dashes' => true))
   end
 end
 

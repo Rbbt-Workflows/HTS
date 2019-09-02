@@ -79,6 +79,16 @@ module Samtools
 
     linked
   end
+  
+  def self.BAM_sort(bam_file)
+  	cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    if cpus
+      Samtools.run("sort -@ #{cpus} '#{bam_file}'")
+    else
+      Samtools.run("sort '#{bam_file}'")
+    end
+  end
+
 
   def self.BAM_start(bam_file)
     CMD.cmd("samtools view '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")
