@@ -1,7 +1,7 @@
 require 'rbbt-util'
 require 'rbbt/workflow'
 require_relative '../tools/samtools'
-require 'pry'
+
 module Strelka
   # ToDo pull files out of directory
   
