@@ -59,9 +59,11 @@ module Sample
   {
     :strelka => :strelka,
     :varscan => :varscan_somatic,
+    :varscan_somatic => :varscan_somatic,
     :mutect2 => [:mutect2, true],
     :muse => :muse,
     :somatic_sniper => :somatic_sniper,
+    :somatic_sniper_filtered => :somatic_sniper_filtered,
     :delly => :delly,
     :svABA => :svABA,
     :sequenza_purity => :sequenza_purity,

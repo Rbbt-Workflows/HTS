@@ -1,0 +1,7 @@
+#!/bin/bash
+
+name='fpfilter'
+url="https://github.com/genome/fpfilter-tool"
+
+get_git "$name" "$url"
+move_opt "$name"
