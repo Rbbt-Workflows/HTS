@@ -35,7 +35,11 @@ module GATK
 
   def self.get_VCF(url, target)
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    CMD.cmd_log("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'").read
+    begin
+      CMD.cmd_log("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    rescue
+      FileUtils.rm target if File.exists?(target)
+    end
     nil
   end
 
