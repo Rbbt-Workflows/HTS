@@ -35,7 +35,7 @@ module GATK
 
   def self.get_VCF(url, target)
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    CMD.cmd("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
+    CMD.cmd_log("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'").read
     nil
   end
 
@@ -120,6 +120,7 @@ module GATK
   end
 
   Rbbt.claim Rbbt.software.opt.GATK, :install, Rbbt.share.install.software.GATK.find
+  CMD.tool :gatk, Rbbt.software.opt.GATK
 
   DbSNP.claim DbSNP["All.vcf.gz.tbi"], :proc do
     args = {}
@@ -258,7 +259,7 @@ module GATK
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
-        CMD.cmd("'#{GATK_CMD}' CreateSequenceDictionary -R '#{ linked }'")
+        CMD.cmd(:gatk, "CreateSequenceDictionary -R '#{ linked }'")
       end
     end
 
@@ -332,9 +333,9 @@ PrintVariants
 
     tmpdir = self.tmpdir
     if tmpdir
-      CMD.cmd("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+      CMD.cmd(:gatk, "--java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else
-      CMD.cmd("#{GATK_CMD} #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+      CMD.cmd(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     end
   end
 
@@ -344,13 +345,11 @@ PrintVariants
 
     tmpdir = self.tmpdir
     if tmpdir
-      CMD.cmd_log("#{GATK_CMD} --java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+      CMD.cmd_log(:gatk, "--java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else
-      CMD.cmd_log("#{GATK_CMD} #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+      CMD.cmd_log(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     end
   end
-
-  GATK_CMD='gatk'
 end
 
 if __FILE__ == $0

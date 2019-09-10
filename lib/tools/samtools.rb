@@ -13,8 +13,15 @@ module Samtools
   #self.search_paths[:default] = :lib
 
   Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
-  Rbbt.claim Rbbt.software.opt.bcftools, :install, Rbbt.share.install.software.bcftools.find
   Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
+  Rbbt.claim Rbbt.software.opt.bcftools, :install, Rbbt.share.install.software.bcftools.find
+
+  CMD.tool :samtools, Rbbt.software.opt.Samtools do
+    Rbbt.software.opt.HTSLib.produce
+    Rbbt.software.opt.Samtools.produce
+  end
+
+  CMD.tool :bcftools, Rbbt.software.opt.Samtools
 
   #Samtools_CMD='samtools'
   
@@ -26,7 +33,7 @@ module Samtools
   end
 
   def self.run(command)
-    CMD.cmd_log("'#{samtools_cmd}' " << command)
+    CMD.cmd_log(:samtools, command)
   end
 
   def self.prepare_BAM(file, dir = nil)

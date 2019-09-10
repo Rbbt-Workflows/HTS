@@ -9,37 +9,41 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   tools=tools{
    BAMSurgeon.rb
    BWA.rb
-   GATK.rb
    Bowtie.rb
-   IGV.rb
-   NovoAlign.rb
-   opti_type.rb
-   samtools.rb
-   VarScan.rb
-   Strelka.rb
-   alleleCount.rb
-   scatter.rb
-   control_FREEC.rb
-   stringTie.rb
-   HISAT.rb
-   STAR.rb
-   svABA.rb
-   pfff.rb
    Delly.rb
    FuSeq.rb
+   GATK.rb
+   HISAT.rb
+   IGV.rb
+   NovoAlign.rb
+   STAR.rb
+   Strelka.rb
+   VarScan.rb
+   alleleCount.rb
+   control_FREEC.rb
+   opti_type.rb
+   samtools.rb
    scatter.rb
    shard.rb
+   stringTie.rb
+   svABA.rb
   }
   tasks=HTS/tasks{
+   BAMSurgeon.rb
    CNV.rb
-   sequenza.rb
+   DNASeq.rb
+   IGV.rb
    RNASeq.rb
+   VCF.rb
+   sample.rb
+   sequenza.rb
+   test.rb
    RNASeq=RNASeq{
     BAM.rb
-    salmon.rb
     FuSeq.rb
+    salmon.rb
+    splicing.rb
    }
-   DNASeq.rb
    DNASeq=DNASeq{
     BAM.rb
     filter.rb
@@ -47,24 +51,17 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     plumbing.rb
     util.rb
    }
-   VCF.rb
    VCF=VCF{
-    MuTect2.rb
-    Haplotype.rb
-    Strelka.rb
-    MuSE.rb
-    somaticsniper.rb
-    VarScan.rb
-
     Delly.rb
+    Haplotype.rb
+    MuSE.rb
+    MuTect2.rb
+    Strelka.rb
+    VarScan.rb
     control_FREEC.rb
+    somaticsniper.rb
     svABA.rb
    }
-   IGV.rb
-
-   test.rb
-
-   sample.rb
    sample=sample{
     DNA.rb
     RNA.rb
@@ -84,31 +81,31 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    bootstrap2
   }
   software=install/software{
+   AlleleCount
+   BAMSurgeon
    BWA
    Bowtie
    Bowtie2
-   GATK
-   HTSLib
-   Samtools
-   OptiType
-   Jellyfish
-   NovoAlign
-   PicardTools
-   IGV
-   seqan
-   LOHHLA
-   VarScan
-   AlleleCount
-   Strelka
    ControlFREEC
    Delly
-   SvABA
-   bcftools
-   StringTie
-   HISAT
-   STAR
-   pfff
    FuSeq
+   GATK
+   HISAT
+   HTSLib
+   IGV
+   Jellyfish
+   LOHHLA
+   NovoAlign
+   OptiType
+   PicardTools
+   STAR
+   Samtools
+   Strelka
+   StringTie
+   SvABA
+   VarScan
+   bcftools
+   seqan
   }
  }
  data=data filter="*"{
