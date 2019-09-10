@@ -38,7 +38,7 @@ end
 if __FILE__ == $0
   Log.severity = 0 
   #iii Rbbt.software.opt.BAMSurgeon.produce(true)
-  iii Rbbt.software.opt.Exonerate.produce(true)
+  iii Rbbt.software.opt.jars["PicardTools.jar"].produce(true)
 end
 
 
