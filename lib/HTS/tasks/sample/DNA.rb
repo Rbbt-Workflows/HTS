@@ -60,6 +60,7 @@ module Sample
     :strelka => :strelka,
     :varscan => :varscan_somatic,
     :varscan_somatic => :varscan_somatic,
+    :varscan_fpfiltered => :varscan_fpfiltered,
     :mutect2 => [:mutect2, true],
     :muse => :muse,
     :somatic_sniper => :somatic_sniper,

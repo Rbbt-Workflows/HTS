@@ -1,4 +1,6 @@
 require 'tools/VarScan'
+require 'tools/fpfilter'
+require 'pry'
 module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
@@ -57,6 +59,32 @@ module HTS
 
       monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
     end
+  end
+
+  dep :varscan_somatic
+  task :varscan_fpfiltered => :text do |jobname, options|
+    binding.pry
+    varscan_inputs = step(:varscan_somatic).inputs
+	orig_reference = reference_file varscan_inputs[:reference]
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.uncompress_FASTA orig_reference
+
+    args = {}
+    args["bam-file"] = varscan_inputs[:tumor]
+    args["vcf-file"] = step(:varscan_somatic).path
+    args["output"] = self.tmp_path
+    args["reference"] = reference
+    args["sample"] = "TUMOR"
+    FPFilter.filter(args.to_hash)
+
+    args = {}
+    args["reference"] = reference
+    args["variant"] = self.tmp_path
+    args["output"] = self.path
+    args["exclude-filtered"] = true
+    args["exclude-non-variants"] = true
+    GATK.run_log("SelectVariants", args)
   end
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
