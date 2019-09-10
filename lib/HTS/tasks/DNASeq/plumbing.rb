@@ -58,7 +58,8 @@ module HTS
 
   input :bam_file, :binary, "Bam file", nil, :nofile => true
   input :by_group, :boolean, "Separate files by read-group", false
-  task :revert_BAM => :binary do |bam_file,by_group|
+  input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
+  task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction|
     args = {}
     args["INPUT"] = bam_file
 
@@ -72,7 +73,7 @@ module HTS
     end
     
     args["SANITIZE"] = "true"
-    args["MAX_DISCARD_FRACTION"] = "0.005"
+    args["MAX_DISCARD_FRACTION"] = max_discard_fraction
     args["ATTRIBUTE_TO_CLEAR"] = ["XA", "BD", "XS", "BI"]
     args["SORT_ORDER"] = "queryname"
     args["RESTORE_ORIGINAL_QUALITIES"] = "true"
