@@ -7,6 +7,7 @@ require 'HTS/tasks/VCF/svABA'
 require 'HTS/tasks/VCF/control_FREEC'
 require 'HTS/tasks/VCF/MuSE'
 require 'HTS/tasks/VCF/somaticsniper'
+require 'HTS/tasks/VCF/SomaticSeq'
 
 module HTS
 
