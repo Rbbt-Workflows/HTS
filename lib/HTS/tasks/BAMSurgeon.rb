@@ -55,7 +55,7 @@ module HTS
     i[:bamfile] = Samtools.prepare_BAM(bamfile) 
     i[:reference] = reference
     i[:procs] = config :cpus, :BAMSurgeon, :bamsurgeon, :bam_surgeon, :default => 1
-
+    i[:picardjar] = Rbbt.software.opt.jars["PicardTools.jar"].produce.find if picardjar.nil?
     Misc.in_dir file('workdir') do
       BAMSurgeon.add_snvs(i)
     end
