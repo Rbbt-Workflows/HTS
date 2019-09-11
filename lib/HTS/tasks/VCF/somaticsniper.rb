@@ -35,6 +35,7 @@ module HTS
   end
 
   dep :somatic_sniper
+  extension :vcf
   task :somatic_sniper_filtered => :text do
     orig_reference = reference_file step(:somatic_sniper).inputs[:reference]
     reference = GATK.prepare_FASTA orig_reference

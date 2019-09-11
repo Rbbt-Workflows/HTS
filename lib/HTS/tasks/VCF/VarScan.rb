@@ -61,6 +61,7 @@ module HTS
   end
 
   dep :varscan_somatic
+  extension :vcf
   task :varscan_fpfiltered => :text do |jobname, options|
     varscan_inputs = step(:varscan_somatic).inputs
 	orig_reference = reference_file varscan_inputs[:reference]
