@@ -1,3 +1,4 @@
+
 module Sample
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   extension :bam
@@ -245,6 +246,41 @@ module Sample
 
 
   dep_task :plot_freec_results, HTS, :plot_freec_results
+
+  dep Sample, :BAM
+  dep Sample, :BAM_normal 
+  dep Sample, :mutect2
+  dep Sample, :somatic_sniper_filtered
+  dep Sample, :varscan_fpfiltered
+  dep Sample, :muse
+  dep Sample, :strelka
+  dep_task :somatic_seq, HTS, :somatic_seq, :mutect2_vcf => :mutect2, :varscan_snv => :varscan_fpfiltered, :somaticsniper_vcf => :somatic_sniper_filtered do |jobname, options,deps|
+    tumor = deps.flatten.select{|d| d.task_name == :BAM}.first.path
+    normal = deps.flatten.select{|d| d.task_name == :BAM_normal}.first.path
+
+    options = options.merge({:tumor_bam_file => tumor, :normal_bam_file => normal})
+    {:inputs => options}
+  end
+
+  dep :somatic_seq
+  task :somatic_seq_filtered do |jobname, options, deps|
+    reference = HTS.helpers[:reference_file].call(step(:somatic_seq).dependencies.flatten.select{|d| d.inputs.to_hash.include?"genome_reference"}.first.inputs.to_hash["genome_reference"])
+    orig_reference = reference
+
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.uncompress_FASTA orig_reference
+
+	args = {}
+    args["reference"] = reference
+    args["variant"] = step(:somatic_seq).path
+    args["output"] = self.tmp_path
+    args["exclude-filtered"] = true
+    args["exclude-non-variants"] = true
+    GATK.run_log("SelectVariants", args)
+    FileUtils.rm_rf self.path
+    FileUtils.ln_s self.tmp_path, self.path
+  end
 
 
 end

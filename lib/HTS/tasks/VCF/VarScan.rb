@@ -1,6 +1,5 @@
 require 'tools/VarScan'
 require 'tools/fpfilter'
-require 'pry'
 module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
@@ -63,7 +62,6 @@ module HTS
 
   dep :varscan_somatic
   task :varscan_fpfiltered => :text do |jobname, options|
-    binding.pry
     varscan_inputs = step(:varscan_somatic).inputs
 	orig_reference = reference_file varscan_inputs[:reference]
     reference = GATK.prepare_FASTA orig_reference
