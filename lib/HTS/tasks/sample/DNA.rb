@@ -59,6 +59,7 @@ module Sample
   
   {
     :strelka => :strelka,
+    :strelka_filtered => :strelka_filtered,
     :varscan => :varscan_somatic,
     :varscan_somatic => :varscan_somatic,
     :varscan_fpfiltered => :varscan_fpfiltered,
