@@ -57,8 +57,17 @@ module HTS
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
-      monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
+      io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
+      Open.write(output[clean_name + '.snv.vcf'].find, io)
     end
+
+    reference_file = GATK.prepare_FASTA(reference_file(reference))
+
+    args = {}
+    args["INPUT"] = output.glob("*.indel.vcf") + output.glob("*.snv.vcf")
+    args["OUTPUT"] = self.tmp_path
+    args["SEQUENCE_DICTIONARY"] = reference_file.replace_extension('dict', true)
+    gatk("MergeVcfs", args)
   end
   
   dep :varscan_somatic, :compute => :produce
@@ -87,14 +96,17 @@ module HTS
     tumor = recursive_inputs[:tumor]
     tumor = tumor.path if Step === tumor
 
+
+    Open.mkdir files_dir
+    fpfiltered = file('fpfiltered.vcf')
     args["bam-file"] = tumor
     args["vcf-file"] = step(:varscan_classify).path
-    args["output"] = self.tmp_path
+    args["output"] = fpfiltered
     args["reference"] = reference
     args["sample"] = "TUMOR"
     FPFilter.filter(args.to_hash)
 
-    TSV.traverse self.tmp_path, :into => :stream, :type => :array do |line|
+    TSV.traverse fpfiltered, :into => :stream, :type => :array do |line|
       next line if line[0] =~ /^#/
 
       chr = line.split("\t").first

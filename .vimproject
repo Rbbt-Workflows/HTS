@@ -7,7 +7,6 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    HTS_reference.rb
   }
   tools=tools{
-   misc.rb
    BAMSurgeon.rb
    BWA.rb
    Bowtie.rb
@@ -18,10 +17,13 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    IGV.rb
    NovoAlign.rb
    STAR.rb
+   SomaticSeq.rb
    Strelka.rb
    VarScan.rb
    alleleCount.rb
    control_FREEC.rb
+   fpfilter.rb
+   misc.rb
    opti_type.rb
    samtools.rb
    scatter.rb
@@ -57,6 +59,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     Haplotype.rb
     MuSE.rb
     MuTect2.rb
+    SomaticSeq.rb
     Strelka.rb
     VarScan.rb
     control_FREEC.rb
@@ -101,11 +104,13 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    PicardTools
    STAR
    Samtools
+   SomaticSeq
    Strelka
    StringTie
    SvABA
    VarScan
    bcftools
+   fpfilter
    seqan
   }
  }

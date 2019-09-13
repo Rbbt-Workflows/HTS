@@ -59,20 +59,23 @@ module Sample
   
   {
     :strelka => :strelka,
-    :strelka_filtered => :strelka_filtered,
-    :varscan => :varscan_somatic,
-    :varscan_somatic => :varscan_somatic,
-    :varscan_somatic_alt => :varscan_somatic_alt,
-    :varscan_classify => :varscan_classify,
-    :varscan_fpfiltered => :varscan_fpfiltered,
     :mutect2 => [:mutect2, true],
+    :varscan => :varscan_fpfiltered,
+    :somatic_sniper => :somatic_sniper_filtered,
     :muse => :muse,
-    :somatic_sniper => :somatic_sniper,
-    :somatic_sniper_filtered => :somatic_sniper_filtered,
+
     :delly => :delly,
     :svABA => :svABA,
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
+    
+    #:somatic_seq => :somatic_seq,
+
+    #:varscan_somatic => :varscan_somatic,
+    #:varscan_somatic_alt => :varscan_somatic_alt,
+    #:varscan_classify => :varscan_classify,
+    #:varscan_fpfiltered => :varscan_fpfiltered,
+
   }.each do |task,otask|
     if Array === otask
       otask, allow_tumor_only = otask
@@ -130,7 +133,7 @@ module Sample
     {:inputs => options, :jobname => jobname}
   end
 
-  dep :strelka, :compute => :bootstrap do |jobname, options|
+  dep :strelka, :compute => [:bootstrap, :canfail] do |jobname, options|
     %w(strelka varscan mutect2 somatic_sniper muse).collect do |var_caller|
       {:task => var_caller, :inputs => options, :jobname => jobname}
     end
@@ -139,6 +142,7 @@ module Sample
   task :caller_comparison => :tsv do |only_pass|
     caller_variants = {}
     dependencies.each do |dep|
+      next if dep.error?
       var_caller = dep.task_name
 
       variants = TSV.traverse dep, :into => [], :type => :list do |chr, values|
@@ -253,11 +257,11 @@ module Sample
   dep Sample, :BAM
   dep Sample, :BAM_normal 
   dep Sample, :mutect2
-  dep Sample, :somatic_sniper_filtered
-  dep Sample, :varscan_fpfiltered
-  dep Sample, :muse
-  dep Sample, :strelka_filtered
-  dep_task :somatic_seq, HTS, :somatic_seq, :mutect2_vcf => :mutect2, :varscan_snv => :varscan_fpfiltered, :somaticsniper_vcf => :somatic_sniper_filtered do |jobname, options,deps|
+  dep Sample, :somatic_sniper
+  dep Sample, :varscan
+  #dep Sample, :muse
+  dep Sample, :strelka
+  dep_task :somatic_seq, HTS, :somatic_seq, :mutect2_vcf => :mutect2, :varscan_snv => :varscan, :somaticsniper_vcf => :somatic_sniper, :strelka_vcf => :strelka do |jobname, options,deps|
     tumor = deps.flatten.select{|d| d.task_name == :BAM}.first.path
     normal = deps.flatten.select{|d| d.task_name == :BAM_normal}.first.path
 
@@ -274,7 +278,7 @@ module Sample
     reference = Samtools.prepare_FASTA orig_reference
     reference = HTS.uncompress_FASTA orig_reference
 
-	args = {}
+    args = {}
     args["reference"] = reference
     args["variant"] = step(:somatic_seq).path
     args["output"] = self.tmp_path
@@ -285,5 +289,34 @@ module Sample
     FileUtils.ln_s self.tmp_path, self.path
   end
 
+  dep Sample, :BAM
+  dep Sample, :BAM_normal 
+  dep Sample, :mutect2
+  dep Sample, :somatic_sniper
+  dep Sample, :varscan
+  #dep Sample, :muse
+  dep Sample, :strelka
+  dep_task :somatic_seq, HTS, :somatic_seq, :tumor_bam_file => :BAM, :normal_bam_file => :BAM_normal, :mutect2_vcf => :mutect2, :varscan_snv => :varscan, :somaticsniper_vcf => :somatic_sniper, :strelka_vcf => :strelka
+
+
+  dep Sample, :BAM
+  dep Sample, :BAM_normal 
+  dep Sample, :mutect2
+  dep Sample, :somatic_sniper
+  dep Sample, :varscan
+  #dep Sample, :muse
+  dep Sample, :strelka
+  dep_task :somatic_seq_prefilter, HTS, :somatic_seq, :tumor_bam_file => :BAM, :normal_bam_file => :BAM_normal, :mutect2_vcf => :mutect2, :somaticsniper_vcf => :somatic_sniper do |jobname,options,dependencies|
+
+    varscan = dependencies.flatten.select{|dep| dep.task_name == :varscan}.first
+    options[:varscan_snv] = varscan.step(:varscan_somatic).files('output')[jobname + 'snv.vcf']
+    options[:varscan_indel] = varscan.step(:varscan_somatic).files('output')[jobname + 'indel.vcf']
+
+    strelka = dependencies.flatten.select{|dep| dep.task_name == :strelka}.first
+    options[:strelka_snv] = strelka.step(:strelka_pre).path
+    options[:strelka_indel] = strelka.step(:strelka_pre_indels).path
+
+    {:inputs => options} 
+  end
 
 end
