@@ -62,6 +62,7 @@ module Sample
     :strelka_filtered => :strelka_filtered,
     :varscan => :varscan_somatic,
     :varscan_somatic => :varscan_somatic,
+    :varscan_classify => :varscan_classify,
     :varscan_fpfiltered => :varscan_fpfiltered,
     :mutect2 => [:mutect2, true],
     :muse => :muse,
@@ -254,7 +255,7 @@ module Sample
   dep Sample, :somatic_sniper_filtered
   dep Sample, :varscan_fpfiltered
   dep Sample, :muse
-  dep Sample, :strelka
+  dep Sample, :strelka_filtered
   dep_task :somatic_seq, HTS, :somatic_seq, :mutect2_vcf => :mutect2, :varscan_snv => :varscan_fpfiltered, :somaticsniper_vcf => :somatic_sniper_filtered do |jobname, options,deps|
     tumor = deps.flatten.select{|d| d.task_name == :BAM}.first.path
     normal = deps.flatten.select{|d| d.task_name == :BAM_normal}.first.path

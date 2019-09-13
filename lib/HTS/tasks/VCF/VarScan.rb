@@ -1,5 +1,6 @@
 require 'tools/VarScan'
 require 'tools/fpfilter'
+require 'pry'
 module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
@@ -59,6 +60,19 @@ module HTS
       monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
     end
   end
+  
+  dep :varscan_somatic
+  extension :vcf
+  task :varscan_classify => :text do 
+	Open.mkdir files_dir
+    vcf = step(:varscan_somatic).path
+    output = file('output')
+    io_vcf = TSV.get_stream(vcf, :noz => true)
+    io = Misc.in_dir output do
+      monitor_cmd_genome ["java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} processSomatic - ",:in => io_vcf], output[clean_name + '.Somatic.vcf']
+    end
+    io
+  end
 
   dep :varscan_somatic
   extension :vcf
@@ -70,6 +84,7 @@ module HTS
     reference = HTS.uncompress_FASTA orig_reference
 
     args = {}
+    binding.pry
     args["bam-file"] = varscan_inputs[:tumor]
     args["vcf-file"] = step(:varscan_somatic).path
     args["output"] = self.tmp_path
@@ -77,13 +92,17 @@ module HTS
     args["sample"] = "TUMOR"
     FPFilter.filter(args.to_hash)
 
-    args = {}
-    args["reference"] = reference
-    args["variant"] = self.tmp_path
-    args["output"] = self.path
-    args["exclude-filtered"] = true
-    args["exclude-non-variants"] = true
-    GATK.run_log("SelectVariants", args)
+	TSV.traverse self.tmp_path, :into => :stream, :type => :array do |line|
+        next line if line[0] =~ /^#/
+
+        chr = line.split("\t").first
+        next unless chr =~ /^(chr)?[0-9MTXY]+$/
+        next unless line =~ /PASS/
+        #ssc = line.split(";").select{|d| d =~ /^SSC=/}.first.split.first.split("=").last.to_f
+        #next unless ssc > 10
+
+        line
+    end
   end
 
   input :normal, :file, "Normal BAM", nil, :nofile => true

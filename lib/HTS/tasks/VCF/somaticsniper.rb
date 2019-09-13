@@ -5,7 +5,7 @@ module HTS
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :quality, :integer, "Mapping quality filter threshold", 1
-  input :somatic_score, :integer, "Filtering somatic snv output with somatic quality less than", 15
+  input :somatic_score, :integer, "Filtering somatic snv output with somatic quality less than", 40
   extension :vcf
   task :somatic_sniper => :text do |tumor, normal, reference, quality, somatic_score|
     reference = reference_file reference

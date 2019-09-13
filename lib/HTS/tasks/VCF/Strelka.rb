@@ -4,19 +4,19 @@ module HTS
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :interval_list, :file, "interval list bed file", nil, :nofile => true
   extension :vcf
-  task :strelka => :text do |tumor,normal,reference|
+  task :strelka => :text do |tumor,normal,reference,interval_list|
     output = file('output')
     reference = reference_file reference
-
+    interval_list = "/dev/shm/prueba.bed.gz"
     normal = Samtools.prepare_BAM(normal) if normal
     tumor = Samtools.prepare_BAM(tumor) if tumor
 
     reference = Samtools.prepare_FASTA(reference)
 
     cpus = config :cpus, :strelka, :default => 3
-
-    Strelka.runSomatic(tumor, normal, reference, output, cpus)
+    Strelka.runSomatic(tumor, normal, reference, output, cpus, interval_list)
     
     Open.read(output.results.variants["somatic.snvs.vcf.gz"])
   end
@@ -37,7 +37,9 @@ module HTS
         next unless tqss_nt == 1
         tqss = line.split(";").select{|d| d =~ /^TQSS/}.first.split("=").last.to_i
         next unless tqss == 1
-
+        somatic_evs = line.split(";").select{|d| d =~ /^SomaticEVS/}.first.split.first.split("=").last.to_f
+        next unless somatic_evs > 15
+    
         line
 	end
   end
