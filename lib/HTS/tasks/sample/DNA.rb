@@ -309,12 +309,12 @@ module Sample
   dep_task :somatic_seq_prefilter, HTS, :somatic_seq, :tumor_bam_file => :BAM, :normal_bam_file => :BAM_normal, :mutect2_vcf => :mutect2, :somaticsniper_vcf => :somatic_sniper do |jobname,options,dependencies|
 
     varscan = dependencies.flatten.select{|dep| dep.task_name == :varscan}.first
-    options[:varscan_snv] = varscan.step(:varscan_somatic).files('output')[jobname + 'snv.vcf']
-    options[:varscan_indel] = varscan.step(:varscan_somatic).files('output')[jobname + 'indel.vcf']
+    options[:varscan_snv] = varscan.step(:varscan_somatic).file('output')["Default" + '.snv.vcf']
+    options[:varscan_indel] = varscan.step(:varscan_somatic).file('output')["Default" + '.indel.vcf']
 
     strelka = dependencies.flatten.select{|dep| dep.task_name == :strelka}.first
     options[:strelka_snv] = strelka.step(:strelka_pre).path
-    options[:strelka_indel] = strelka.step(:strelka_pre_indels).path
+    options[:strelka_indel] = strelka.step(:strelka_filtered_indels).step(:strelka_filtered).dependencies.first
 
     {:inputs => options} 
   end
