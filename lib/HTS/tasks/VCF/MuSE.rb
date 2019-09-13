@@ -1,4 +1,6 @@
 module HTS
+  Rbbt.claim Rbbt.software.opt.MuSE, :install, "https://github.com/danielfan/MuSE.git"
+  CMD.tool :MuSE, Rbbt.software.opt.MuSE
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
@@ -24,11 +26,10 @@ module HTS
     normal = Samtools.prepare_BAM(normal) if normal
 
     Open.mkdir files_dir
-    int_fie = file('intermediate')
-    muse = Rbbt.software.opt.MuSE.MuSE.find
-    CMD.cmd_log("#{muse} call -O #{int_fie} -f #{reference} #{tumor} #{normal}")
+    int_file = file('intermediate')
+    CMD.cmd_log(:MuSE, "call -O #{int_file} -f #{reference} #{tumor} #{normal}")
 
-    CMD.cmd_log("#{muse} sump -I #{int_fie}.MuSE.txt -E -O #{self.tmp_path}")
+    CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt -E -O #{self.tmp_path}")
     nil
   end
 end

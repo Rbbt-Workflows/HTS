@@ -15,6 +15,7 @@ require 'tools/stringTie'
 require 'tools/HISAT'
 require 'tools/STAR'
 require 'tools/BAMSurgeon'
+require 'tools/misc'
 #require 'tools/pfff'
 require 'sources/HTS_reference'
 

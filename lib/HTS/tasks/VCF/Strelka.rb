@@ -9,9 +9,15 @@ module HTS
   task :strelka => :text do |tumor,normal,reference,interval_list|
     output = file('output')
     reference = reference_file reference
-    interval_list = "/dev/shm/prueba.bed.gz"
     normal = Samtools.prepare_BAM(normal) if normal
     tumor = Samtools.prepare_BAM(tumor) if tumor
+
+    if interval_list and interval_list.include? '.bed'
+      interval_list = HTS.prepare_BED interval_list if interval_list
+    else
+      message "Interval list not in bed format" if interval_list
+      interval_list = nil
+    end
 
     reference = Samtools.prepare_FASTA(reference)
 
@@ -24,23 +30,26 @@ module HTS
 
   dep :strelka
   extension :vcf
-  task :strelka_filtered => :text do
-	TSV.traverse step(:strelka), :into => :stream, :type => :array do |line|
-        next line if line[0] =~ /^#/
+  input :strelka_filter_tier, :boolean, "Take only tier 1 variants from strelka", true
+  input :strelka_filter_evs, :integer, "Strelka EVS minimum score filter", 15
+  input :strelka_filter_qss, :integer, "Strelka QSS minimum score filter", 15
+  task :strelka_filtered => :text do |tier,evs,qss|
+    TSV.traverse step(:strelka), :into => :stream, :type => :array do |line|
+      next line if line[0] =~ /^#/
 
-        chr = line.split("\t").first
-        next unless chr =~ /^(chr)?[0-9MTXY]+$/
-        next unless line =~ /PASS/
-        qss_nt = line.split(";").select{|d| d =~ /^QSS_NT/}.first.split("=").last.to_i
-        next unless qss_nt > 15
-        tqss_nt = line.split(";").select{|d| d =~ /^TQSS_NT/}.first.split("=").last.to_i
-        next unless tqss_nt == 1
-        tqss = line.split(";").select{|d| d =~ /^TQSS/}.first.split("=").last.to_i
-        next unless tqss == 1
-        somatic_evs = line.split(";").select{|d| d =~ /^SomaticEVS/}.first.split.first.split("=").last.to_f
-        next unless somatic_evs > 15
-    
-        line
-	end
+      chr = line.split("\t").first
+      next unless chr =~ /^(chr)?[0-9MTXY]+$/
+      next unless line =~ /PASS/
+      qss_nt = line.split(";").select{|d| d =~ /^QSS_NT/}.first.split("=").last.to_i
+      next unless qss_nt >= qss
+      tqss_nt = line.split(";").select{|d| d =~ /^TQSS_NT/}.first.split("=").last.to_i
+      next if tier and tqss_nt > 1 
+      tqss = line.split(";").select{|d| d =~ /^TQSS/}.first.split("=").last.to_i
+      next if tier and tqss > 1 
+      somatic_evs = line.split(";").select{|d| d =~ /^SomaticEVS/}.first.split.first.split("=").last.to_f
+      next unless somatic_evs >= evs
+
+      line
+    end
   end
 end

@@ -62,6 +62,7 @@ module Sample
     :strelka_filtered => :strelka_filtered,
     :varscan => :varscan_somatic,
     :varscan_somatic => :varscan_somatic,
+    :varscan_somatic_alt => :varscan_somatic_alt,
     :varscan_classify => :varscan_classify,
     :varscan_fpfiltered => :varscan_fpfiltered,
     :mutect2 => [:mutect2, true],

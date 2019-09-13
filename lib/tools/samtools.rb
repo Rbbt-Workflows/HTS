@@ -63,7 +63,7 @@ module Samtools
 
     linked
   end
-
+  
   def self.prepare_FASTA(file, dir = nil)
     file = file.path if Step === file
     file = file.find if Path === file

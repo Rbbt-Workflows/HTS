@@ -1,11 +1,20 @@
 require 'tools/fpfilter'
 module HTS
   
+  CMD.tool "bam-somaticsniper", 'bam-somaticsniper' do
+    CMD.cmd('conda install somatic-sniper -c bioconda')
+  end
+
+  desc <<-EOF
+Somatic sniper variant caller
+
+somatic_score is set to 40 according to documentation in the web page
+  EOF
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :quality, :integer, "Mapping quality filter threshold", 1
-  input :somatic_score, :integer, "Filtering somatic snv output with somatic quality less than", 40
+  input :somatic_score, :integer, "Filtering somatic snv output with somatic quality less than", 40 
   extension :vcf
   task :somatic_sniper => :text do |tumor, normal, reference, quality, somatic_score|
     reference = reference_file reference
@@ -25,6 +34,8 @@ module HTS
 
     tumor_sample = GATK.BAM_sample_name(tumor)
     normal_sample = GATK.BAM_sample_name(normal) if normal
+
+    CMD.get_tool 'bam-somaticsniper'
 
     CMD.cmd_log("bam-somaticsniper -L -G -Q #{somatic_score} -s 0.01 -T 0.85 -N 2 -r 0.001 -F vcf  \
                 -q #{quality} \
@@ -54,8 +65,8 @@ module HTS
     args["reference"] = reference
     args["variant"] = self.tmp_path
     args["output"] = self.path
-	args["exclude-filtered"] = true
-	args["exclude-non-variants"] = true
+    args["exclude-filtered"] = true
+    args["exclude-non-variants"] = true
     GATK.run_log("SelectVariants", args)
   end
 end
