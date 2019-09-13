@@ -1,6 +1,6 @@
 #!/bin/bash
 
 name='GATK'
-url="https://github.com/broadinstitute/gatk/releases/download/4.0.11.0/gatk-4.0.11.0.zip"
+url="https://github.com/broadinstitute/gatk/releases/download/4.1.3.0/gatk-4.1.3.0.zip"
 
 install_src "$name" "$url"
