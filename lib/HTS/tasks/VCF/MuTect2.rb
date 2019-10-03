@@ -8,8 +8,9 @@ module HTS
   input :pon, :file, "Panel of normals", nil, :nofile => true
   input :germline_resource, :file, "Germline resource", :gnomad, :nofile => true
   input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
+  input :remove_soft_clip, :boolean, "Don't consider soft clip bases", false
   extension :vcf
-  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource|
+  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource,remove_soft_clip|
 
     interval_list = nil if interval_list == "none"
 
@@ -48,6 +49,7 @@ module HTS
     args["panel-of-normals"] = pon if pon
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
+    args["dont-use-soft-clipped-bases"] = remove_soft_clip if remove_soft_clip
 
     # UPDATE FOR GATK 4.1.2
     #args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
