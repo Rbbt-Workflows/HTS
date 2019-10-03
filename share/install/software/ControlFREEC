@@ -4,3 +4,4 @@ name='ControlFREEC'
 url="https://github.com/BoevaLab/FREEC.git"
 
 install_git "$name" "$url" 
+link "$(opt_dir $name )/src/freec" "$OPT_DIR/bin/freec"

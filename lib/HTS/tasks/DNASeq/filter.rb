@@ -84,9 +84,9 @@ module HTS
     cpus = Rbbt::Config.get(:cpus, :novoalign)
     TmpFile.with_file :extension => :sam do |tmp_sam|
       if fastq2
-        CMD.cmd_log("#{Rbbt.software.opt.NovoAlign.novoalign.find} -d '#{reference}.nix' -f '#{fastq1}' '#{fastq2}' #{novoalign_args} 1> #{tmp_sam}")
+        CMD.cmd_log(:novoalign, "-d '#{reference}.nix' -f '#{fastq1}' '#{fastq2}' #{novoalign_args} 1> #{tmp_sam}")
       else
-        CMD.cmd_log("#{Rbbt.software.opt.NovoAlign.novoalign.find} -d '#{reference}.nix' -f '#{fastq1}' #{novoalign_args} 1> #{tmp_sam}")
+        CMD.cmd_log(:novoalign, "-d '#{reference}.nix' -f '#{fastq1}' #{novoalign_args} 1> #{tmp_sam}")
       end
       CMD.cmd("samtools sam2fq -F 4 '#{tmp_sam}' | gzip > '#{self.tmp_path}'")
     end

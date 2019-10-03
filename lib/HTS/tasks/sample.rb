@@ -223,7 +223,8 @@ module Sample
   end
 
   STUDY_OPTIONS = {:organism => :string, :reference => :string, :interval_list => :file, 
-                   :pon => :file, :germline_resource => :file}
+                   :pon => :file, :germline_resource => :file, :skip_rescore => :boolean}
+
   def self.study_options(sample, sstudy = nil)
     if sample.include?(":") and sstudy.nil?
       study, _sep, ssample  = sample.partition(":")

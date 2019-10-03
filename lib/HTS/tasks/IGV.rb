@@ -22,6 +22,7 @@ module HTS
     panel_height = depth * 7 * 2
     panel_height *= 2 if normal
 
+    margin = 20
     IGV.run <<-EOF
 new
 genome #{reference}
@@ -32,8 +33,8 @@ maxPanelHeight #{panel_height}
 #{positions.collect do |position|
   chr, pos, alt = position.split(":")
 
-  start = [pos.to_i - 50, 0].max
-  eend = pos.to_i + 50
+  start = [pos.to_i - margin, 0].max
+  eend = pos.to_i + margin + 1
 
   ["goto #{chr}:#{start}-#{eend}",
   "snapshot #{chr}:#{pos}:#{alt}.png"]

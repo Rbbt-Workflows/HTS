@@ -73,9 +73,11 @@ module HTS
     end
     
     args["SANITIZE"] = "true"
+    args["SORT_ORDER"] = "queryname"
+    args["KEEP_FIRST_DUPLICATE"] = "true"
+
     args["MAX_DISCARD_FRACTION"] = max_discard_fraction
     args["ATTRIBUTE_TO_CLEAR"] = ["XA", "BD", "XS", "BI"]
-    args["SORT_ORDER"] = "queryname"
     args["RESTORE_ORIGINAL_QUALITIES"] = "true"
     args["REMOVE_DUPLICATE_INFORMATION"] = "true"
     args["REMOVE_ALIGNMENT_INFORMATION"] = "true"

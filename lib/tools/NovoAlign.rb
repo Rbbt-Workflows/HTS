@@ -2,6 +2,10 @@ module NovoAlign
   extend Resource
   self.subdir = 'share/databases/NovoAlign'
 
+  Rbbt.claim Rbbt.software.opt.NovoAlign, :install, Rbbt.share.install.software.NovoAlign.find
+  CMD.tool :novoindex, Rbbt.software.opt.NovoAlign
+  CMD.tool :novoalign, Rbbt.software.opt.NovoAlign
+
   def self.prepare_FASTA(file, dir = nil)
     file = file.find if Path === file
 
@@ -16,12 +20,11 @@ module NovoAlign
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
-        CMD.cmd("'#{Rbbt.software.opt.NovoAlign.novoindex.find}' '#{ linked }.nix' '#{linked}'")
+        CMD.cmd(:novoindex, "'#{ linked }.nix' '#{linked}'")
       end
     end
 
     linked
   end
 
-  Rbbt.claim Rbbt.software.opt.NovoAlign, :install, Rbbt.share.install.software.NovoAlign.find
 end

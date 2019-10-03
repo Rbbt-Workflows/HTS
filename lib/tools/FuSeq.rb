@@ -23,11 +23,18 @@ module FuSeq
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
         args = {}
-        if kmer
-          CMD.cmd_log("bash -c 'TxIndexer -t <(gunzip -c \"#{linked}\") -k 21 -o \"#{linked}.idx\"'")
-        else
-          CMD.cmd_log("bash -c 'TxIndexer -t <(gunzip -c \"#{linked}\") -o \"#{linked}.idx\"'")
-        end
+        gunzip_cmd = "gunzip -c \"#{linked}\"" +  '| sed "s/\(EN[[:alpha:]]*[[:digit:]]*\)\.[[:digit:]]/\1/g"'
+        cmd = "TxIndexer -t <(#{gunzip_cmd})"
+        cmd += " -k 21 " if kmer
+        cmd += " -o \"#{linked}.idx\""
+        cmd = "bash -c '#{cmd}'"
+        CMD.cmd_log(cmd)
+        #if kmer
+        #  CMD.cmd_log("bash -c 'TxIndexer -t <(gunzip -c \"#{linked}\"" + '|sed \'s/\(EN[[:alpha:]]*[[:digit:]]*\)\.[[:digit:]]/\1/g\')' + " -k 21 -o \"#{linked}.idx\"'")
+        #else
+        #  CMD.cmd_log("bash -c 'TxIndexer -t <(gunzip -c \"#{linked}\"" + '|sed \'s/\(EN[[:alpha:]]*[[:digit:]]*\)\.[[:digit:]]/\1/g\')' + " -o \"#{linked}.idx\"'")
+        #  #CMD.cmd_log("bash -c 'TxIndexer -t <(gunzip -c \"#{linked}\" | sed 's/\(EN[[:alpha:]]*[[:digit:]]*\)\.[[:digit:]]/\1/g') -o \"#{linked}.idx\"'")
+        #end
       end
     end
 
