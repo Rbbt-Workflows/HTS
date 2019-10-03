@@ -1,4 +1,3 @@
-
 module HTS
   input :fastq1, :file, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :file, "FASTQ 2 file", nil, :nofile => true
@@ -18,6 +17,6 @@ module HTS
 
     FuSeq.process step(:FuSeq).file('output'), organism, output
 
-    TSV.open file('output/fusions.FuSeq'), :header_hash => '', :merge => true, :key_field => "fusionName"
+    TSV.open file('output/fusions.FuSeq'), :header_hash => '', :merge => true, :key_field => "fusionName", :namespace => organism
   end
 end

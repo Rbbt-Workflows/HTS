@@ -5,12 +5,12 @@ module ControlFREEC
   # ToDo pull files out of directory
   
   Rbbt.claim Rbbt.software.opt.ControlFREEC, :install, Rbbt.share.install.software.ControlFREEC.find
+  CMD.tool :freec, Rbbt.software.opt.ControlFREEC
 	
   FREEC_CMD = Rbbt.software.opt.ControlFREEC.src.freec.find
   FREEC_PLOT_SCRIPT = Rbbt.software.opt.ControlFREEC.scripts["makeGraph.R"].find
   def self.run(config_file)
-    iii config_file
-    CMD.cmd_log("'#{FREEC_CMD}' -conf '#{config_file}'")
+    CMD.cmd_log(:freec, "-conf '#{config_file}'")
   end
 
   def self.makegraphs(results_path, output)

@@ -252,7 +252,9 @@ module Sample
   dep_task :expanded_vcf, Sequence, :expanded_vcf, :vcf_file => :vcf_file
 
 
-  dep_task :plot_freec_results, HTS, :plot_freec_results
+  dep :BAM
+  dep :BAM_normal
+  dep_task :plot_freec_results, HTS, :plot_freec_results, :sample_mateFile => :BAM, :control_mateFile => :BAM_normal
 
   dep Sample, :BAM
   dep Sample, :BAM_normal 

@@ -45,8 +45,9 @@ module HTS
   dep :mark_adapters
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :bwa_mem_args, :string, "Arg string", "-M -p"
+  input :remove_unpaired, :boolean, "Remove possible unpaired reads", false
   extension :bam
-  task :BAM_bwa => :binary do |reference, bwa_mem_args|
+  task :BAM_bwa => :binary do |reference, bwa_mem_args,remove_unpaired|
 
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference
@@ -55,48 +56,62 @@ module HTS
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 
-    Open.rm file('SamToFastq')
     Misc.with_fifo(file('SamToFastq.fastq')) do |s2f_path|
       Misc.with_fifo(file('bwa.bam')) do |bwa_bam|
+        Misc.with_fifo(file('FilterSam')) do |filter_sam|
 
-        args = {}
-        args["INPUT"] = step(:mark_adapters).path
-        args["FASTQ"] = s2f_path
-        args["CLIPPING_ATTRIBUTE"] = "XT"
-        args["CLIPPING_ACTION"] = "2"
-        args["INTERLEAVE"] = "true"
-        #args["NON_PF"] = "true"
+          if remove_unpaired
+            io_filter = CMD.cmd(:samtools, "view -h -f 0x1 '#{step(:mark_adapters).path}'", :pipe => true)
 
-        io_s2f = gatk_io("SamToFastq", args)
-        t_s2f = Thread.new do
-          while line = io_s2f.gets
-            Log.debug line
+            Misc.consume_stream io_filter, true, filter_sam
+          else
+            filter_sam = step(:mark_adapters).path
           end
+
+          args = {}
+          args["INPUT"] = filter_sam
+          args["FASTQ"] = s2f_path
+          args["CLIPPING_ATTRIBUTE"] = "XT"
+          args["CLIPPING_ACTION"] = "2"
+          args["INTERLEAVE"] = "true"
+          #args["NON_PF"] = "true"
+
+          io_s2f = gatk_io("SamToFastq", args)
+          t_s2f = Thread.new do
+            while line = io_s2f.gets
+              Log.debug line
+            end
+          end
+
+          bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1")
+          io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
+
+          Misc.consume_stream io_bwa, true, bwa_bam
+
+          #bwa_bam = '/data/tmp/test.bam'
+          #Misc.consume_stream io_bwa, false, bwa_bam
+
+          uBAM = step('uBAM').path
+
+          args = {}
+          args["ALIGNED_BAM"] = bwa_bam
+          args["UNMAPPED_BAM"] = uBAM
+          args["OUTPUT"] = self.tmp_path
+          args["R"] = reference
+          args["CREATE_INDEX"] = "false"
+          args["ADD_MATE_CIGAR"] = "true"
+          args["CLIP_ADAPTERS"] = "false"
+          args["CLIP_OVERLAPPING_READS"] = "true"
+          args["INCLUDE_SECONDARY_ALIGNMENTS"] = "true"
+          args["MAX_INSERTIONS_OR_DELETIONS"] = "-1"
+          args["PRIMARY_ALIGNMENT_STRATEGY"] = "MostDistant"
+          args["ATTRIBUTES_TO_RETAIN"] = "XS"
+          args["SORT_ORDER"] = "queryname"
+
+          gatk("MergeBamAlignment", args)
+
+          FileUtils.rm_rf filter_sam if remove_unpaired
         end
-
-        bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1")
-        io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
-        Misc.consume_stream io_bwa, true, bwa_bam
-
-        uBAM = step('uBAM').path
-
-        args = {}
-        args["ALIGNED_BAM"] = bwa_bam
-        args["UNMAPPED_BAM"] = uBAM
-        args["OUTPUT"] = self.tmp_path
-        args["R"] = reference
-        args["CREATE_INDEX"] = "false"
-        args["ADD_MATE_CIGAR"] = "true"
-        args["CLIP_ADAPTERS"] = "false"
-        args["CLIP_OVERLAPPING_READS"] = "true"
-        args["INCLUDE_SECONDARY_ALIGNMENTS"] = "true"
-        args["MAX_INSERTIONS_OR_DELETIONS"] = "-1"
-        args["PRIMARY_ALIGNMENT_STRATEGY"] = "MostDistant"
-        args["ATTRIBUTES_TO_RETAIN"] = "XS"
-        args["SORT_ORDER"] = "queryname"
-
-        gatk("MergeBamAlignment", args)
-
         FileUtils.rm_rf bwa_bam
       end
       FileUtils.rm_rf s2f_path
@@ -128,7 +143,7 @@ module HTS
   task :BAM_sorted => :binary do
     Open.mkdir files_dir 
     sorted = file('sorted.bam')
-    
+
     args = {}
     args["INPUT"] = step(:BAM_duplicates).path
     args["OUTPUT"] = sorted
@@ -156,10 +171,10 @@ module HTS
 
     known_sites = [] 
     known_site_codes = if reference.include?('mm10') || reference.include?('GRCm38')
-                    ["mm10_variation", "mm10_structural"]
-                  else
-                    ["miller_indels", "dbsnp", "1000G_indels"]
-                  end
+                         ["mm10_variation", "mm10_structural"]
+                       else
+                         ["miller_indels", "dbsnp", "1000G_indels"]
+                       end
     known_site_codes.each do |file|
       vcf = vcf_file reference, file
       next if vcf.nil?
@@ -260,6 +275,14 @@ module HTS
   end
 
   extension :bam
-  dep_task :BAM, HTS, :BAM_rescore
+  input :skip_rescore, :boolean, "Skip BAM rescore", false
+  dep_task :BAM, HTS, :BAM_rescore do |jobname,options|
+    if options[:skip_rescore]
+      task = :BAM_sorted
+    else
+      task = :BAM_rescore
+    end
+    {:task => task, :jobname => jobname, :inputs => options}
+  end
 end
 
