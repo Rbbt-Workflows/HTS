@@ -6,7 +6,7 @@ module HTS
   input :outbam, :file, "Output BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :snvfrac, :float, "Maximum allowable linked SNP MAF (for avoiding haplotypes)", 1
-  input :mutfrac, :float, "Allelic fraction at which to make SNVs", 0.5
+  input :mutfrac, :float, "Allelic fraction at which to make SNVs", 0.1
   input :numsnvs, :float, "maximum number of mutations to try (default: entire input)", nil
   input :cnvfile, :file, "tabix-indexed list of genome-wide absolute copy number values", nil, :nofile => true
   input :coverdiff, :float, "allow difference in input and output coverage", 0.1
