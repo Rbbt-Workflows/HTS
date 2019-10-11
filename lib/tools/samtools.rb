@@ -96,6 +96,9 @@ module Samtools
     end
   end
 
+  def self.BAM_get_chr_reads(bam_file, chr)
+    CMD.cmd("samtools view -h '#{bam_file}' #{chr} > #{chr}.bam")
+  end
 
   def self.BAM_start(bam_file)
     CMD.cmd("samtools view '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")

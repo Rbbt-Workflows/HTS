@@ -1,3 +1,4 @@
+require 'tools/BAM_shard'
 module HTS
 
   input :bam_files, :array, "BAM filenames to multiplex"
@@ -86,6 +87,12 @@ module HTS
     if by_group
       file("uBAM").glob("*")
     end
+  end
+
+  input :bamfile , :file, "BAM", :nofile => true
+  task :revert_BAM_sharded do |bamfile|
+    bamfile = Samtools.prepare_BAM(bamfile)
+    BAMShard.cmd(bamfile, self.path)
   end
 
   input :fastq1_files, :array, "FASTQ files for first mate"
