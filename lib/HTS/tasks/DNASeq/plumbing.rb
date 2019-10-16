@@ -89,10 +89,10 @@ module HTS
     end
   end
 
-  input :bamfile , :file, "BAM", :nofile => true
-  task :revert_BAM_sharded do |bamfile|
-    bamfile = Samtools.prepare_BAM(bamfile)
-    BAMShard.cmd(bamfile, self.path)
+  input :bam_file , :file, "BAM", :nofile => true
+  task :revert_BAM_sharded do |bam_file|
+    bam_file = Samtools.prepare_BAM(bam_file)
+    BAMShard.revert_BAM(bam_file, self.path)
   end
 
   input :fastq1_files, :array, "FASTQ files for first mate"

@@ -87,17 +87,34 @@ module Samtools
     linked
   end
   
-  def self.BAM_sort(bam_file)
+  def self.BAM_sort(bam_file,to_sam=false, queryname=true)
   	cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    format_str=" -O BAM "
+    if to_sam
+      format_str=" -O SAM "
+    end
+    sort_order_str=""
+    if queryname
+      sort_order_str="-n"
+    end
     if cpus
-      Samtools.run("sort -@ #{cpus} '#{bam_file}'")
+      Samtools.run("sort #{format_str} #{sort_order_str} -@ #{cpus} '#{bam_file}' -o #{bam_file}.sorted")
     else
-      Samtools.run("sort '#{bam_file}'")
+      Samtools.run("sort #{format_str} #{sort_order_str} '#{bam_file}' -o #{bam_file}.sorted")
     end
   end
 
   def self.BAM_get_chr_reads(bam_file, chr)
-    CMD.cmd("samtools view -h '#{bam_file}' #{chr} > #{chr}.bam")
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    CMD.cmd("samtools view -@ #{cpus} -Sb -h '#{bam_file}' #{chr} > #{chr}.bam")
+  end
+
+  def self.header(bam_file)
+    CMD.cmd("samtools view -H #{bam_file}| grep -v \"^@PG\"").read
+  end
+
+  def self.reads_number(bam_file)
+    CMD.cmd("samtools view -c #{bam_file}").read
   end
 
   def self.BAM_start(bam_file)
