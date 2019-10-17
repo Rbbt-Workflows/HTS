@@ -121,6 +121,11 @@ module Samtools
     CMD.cmd("samtools view '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")
   end
 
+  def self.merge(outbam, inbams)
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    CMD.cmd("samtools merge -@ #{cpus} #{outbam} #{inbams} ")
+  end
+
   def self.reference_contigs(reference)
     Open.read(reference + '.fai').split("\n").collect{|line| line.split("\t").first}
   end

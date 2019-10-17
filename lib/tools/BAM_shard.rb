@@ -1,4 +1,5 @@
 require 'tools/samtools'
+
 class BAMShard
 
   GAP_SIZE = 1_000
@@ -79,15 +80,9 @@ class BAMShard
       end
 
       q.join
-
-      bams = Dir.glob(output + ".files/*").map(&File.method(:realpath))
-      args = {}
-      args["OUTPUT"] = output
-      args["INPUT"] = bams
-      args["USE_THREADING"] = "true"
-      args["MERGE_SEQUENCE_DICTIONARIES"] = "true"
-
-      GATK.run_log("MergeSamFiles", args)
+      inbams = Dir.glob(output + ".files/*").map(&File.method(:realpath)).join(" ")
+      Samtools.merge(output,inbams)
+      nil
     end
   end
 end
