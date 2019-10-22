@@ -123,7 +123,11 @@ module Samtools
 
   def self.merge(outbam, inbams)
     cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
-    CMD.cmd("samtools merge -@ #{cpus} #{outbam} #{inbams} ")
+    CMD.cmd("samtools merge -n -@ #{cpus} #{outbam} #{inbams} ")
+  end
+
+  def self.viewSam(inBAM, outSAM)
+    CMD.cmd("samtools view #{inBAM} > #{outSAM}")
   end
 
   def self.reference_contigs(reference)

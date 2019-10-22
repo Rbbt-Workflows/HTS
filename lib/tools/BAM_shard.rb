@@ -1,45 +1,41 @@
 require 'tools/samtools'
+require 'digest'
+
+require 'pry'
 
 class BAMShard
-
-  GAP_SIZE = 1_000
-  CHUNK_SIZE = 10_000_000
-
-  def self.create_chunk_files(bamfile)
-    chunks ||= Rbbt::Config.get('cpus', 'bamshard', :default => 3)
-    num_reads = Samtools.reads_number(bamfile)
-    chunk_size = num_reads.to_i / (chunks.to_i - 1)
-    header = Samtools.header(bamfile)
-    Samtools.BAM_sort(bamfile, to_sam=true)
-    bamfile = bamfile + ".sorted"
-    chunk_idx = 0
-    idx = 0
-    chfd = open("chunk#{chunk_idx}.reads", "w")
-    chfd << header
-    previous_line = ""
-    File.foreach(bamfile) do |fd|
+  DIGEST_SIZE = 128
+  CHUNK_LIMIT = 100_000_000 
+  def self.create_chunk_files(samfile)
+    chunks ||= Rbbt::Config.get('cpus', 'bamshard', default: 3)
+    chunk_size = 2 ** DIGEST_SIZE / chunks.to_i
+    header = Samtools.header(samfile)
+    i=0
+    reads = {}
+    File.foreach(samfile) do |fd|
       if fd.start_with?("@")
         next
       end
-      if idx < chunk_size
-        idx += 1
-        previous_line = fd
-        chfd << fd
-        next
-      else
-        if  previous_line.split()[0] == fd.split()[0]
-          chfd << fd
-          previous_line = fd
-        else
-          idx = 0
-          previous_line = fd
-          chfd.close()
-          chunk_idx += 1
-          chfd = open("chunk#{chunk_idx}.reads","w")
-          chfd << header
-          chfd << fd
+      read_name = fd.split()[0]
+      chunk_selected = Digest::MD5.hexdigest(read_name).to_i(16)/chunk_size
+        
+      reads[chunk_selected] = [] if reads[chunk_selected].nil?
+      reads[chunk_selected] << fd
+
+      if reads[chunk_selected].length > CHUNK_LIMIT
+        if File.zero?("chunk#{chunk_selected}.reads")
+          File.open("chunk#{chunk_selected}.reads","w"){|f| f.write header}
         end
+        File.open("chunk#{chunk_selected}.reads","w"){|f| reads[chunk_selected].each {|read| f.write read}}          
+        reads[chunk_selected] = []
       end
+    
+    end
+    reads.keys.each do |key|    
+      if File.zero?("chunk#{key}.reads")
+        File.open("chunk#{key}.reads","w"){|f| f.write header}
+      end
+      File.open("chunk#{key}.reads","w"){|f| reads[key].each {|read| f.write read}}
     end
   end
 
@@ -47,21 +43,26 @@ class BAMShard
 
     cpus ||= Rbbt::Config.get('cpus', 'bamshard', :default => 3)
 
-    q = RbbtProcessQueue.new cpus
-    q.callback &callback
     Open.mkdir output + ".files"
     TmpFile.with_file do |workdir|
       Open.mkdir workdir
       #Dir.chdir workdir
 
       Misc.in_dir workdir do
-        self.create_chunk_files(bamfile)
-      end
+        Dir.mkdir "temp"
+        outsam = workdir + "/temp/" + File.basename(bamfile) + ".sam"
+        binding.pry
+        Samtools.run("view -h #{bamfile} > #{outsam}")
+        self.create_chunk_files(outsam)
 
+      end
+      binding.pry
+      q = RbbtProcessQueue.new cpus
+      q.callback &callback
       q.init do |bam|
           args = {}
           args["INPUT"] = workdir + "/" + bam
-          args["OUTPUT"] = output + ".files" + "/" + "#{bam}.ubam"
+          args["OUTPUT"] = output + ".files" + "/" + "#{File.basename(bam)}.ubam"
           args["OUTPUT_BY_READGROUP"] = "false"
           args["SANITIZE"] = "true"
           args["SORT_ORDER"] = "queryname"
@@ -73,15 +74,25 @@ class BAMShard
 
           GATK.run_log("RevertSam", args)
       end
-
-      bams =  Dir.entries(workdir).select {|f| !File.directory? f}
+      bams =  Dir.glob("#{workdir}/*reads").each {|f| !File.directory? f}
       for bam in bams do
+        iii bam
+        binding.pry
         q.process bam
       end
 
       q.join
-      inbams = Dir.glob(output + ".files/*").map(&File.method(:realpath)).join(" ")
-      Samtools.merge(output,inbams)
+      binding.pry
+      inbams = Dir.glob(output + ".files/*reads").map(&File.method(:realpath))
+      args = {}
+      args["OUTPUT"] = output
+      args["INPUT"] = inbams
+      args["USE_THREADING"] = "true"
+      args["MERGE_SEQUENCE_DICTIONARIES"] = "true"
+      args["SORT_ORDER"] = "queryname"
+
+      GATK.run_log("MergeSamFiles", args)
+
       nil
     end
   end
