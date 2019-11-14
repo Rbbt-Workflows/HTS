@@ -1,4 +1,5 @@
 require 'tools/shard'
+
 module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
@@ -32,8 +33,8 @@ module HTS
     tumor = Samtools.prepare_BAM(tumor)
     normal = Samtools.prepare_BAM(normal) if normal
 
-    tumor_sample = GATK.BAM_sample_name(tumor)
-    normal_sample = GATK.BAM_sample_name(normal) if normal
+    tumor_sample = Samtools.BAM_sample_name(tumor)
+    normal_sample = Samtools.BAM_sample_name(normal) if normal
 
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
 

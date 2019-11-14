@@ -126,8 +126,13 @@ module Samtools
     CMD.cmd("samtools merge -n -@ #{cpus} #{outbam} #{inbams} ")
   end
 
+  def self.BAM_sample_name(bam_file)
+    Samtools.run("view -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n1")
+  end
+
   def self.viewSam(inBAM, outSAM)
-    CMD.cmd("samtools view #{inBAM} > #{outSAM}")
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    CMD.cmd("samtools view -@ #{cpus} #{inBAM} > #{outSAM}")
   end
 
   def self.reference_contigs(reference)
