@@ -331,25 +331,25 @@ PrintVariants
     end.compact.flatten * " "
   end
 
-  def self.run(command, args = {}, sin = nil)
+  def self.run(command, args = {}, sin = nil, tmp_dir = nil)
 
     arg_string = self.hash2args(args) if Hash === args
 
-    tmpdir = self.tmpdir
-    if tmpdir
-      CMD.cmd(:gatk, "--java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    tmp_dir ||= self.tmpdir
+    if tmp_dir
+      CMD.cmd(:gatk, "--java-options '-Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else
       CMD.cmd(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     end
   end
 
-  def self.run_log(command, args = {}, sin = nil)
+  def self.run_log(command, args = {}, sin = nil, tmp_dir = nil)
 
     arg_string = self.hash2args(args) if Hash === args
 
-    tmpdir = self.tmpdir
-    if tmpdir
-      CMD.cmd_log(:gatk, "--java-options '-Djava.io.tmpdir=#{tmpdir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
+    tmp_dir ||= self.tmpdir
+    if tmp_dir
+      CMD.cmd_log(:gatk, "--java-options '-Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     else
       CMD.cmd_log(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin)
     end
