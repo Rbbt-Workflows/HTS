@@ -1,8 +1,6 @@
 require 'tools/samtools'
 require 'digest'
 
-require 'pry'
-
 class BAMShard
   DIGEST_SIZE = 128
   CHUNK_LIMIT = 100_000_000 
@@ -51,12 +49,10 @@ class BAMShard
       Misc.in_dir workdir do
         Dir.mkdir "temp"
         outsam = workdir + "/temp/" + File.basename(bamfile) + ".sam"
-        binding.pry
         Samtools.run("view -h #{bamfile} > #{outsam}")
         self.create_chunk_files(outsam)
 
       end
-      binding.pry
       q = RbbtProcessQueue.new cpus
       q.callback &callback
       q.init do |bam|
@@ -76,13 +72,10 @@ class BAMShard
       end
       bams =  Dir.glob("#{workdir}/*reads").each {|f| !File.directory? f}
       for bam in bams do
-        iii bam
-        binding.pry
         q.process bam
       end
 
       q.join
-      binding.pry
       inbams = Dir.glob(output + ".files/*reads").map(&File.method(:realpath))
       args = {}
       args["OUTPUT"] = output
