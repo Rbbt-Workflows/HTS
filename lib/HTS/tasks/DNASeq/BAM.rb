@@ -121,16 +121,31 @@ module HTS
 
   dep :BAM_bwa
   extension :bam
+  task :BAM_sorted => :binary do
+    Open.mkdir files_dir 
+    sorted = file('sorted.bam')
+
+    args = {}
+    args["INPUT"] = step(:BAM_bwa).path
+    args["OUTPUT"] = sorted
+    args["SORT_ORDER"] = 'coordinate'
+    gatk("SortSam", args)
+    Open.mv sorted, self.path
+    nil
+  end
+
+  dep :BAM_sorted
+  extension :bam
   input :tmp_dir, :string, "Temporary directory", nil
   task :BAM_duplicates => :binary do |tmp_dir|
     Open.mkdir files_dir 
     output = file('out.bam')
 
     args = {}
-    args["INPUT"] = step(:BAM_bwa).path
+    args["INPUT"] = step(:BAM_sorted).path
     args["OUTPUT"] = output
     args["METRICS_FILE"] = file('metrics.txt') 
-    args["ASSUME_SORT_ORDER"] = 'queryname'
+    args["ASSUME_SORT_ORDER"] = 'coordinate'
     args["CREATE_INDEX"] = 'false'
 
     gatk("MarkDuplicates", args, tmp_dir)
@@ -140,22 +155,6 @@ module HTS
   end
 
   dep :BAM_duplicates
-  extension :bam
-  input :tmp_dir, :string, "Temporary directory", nil
-  task :BAM_sorted => :binary do |tmp_dir|
-    Open.mkdir files_dir 
-    sorted = file('sorted.bam')
-
-    args = {}
-    args["INPUT"] = step(:BAM_duplicates).path
-    args["OUTPUT"] = sorted
-    args["SORT_ORDER"] = 'coordinate'
-    gatk("SortSam", args, tmp_dir)
-    Open.mv sorted, self.path
-    nil
-  end
-
-  dep :BAM_sorted
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
   task :BAM_rescore => :binary do |interval_list|
@@ -191,8 +190,8 @@ module HTS
     #{{{ Recalibration
     shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
     if shard == 'true'
-      contigs = Samtools.bam_contigs(step(:BAM_sorted))
-      bam_file = Samtools.prepare_BAM(step(:BAM_sorted))
+      contigs = Samtools.bam_contigs(step(:BAM_duplicates))
+      bam_file = Samtools.prepare_BAM(step(:BAM_duplicates))
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
@@ -216,7 +215,7 @@ module HTS
       Open.rm_rf outfiles
       nil
     else
-      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_sorted)) : step(:BAM_sorted).path
+      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
 
       args["input"] = bam_file
       gatk("BaseRecalibrator", args)
@@ -234,7 +233,7 @@ module HTS
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
     if shard == 'true'
-      contigs = Samtools.bam_contigs(step(:BAM_sorted))
+      contigs = Samtools.bam_contigs(step(:BAM_duplicates))
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
@@ -266,7 +265,7 @@ module HTS
 
       Open.rm_rf outfiles
     else
-      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_sorted)) : step(:BAM_sorted).path
+      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
 
       args["input"] = bam_file
       gatk("ApplyBQSR", args)
@@ -280,7 +279,7 @@ module HTS
   input :skip_rescore, :boolean, "Skip BAM rescore", false
   dep_task :BAM, HTS, :BAM_rescore do |jobname,options|
     if options[:skip_rescore]
-      task = :BAM_sorted
+      task = :BAM_duplicates
     else
       task = :BAM_rescore
     end

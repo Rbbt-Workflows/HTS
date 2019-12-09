@@ -321,4 +321,7 @@ module Sample
     {:inputs => options} 
   end
 
+  #dep Sample, :BAM
+  #dep_task :collect_fragment_counts, HTS, :collect_fragment_counts, :bam => :BAM
+
 end
