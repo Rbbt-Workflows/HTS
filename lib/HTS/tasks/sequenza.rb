@@ -2,11 +2,14 @@ require 'rbbt/util/R'
 module HTS
 
   SEQUENZA_UTILS = 'sequenza-utils'
+
+  CMD.tool "sequenza-utils" do
+    CMD.cmd('pip install sequenza-utils')
+  end
   
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38), :nofile => true
   extension 'gc.gz'
-  task :GC_windows => :text do |reference|
-    orig_reference = reference_file(reference)
+  task :GC_windows => :text do 
+    orig_reference = reference_file(self.clean_name)
     reference = Samtools.prepare_FASTA orig_reference
     CMD.cmd("'#{SEQUENZA_UTILS}' gc_wiggle -w 50 -f '#{reference}' -o - | gzip > #{self.tmp_path}")
     nil
@@ -33,7 +36,7 @@ module HTS
     orig_reference = reference_file(reference)
     reference = Samtools.prepare_FASTA orig_reference
 
-    CMD.cmd("'#{SEQUENZA_UTILS}' bam2seqz -gc '#{step(:GC_windows).path}' -p -n '#{normal.path}' -t '#{tumor.path}' --fasta '#{reference}' | gzip > #{self.tmp_path}")
+    CMD.cmd("sequenza-utils", "bam2seqz -gc '#{step(:GC_windows).path}' -p -n '#{normal.path}' -t '#{tumor.path}' --fasta '#{reference}' | gzip > #{self.tmp_path}")
     nil
   end
 
