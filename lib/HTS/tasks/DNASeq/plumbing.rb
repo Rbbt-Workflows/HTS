@@ -1,3 +1,4 @@
+require 'tools/BAM_shard'
 module HTS
 
   input :bam_files, :array, "BAM filenames to multiplex"
@@ -59,7 +60,9 @@ module HTS
   input :bam_file, :binary, "Bam file", nil, :nofile => true
   input :by_group, :boolean, "Separate files by read-group", false
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
-  task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction|
+
+  input :tmp_dir, :string, "Temporary directory", nil
+  task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir|
     args = {}
     args["INPUT"] = bam_file
 
@@ -82,10 +85,16 @@ module HTS
     args["REMOVE_DUPLICATE_INFORMATION"] = "true"
     args["REMOVE_ALIGNMENT_INFORMATION"] = "true"
 
-    gatk("RevertSam", args)
+    gatk("RevertSam", args, tmp_dir)
     if by_group
       file("uBAM").glob("*")
     end
+  end
+
+  input :bam_file , :file, "BAM", :nofile => true
+  task :revert_BAM_sharded do |bam_file|
+    bam_file = Samtools.prepare_BAM(bam_file)
+    BAMShard.revert_BAM(bam_file, self.path)
   end
 
   input :fastq1_files, :array, "FASTQ files for first mate"

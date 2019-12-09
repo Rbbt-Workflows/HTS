@@ -136,7 +136,8 @@ module HTS
 
   dep :BAM_sorted
   extension :bam
-  task :BAM_duplicates => :binary do
+  input :tmp_dir, :string, "Temporary directory", nil
+  task :BAM_duplicates => :binary do |tmp_dir|
     Open.mkdir files_dir 
     output = file('out.bam')
 
@@ -147,7 +148,7 @@ module HTS
     args["ASSUME_SORT_ORDER"] = 'coordinate'
     args["CREATE_INDEX"] = 'false'
 
-    gatk("MarkDuplicates", args)
+    gatk("MarkDuplicates", args, tmp_dir)
 
     Open.mv output, self.path
     nil

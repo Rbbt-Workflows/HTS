@@ -87,18 +87,52 @@ module Samtools
     linked
   end
   
-  def self.BAM_sort(bam_file)
+  def self.BAM_sort(bam_file,to_sam=false, queryname=true)
   	cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    format_str=" -O BAM "
+    if to_sam
+      format_str=" -O SAM "
+    end
+    sort_order_str=""
+    if queryname
+      sort_order_str="-n"
+    end
     if cpus
-      Samtools.run("sort -@ #{cpus} '#{bam_file}'")
+      Samtools.run("sort #{format_str} #{sort_order_str} -@ #{cpus} '#{bam_file}' -o #{bam_file}.sorted")
     else
-      Samtools.run("sort '#{bam_file}'")
+      Samtools.run("sort #{format_str} #{sort_order_str} '#{bam_file}' -o #{bam_file}.sorted")
     end
   end
 
+  def self.BAM_get_chr_reads(bam_file, chr)
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    CMD.cmd("samtools view -@ #{cpus} -Sb -h '#{bam_file}' #{chr} > #{chr}.bam")
+  end
+
+  def self.header(bam_file)
+    CMD.cmd("samtools view -H #{bam_file}| grep -v \"^@PG\"").read
+  end
+
+  def self.reads_number(bam_file)
+    CMD.cmd("samtools view -c #{bam_file}").read
+  end
 
   def self.BAM_start(bam_file)
     CMD.cmd("samtools view '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")
+  end
+
+  def self.merge(outbam, inbams)
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    CMD.cmd("samtools merge -n -@ #{cpus} #{outbam} #{inbams} ")
+  end
+
+  def self.BAM_sample_name(bam_file)
+    Samtools.run("view -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n1")
+  end
+
+  def self.viewSam(inBAM, outSAM)
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    CMD.cmd("samtools view -@ #{cpus} #{inBAM} > #{outSAM}")
   end
 
   def self.reference_contigs(reference)

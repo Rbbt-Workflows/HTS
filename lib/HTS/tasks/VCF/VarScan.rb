@@ -1,6 +1,6 @@
 require 'tools/VarScan'
 require 'tools/fpfilter'
-require 'pry'
+
 module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
