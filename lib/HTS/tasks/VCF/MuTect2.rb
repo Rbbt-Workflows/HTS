@@ -112,8 +112,8 @@ module HTS
     end
   end
   dep :contamination, :BAM => :tumor, :compute => :canfail do |jobname,options,dependencies|
-    matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination}.first
-    options[:matched] = matched_dep.step(:BAM_pileup_sumaries).path if matched_dep
+    matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination }.first
+    options[:matched] = matched_dep.step(:BAM_pileup_sumaries) if matched_dep
     options[:BAM] = options[:tumor]
     {:inputs => options}
   end

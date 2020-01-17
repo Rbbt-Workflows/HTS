@@ -67,8 +67,12 @@ module HTS
     {:inputs => options, :jobname => jobname}
   end
 
-  dep :strelka_filtered
-  dep :strelka_filtered_indels
+  dep :strelka_filtered, :compute => :produce
+  dep :strelka_filtered_indels do |jobname, options|
+    job = HTS.job(:strelka_filtered_indels, jobname, options)
+    job.overriden = false
+    job
+  end
   extension :vcf
   task :strelka => :text do
     

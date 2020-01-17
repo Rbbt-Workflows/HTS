@@ -47,11 +47,12 @@ module HTS
   end
 
   dep :BAM_pileup_sumaries
-  input :matched, :file, "Matched contamiation table"
+  input :matched, :file, "Matched contamination table", nil, :nofile => true
   task :contamination => :text do |matched|
     args = {}
     args["input"] = step(:BAM_pileup_sumaries).path
     args["output"] = self.tmp_path
+    matched = matched.path if Step === matched
     args["matched"] = matched if matched
     Open.mkdir files_dir
     args["segments"] = file('segments.tsv')
