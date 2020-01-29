@@ -35,6 +35,8 @@ module HTS
 
     tumor_sample = Samtools.BAM_sample_name(tumor)
     normal_sample = Samtools.BAM_sample_name(normal) if normal
+    
+    raise "No normal sample name" if normal and normal_sample.nil?
 
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
 
@@ -51,7 +53,7 @@ module HTS
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
     args["dont-use-soft-clipped-bases"] = remove_soft_clip if remove_soft_clip
-
+    
     # UPDATE FOR GATK 4.1.2
     #args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
 
@@ -112,8 +114,8 @@ module HTS
     end
   end
   dep :contamination, :BAM => :tumor, :compute => :canfail do |jobname,options,dependencies|
-    matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination}.first
-    options[:matched] = matched_dep.step(:BAM_pileup_sumaries).path if matched_dep
+    matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination }.first
+    options[:matched] = matched_dep.step(:BAM_pileup_sumaries) if matched_dep
     options[:BAM] = options[:tumor]
     {:inputs => options}
   end

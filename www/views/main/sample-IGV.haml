@@ -1,0 +1,7 @@
+%h1 IGV
+
+= action_parameters do
+  - input :sample, :string
+
+- if defined? sample
+  = tool :IGV_js, :sample => sample

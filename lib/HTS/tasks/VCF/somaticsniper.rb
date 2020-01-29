@@ -1,7 +1,7 @@
 require 'tools/fpfilter'
 module HTS
   
-  CMD.tool "bam-somaticsniper", 'bam-somaticsniper' do
+  CMD.tool "bam-somaticsniper", nil, "bam-somaticsniper -v" do
     CMD.cmd('conda install somatic-sniper -c bioconda')
   end
 
