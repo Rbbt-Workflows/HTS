@@ -28,12 +28,15 @@ module Samtools
   #Samtools_CMD=Rbbt.software.opt.Samtools.produce.bin.samtools.find
 
   def self.samtools_cmd
-    Rbbt.software.opt.Samtools.produce.bin.samtools.find
     'samtools'
   end
 
-  def self.run(command)
+  def self.run_log(command)
     CMD.cmd_log(:samtools, command)
+  end
+
+  def self.run(command)
+    CMD.cmd(:samtools, command).read
   end
 
   def self.prepare_BAM(file, dir = nil)
@@ -127,7 +130,7 @@ module Samtools
   end
 
   def self.BAM_sample_name(bam_file)
-    Samtools.run("view -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n1")
+    CMD.cmd(:samtools, "view -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n 1").read.strip
   end
 
   def self.viewSam(inBAM, outSAM)

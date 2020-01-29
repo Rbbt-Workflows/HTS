@@ -117,4 +117,19 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
  }
  data=data filter="*"{
  }
+ www=www{
+  views=views{
+   public=public{
+    js=js{
+     igv.min.js
+    }
+   }
+   tools=tools{
+    IGV_js.haml
+   }
+			main=main{
+				sample-IGV.haml
+			}
+  }
+ }
 }
