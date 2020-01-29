@@ -27,8 +27,8 @@ module HTS
 
   dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   input :BAM, :file, "BAM file", nil, :nofile => true
-  input :interval_list, :file, "Interval list", nil, :nofile => true
-  task :BAM_pileup_sumaries => :text do |bam,interval_list|
+  #input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :BAM_pileup_sumaries => :text do |bam|
 
     variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path, file('index')
 
@@ -36,8 +36,9 @@ module HTS
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
     args["output"] = self.tmp_path
-    args["intervals"] = interval_list ? interval_list : variants_file
-    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
+    # args["intervals"] = interval_list ? interval_list : variants_file
+    args["intervals"] = variants_file
+    #args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
     begin
       GATK.run_log("GetPileupSummaries", args)
     rescue ProcessFailed

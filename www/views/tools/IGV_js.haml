@@ -1,0 +1,67 @@
+#igv-div
+
+- Workflow.require_workflow "Sample"
+- tumor_bam_job = Sample.job(:BAM, sample)
+- raise "Job not done" unless tumor_bam_job.done?
+- tumor_bam = Samtools.prepare_BAM tumor_bam_job.path
+
+- normal_bam_job = Sample.job(:BAM_normal, sample)
+- raise "Job not done" unless normal_bam_job.done?
+- normal_bam = Samtools.prepare_BAM normal_bam_job.path
+
+- filename = "tumor.bam"
+- url_tumor = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
+- f = @step.file(:html_resources)[filename].find
+- Open.link tumor_bam, f
+- Open.link tumor_bam + '.bai', f + '.bai'
+- index_tumor = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }.bai")
+
+- filename = "normal.bam"
+- url_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
+- f = @step.file(:html_resources)[filename].find
+- Open.link normal_bam, f
+- Open.link normal_bam + '.bai', f + '.bai'
+- index_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }.bai")
+
+- url_normal = add_GET_param(url_normal, '_format', 'binary')
+- index_normal = add_GET_param(index_normal, '_format', 'binary')
+
+- url_tumor = add_GET_param(url_tumor, '_format', 'binary')
+- index_tumor = add_GET_param(index_tumor, '_format', 'binary')
+
+:deferjs
+  url_tumor = "#{url_tumor}"
+  index_tumor = "#{index_tumor}"
+  url_normal = "#{url_normal}"
+  index_normal = "#{index_normal}"
+  //url_tumor = "file://#{tumor_bam}"
+  //index_tumor = "file://#{tumor_bam}.bai"
+  //url_normal = "file://#{normal_bam}"
+  //index_normal = "file://#{normal_bam}.bai"
+  genome = "hg38"
+  require_js(["/js-find/igv.min.js"], function(){
+    var igvDiv = document.getElementById("igv-div");
+    var options =
+      {
+        genome: genome,
+        tracks: [
+          {
+            "name": "#{ sample } tumor",
+            "url": url_tumor,
+            "indexURL": index_tumor,
+            "format": "bam"
+          },
+          {
+            "name": "#{ sample } normal",
+            "url": url_normal,
+            "indexURL": index_normal,
+            "format": "bam"
+          }
+        ]
+      };
+
+    igv.createBrowser(igvDiv, options)
+      .then(function (browser) {
+        console.log("Created IGV browser");
+      })
+  })

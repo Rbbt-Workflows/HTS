@@ -61,7 +61,7 @@ module GATK
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
         args = {}
-        args["feature-file"] = linked
+        args["input"] = linked
         GATK.run_log("IndexFeatureFile", args)
       end
     end
@@ -115,7 +115,7 @@ module GATK
         end
 
         args = {}
-        args["feature-file"] = linked
+        args["input"] = linked
         GATK.run_log("IndexFeatureFile", args)
       end
     end
