@@ -227,8 +227,6 @@ module HTS
     args["input"] = bam_file
     args["output"] = output
     args["bqsr-recal-file"] = file('recal_data.table')
-    args["intervals"] = interval_list if interval_list
-    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
 
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
