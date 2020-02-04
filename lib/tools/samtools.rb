@@ -16,7 +16,7 @@ module Samtools
   Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
   Rbbt.claim Rbbt.software.opt.bcftools, :install, Rbbt.share.install.software.bcftools.find
 
-  CMD.tool :samtools, Rbbt.software.opt.Samtools do
+  CMD.tool :samtools do
     Rbbt.software.opt.HTSLib.produce
     Rbbt.software.opt.Samtools.produce
   end
