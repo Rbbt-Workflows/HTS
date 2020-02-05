@@ -11,7 +11,7 @@ module HTS
       variants_file = vcf_file reference, "mm10_variation"
     end
 
-    variants_file = GATK.prepare_VCF_AF_only variants_file
+    variants_file = GATK.prepare_VCF variants_file
 
     reference = reference_file self.recursive_inputs[:reference]
     reference = GATK.prepare_FASTA reference

@@ -17,8 +17,8 @@ module HTS
 
     af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
     germline_resource = vcf_file reference, germline_resource if germline_resource
-    germline_resource = GATK.prepare_VCF_AF_only germline_resource if germline_resource
-    pon = GATK.prepare_VCF_AF_only pon if pon
+    germline_resource = GATK.prepare_VCF germline_resource if germline_resource
+    pon = GATK.prepare_VCF pon if pon
 
     reference = reference_file reference
     orig_reference = reference
