@@ -43,6 +43,7 @@ module HTS
   end
 
   dep :mark_adapters
+  dep :uBAM
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :bwa_mem_args, :string, "Arg string", "-M -p"
   input :remove_unpaired, :boolean, "Remove possible unpaired reads", false
@@ -158,16 +159,15 @@ module HTS
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
-  task :BAM_rescore => :binary do |interval_list|
+  task :BAM_rescore => :binary do |interval_list,reference|
 
     interval_list = nil if interval_list == "none"
-    reference = reference_file self.recursive_inputs[:reference]
+    reference = reference_file reference
     reference = GATK.prepare_FASTA reference
 
     args = {}
     args["reference"] = reference
     args["intervals"] = interval_list if interval_list
-    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
     args["output"] = file('recal_data.table')
 
     known_sites = [] 
@@ -196,7 +196,6 @@ module HTS
 
       cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
       args["intervals"] ||= nil
-      args["interval-padding"] ||= GATKShard::GAP_SIZE 
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing BaseRecalibrator sharded")
 
@@ -235,9 +234,13 @@ module HTS
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
-      args["intervals"] ||= nil
-      args["interval-padding"] ||= GATKShard::GAP_SIZE 
-      intervals = (interval_list || intervals_for_reference(reference))
+      #args["intervals"] ||= nil
+      #args["interval-padding"] ||= GATKShard::GAP_SIZE 
+      #intervals = (interval_list || intervals_for_reference(reference))
+      
+      args["intervals"] = nil
+      args["interval-padding"] = GATKShard::GAP_SIZE 
+      intervals = intervals_for_reference(reference)
 
       outfiles = Path.setup(file('outfiles'))
       Open.mkdir outfiles
@@ -265,6 +268,7 @@ module HTS
     else
       bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
 
+      args["intervals"] = nil
       args["input"] = bam_file
       gatk("ApplyBQSR", args)
     end

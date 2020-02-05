@@ -1,36 +1,37 @@
 module HTS
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
-  extension :vcf
-  task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
-    case reference.sub('_noalt','')
-    when 'b37', 'hg19', 'hg38', 'GRCh38'
-      variants_file = vcf_file reference, "small_exac"
-    when 'mm10', 'GRCm38'
-      raise RbbtException, "No Pileup Summaries for mouse"
-      variants_file = vcf_file reference, "mm10_variation"
-    end
+  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
+  #extension :vcf
+  #task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
+  #  case reference.sub('_noalt','')
+  #  when 'b37', 'hg19', 'hg38', 'GRCh38'
+  #    variants_file = vcf_file reference, "small_exac"
+  #  when 'mm10', 'GRCm38'
+  #    raise RbbtException, "No Pileup Summaries for mouse"
+  #    variants_file = vcf_file reference, "mm10_variation"
+  #  end
 
-    variants_file = GATK.prepare_VCF variants_file
+  #  variants_file = GATK.prepare_VCF variants_file
 
-    reference = reference_file self.recursive_inputs[:reference]
-    reference = GATK.prepare_FASTA reference
+  #  reference = reference_file self.recursive_inputs[:reference]
+  #  reference = GATK.prepare_FASTA reference
 
-    args = {}
-    args["reference"] = reference
-    args["variant"] = variants_file
-    args["restrict-alleles-to"] = 'BIALLELIC'
-    args["output"] = tmp_path
-    GATK.run_log("SelectVariants", args)
-    nil
-  end
+  #  args = {}
+  #  args["reference"] = reference
+  #  args["variant"] = variants_file
+  #  args["restrict-alleles-to"] = 'BIALLELIC'
+  #  args["output"] = tmp_path
+  #  GATK.run_log("SelectVariants", args)
+  #  nil
+  #end
 
-  dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
-  input :BAM, :file, "BAM file", nil, :nofile => true
+  #dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
+  
+  input :bam_file, :file, "BAM file", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,reference|
 
-    variants_file = GATK.prepare_VCF vcf_file reference, "small_exac"
+    variants_file = GATK.prepare_VCF vcf_file(reference, "small_exac")
 
     args = {}
     args["input"] = Samtools.prepare_BAM bam 
@@ -46,14 +47,25 @@ module HTS
     nil
   end
 
-  dep :BAM_pileup_sumaries
-  input :matched, :file, "Matched contamination table", nil, :nofile => true
-  task :contamination => :text do |matched|
+  dep :BAM_pileup_sumaries do |jobname,options|
+    jobs = []
+    jobs << {:inputs => options.merge(:bam_file => options[:tumor_bam]), :jobname => jobname}
+    jobs << {:inputs => options.merge(:bam_file => options[:normal_bam]), :jobname => jobname + "_normal"} if options[:normal_bam]
+    jobs
+  end
+  input :tumor_bam, :file, "Main BAM", nil, :nofile => true
+  input :normal_bam, :file, "Matched BAM", nil, :nofile => true
+  task :contamination => :text do 
     args = {}
-    args["input"] = step(:BAM_pileup_sumaries).path
+
+    tumor_pileup = dependencies[0]
+    matched = dependencies[1]
+
+    args["input"] = tumor_pileup.path
     args["output"] = self.tmp_path
-    matched = matched.path if Step === matched
-    args["matched"] = matched if matched
+
+    args["matched"] = matched.path if matched
+
     Open.mkdir files_dir
     args["segments"] = file('segments.tsv')
     GATK.run_log("CalculateContamination", args)
@@ -113,32 +125,32 @@ module HTS
     nil
   end
 
-  input :BAM, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
-  extension "tar.gz"
-  task :BAM_F1R2 => :binary do |bam,reference|
-    args = {}
+  #input :BAM, :file, "Tumor BAM", nil, :nofile => true
+  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
+  #extension "tar.gz"
+  #task :BAM_F1R2 => :binary do |bam,reference|
+  #  args = {}
 
-    reference = reference_file reference
-    orig_reference = reference
+  #  reference = reference_file reference
+  #  orig_reference = reference
 
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
-    bam = Samtools.prepare_BAM(bam)
+  #  reference = GATK.prepare_FASTA orig_reference
+  #  reference = Samtools.prepare_FASTA orig_reference
+  #  bam = Samtools.prepare_BAM(bam)
 
-    args["--input"] = bam
-    args["--reference"] = reference
-    args["--output"] = self.tmp_path
-    gatk("CollectF1R2Counts", args)
-    nil
-  end
+  #  args["--input"] = bam
+  #  args["--reference"] = reference
+  #  args["--output"] = self.tmp_path
+  #  gatk("CollectF1R2Counts", args)
+  #  nil
+  #end
 
-  dep :BAM_F1R2
+  dep :mutect2_pre
   extension "tar.gz"
   task :BAM_orientation_model => :text do
     args = {}
 
-    args["--input"] = step(:BAM_F1R2).path
+    args["--input"] = step(:mutect2_pre).file('f1r2.tar.gz')
     args["--output"] = self.tmp_path
     gatk("LearnReadOrientationModel", args)
     nil

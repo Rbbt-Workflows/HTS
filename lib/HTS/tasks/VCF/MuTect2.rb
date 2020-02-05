@@ -52,6 +52,7 @@ module HTS
     args["panel-of-normals"] = pon if pon
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
+    args["f1r2-tar-gz"] = file('f1r2.tar.gz')
     args["dont-use-soft-clipped-bases"] = remove_soft_clip if remove_soft_clip
     
     # UPDATE FOR GATK 4.1.2
@@ -107,19 +108,8 @@ module HTS
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   dep :mutect2_pre
-  dep :contamination, :BAM => :normal, :compute => :canfail do |jobname,options,dependencies|
-    if options[:normal]
-      options[:BAM] = options[:normal]
-      {:inputs => options}
-    end
-  end
-  dep :contamination, :BAM => :tumor, :compute => :canfail do |jobname,options,dependencies|
-    matched_dep = dependencies.flatten.select{|dep| dep.task_name.to_sym == :contamination }.first
-    options[:matched] = matched_dep.step(:BAM_pileup_sumaries) if matched_dep
-    options[:BAM] = options[:tumor]
-    {:inputs => options}
-  end
-  dep :BAM_orientation_model, :BAM => :tumor
+  dep :contamination, :tumor_bam => :tumor, :normal_bam => :normal, :compute => :canfail
+  dep :BAM_orientation_model
   extension :vcf
   task :mutect2_filtered => :text do |reference|
     reference = reference_file reference
@@ -135,8 +125,7 @@ module HTS
     FileUtils.mkdir_p files_dir
     args = {}
 
-    contamination = dependencies.select{|dep| dep.task_name.to_sym == :contamination}.last
-    contamination = nil if contamination.error?
+    contamination = step(:contamination)
 
     args["variant"] = tmp
     args["output"] = self.tmp_path

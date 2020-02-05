@@ -69,7 +69,7 @@ module HTS
       when 'gnomad'
         Organism["Hsa"][reference].known_sites["af-only-gnomad.vcf.gz"].produce.find
       when 'small_exac'
-        Organism["Hsa"][reference].known_sites["small_exac_common_3_b37.vcf.gz"].produce.find
+        Organism["Hsa"][reference].known_sites["small_exac_common_3.vcf.gz"].produce.find
       when 'dbsnp'
         if reference =~ /hg38/
           Organism["Hsa"][reference].known_sites["dbsnp_146.vcf.gz"].produce.find
@@ -262,8 +262,8 @@ module HTS
       args = args_new
 
       case command.to_s
-      when "BaseRecalibrator"
-      args.delete_if{|k,v| k.include? 'interval'}
+      #when "BaseRecalibrator"
+      #  args.delete_if{|k,v| k.include? 'interval'}
       when "SortSam", "ApplyBQSR"
         args['--create-output-bam-index'] = false
       when "MarkDuplicates"
@@ -298,6 +298,7 @@ module HTS
       command += "Spark"
     end
 
+    iii args
     begin
       GATK.run_log(command, args, sin, tmp_dir)
     ensure

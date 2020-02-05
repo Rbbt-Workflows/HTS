@@ -124,6 +124,7 @@ module Sample
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
       options = add_sample_options jobname, options
 
+      iii options
       if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
         options[:normal] = nil
       end
