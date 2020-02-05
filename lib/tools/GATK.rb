@@ -183,6 +183,11 @@ module GATK
     GATK.get_VCF(url, target)
   end
 
+  Organism.claim Organism["Hsa"].b37.known_sites["small_exac_common_3_b37.vcf.gz"], :proc do |target|
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/Mutect2/GetPileupSummaries/small_exac_common_3_b37.vcf.gz"
+    GATK.get_VCF(url, target)
+  end
+
   Organism.claim Organism["Hsa"].b37.known_sites["1000G_phase1.snps.high_confidence.vcf.gz"], :proc do |target|
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
     GATK.get_VCF(url, target)

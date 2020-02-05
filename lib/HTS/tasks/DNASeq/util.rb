@@ -5,7 +5,7 @@ module HTS
   task :BAM_pileup_sumaries_known_biallelic => :tsv do |reference|
     case reference.sub('_noalt','')
     when 'b37', 'hg19', 'hg38', 'GRCh38'
-      variants_file = vcf_file reference, "1000g_snps"
+      variants_file = vcf_file reference, "small_exac"
     when 'mm10', 'GRCm38'
       raise RbbtException, "No Pileup Summaries for mouse"
       variants_file = vcf_file reference, "mm10_variation"
@@ -27,18 +27,17 @@ module HTS
 
   dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   input :BAM, :file, "BAM file", nil, :nofile => true
-  #input :interval_list, :file, "Interval list", nil, :nofile => true
-  task :BAM_pileup_sumaries => :text do |bam|
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
+  task :BAM_pileup_sumaries => :text do |bam,reference|
 
-    variants_file = GATK.prepare_VCF step(:BAM_pileup_sumaries_known_biallelic).path, file('index')
+    variants_file = GATK.prepare_VCF vcf_file reference, "small_exac"
 
     args = {}
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
     args["output"] = self.tmp_path
-    # args["intervals"] = interval_list ? interval_list : variants_file
     args["intervals"] = variants_file
-    #args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
+
     begin
       GATK.run_log("GetPileupSummaries", args)
     rescue ProcessFailed

@@ -68,6 +68,8 @@ module HTS
         Organism["Hsa"][reference].known_sites["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
       when 'gnomad'
         Organism["Hsa"][reference].known_sites["af-only-gnomad.vcf.gz"].produce.find
+      when 'small_exac'
+        Organism["Hsa"][reference].known_sites["small_exac_common_3_b37.vcf.gz"].produce.find
       when 'dbsnp'
         if reference =~ /hg38/
           Organism["Hsa"][reference].known_sites["dbsnp_146.vcf.gz"].produce.find
