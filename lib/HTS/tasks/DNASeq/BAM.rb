@@ -157,10 +157,10 @@ module HTS
   dep :BAM_duplicates
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   task :BAM_rescore => :binary do |interval_list|
 
     interval_list = nil if interval_list == "none"
-
     reference = reference_file self.recursive_inputs[:reference]
     reference = GATK.prepare_FASTA reference
 
@@ -174,7 +174,7 @@ module HTS
     known_site_codes = if reference.include?('mm10') || reference.include?('GRCm38')
                          ["mm10_variation", "mm10_structural"]
                        else
-                         ["miller_indels", "dbsnp", "1000G_indels"]
+                         ["miller_indels", "dbsnp", "1000g_snps"]
                        end
     known_site_codes.each do |file|
       vcf = vcf_file reference, file
