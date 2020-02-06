@@ -41,7 +41,7 @@ module Sample
                             sample = file.split(".").first
                             fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz")).sort
                             if fastq_files.any?
-                              fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:_2|_reads2)\.fastq/ }
+                              fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:\.|_)(?:2|reads2)\.fastq/ }
                               fastq1_files = fastq_files - fastq2_files
                               sample_files[sample] ||= {}
                               sample_files[sample]["FASTQ"] = [fastq1_files, fastq2_files]
