@@ -307,7 +307,7 @@ Bwa
 ExtractOriginalAlignmentRecordsByName
 MarkDuplicates
 PrintReads
-__RevertSam
+RevertSam
 SortSam
 FindBadGenomicKmers
 __HaplotypeCaller
