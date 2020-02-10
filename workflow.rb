@@ -303,7 +303,6 @@ module HTS
       command += "Spark"
     end
 
-    iii args
     begin
       GATK.run_log(command, args, sin, tmp_dir)
     ensure

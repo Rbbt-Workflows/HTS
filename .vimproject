@@ -42,12 +42,14 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    sample.rb
    sequenza.rb
    test.rb
+
    RNASeq=RNASeq{
     BAM.rb
     FuSeq.rb
     salmon.rb
     splicing.rb
    }
+
    DNASeq=DNASeq{
     BAM.rb
     filter.rb
@@ -55,6 +57,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     plumbing.rb
     util.rb
    }
+
    VCF=VCF{
     Delly.rb
     Haplotype.rb
@@ -67,6 +70,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     somaticsniper.rb
     svABA.rb
    }
+
    sample=sample{
     DNA.rb
     RNA.rb
