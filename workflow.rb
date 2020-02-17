@@ -271,6 +271,11 @@ module HTS
         args.delete_if{|k,v| k.include? "sort-order" }
         args.delete_if{|k,v| k.include? "metrics" }
         args.delete_if{|k,v| k.include? "create-index" }
+      when "RevertSam"
+        args.delete_if {|k,v| k.include? "max-discard-fraction" }
+        args.delete_if {|k,v| k.include? "attribute-to-clear" }
+        args.delete_if {|k,v| k.include? "restore-original-qualities" }
+        args.delete_if {|k,v| k.include? "remove-alignment-information" }
       end
     end
 
