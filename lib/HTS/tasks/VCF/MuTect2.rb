@@ -6,12 +6,13 @@ module HTS
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
+  input :interval_padding, :integer, "Interval padding", 50
   input :pon, :file, "Panel of normals", nil, :nofile => true
   input :germline_resource, :file, "Germline resource", :gnomad, :nofile => true
   input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
   input :remove_soft_clip, :boolean, "Don't consider soft clip bases", false
   extension :vcf
-  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,pon,germline_resource,af_not_in_resource,remove_soft_clip|
+  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,interval_padding,pon,germline_resource,af_not_in_resource,remove_soft_clip|
 
     interval_list = nil if interval_list == "none"
 
@@ -48,7 +49,7 @@ module HTS
     args["tumor-sample"] = tumor_sample
     args["normal-sample"] = normal_sample if normal_sample
     args["intervals"] = interval_list if interval_list
-    args["interval-padding"] = GATKShard::GAP_SIZE if interval_list
+    args["interval-padding"] = interval_padding || GATKShard::GAP_SIZE if interval_list
     args["panel-of-normals"] = pon if pon
     args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
@@ -65,21 +66,25 @@ module HTS
       cpus = config('cpus', :shard, :mutect, :mutect2)
       headervcf = file('tmp.header')
       args["interval-padding"] ||= GATKShard::GAP_SIZE 
+      args["intervals"] ||= nil
+      args["bam-output"] = nil
+      args["f1r2-tar-gz"] = '[OUTPUT]-f1r2.tar.gz'
+      bar = self.progress_bar("Processing Mutect2 sharded")
+
+      intervals = (interval_list || intervals_for_reference(reference))
       contentvcf = file('tmp.content')
       headervcf_stats = file('tmp.header.stats')
       contentvcf_stats = file('tmp.content.stats')
       tmp_stats = file('tmp.stats')
-      args["intervals"] ||= nil
-      args["bam-output"] = nil
-      intervals = (interval_list || intervals_for_reference(reference))
-      bar = self.progress_bar("Processing Mutect2 sharded")
 
+      Open.mkdir file('f1r2.tar.gz')
       GATKShard.cmd("Mutect2", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
         `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
         `grep -v "#" #{ioutfile} >> #{contentvcf}` 
         `head -n 1 "#{ioutfile}.stats" > "#{headervcf_stats}"` unless File.exists? headervcf_stats
         `tail -n 1 #{ioutfile}.stats >> #{contentvcf_stats}` 
+        `mv "#{ioutfile}-f1r2.tar.gz" "#{file('f1r2.tar.gz')}"`
       end
       bar.remove 
 

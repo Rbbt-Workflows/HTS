@@ -62,7 +62,7 @@ class GATKShard
   end
 
 
-  def self.cmd(command, args, interval_list, chunk_size = 10_000_000, cpus = nil, contigs = nil, bar = nil, &callback)
+  def self.cmd(command, args, interval_list, chunk_size = 10_000_000, cpus = nil, contigs = nil, bar = nil, break_interval = false, &callback)
     interval_file_field = args.keys.select{|f| f =~ /interval/i and f !~ /padding/ }.first
     output_field = args.keys.select{|f| f =~ /output/i }.first
     cpus ||= Rbbt::Config.get('cpus', 'shard', :default => 3) 
@@ -72,8 +72,8 @@ class GATKShard
     q.callback &callback
 
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs)
-    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 10, contigs) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
-    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 100, contigs) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 5, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 20, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
     bar.max = chunks.length if bar
     bar.init if bar
 
@@ -82,9 +82,19 @@ class GATKShard
 
       q.init do |intervals|
         Log.low "GATKShard processing intervals #{Misc.fingerprint intervals}"
-        iargs = args.dup
         name = [intervals.first * "__", intervals.last * "__"] * ","
         output = File.join(workdir, name)
+
+        iargs = {} 
+        args.each do |k,v|
+          if Array === v
+            iv = v.collect{|_v| String === _v ? _v.sub("[OUTPUT]", output) : _v }
+          else
+            iv = String === v ? v.sub("[OUTPUT]", output) : v
+          end
+          iargs[k] = iv
+        end
+
         TmpFile.with_file(intervals.collect{|e| e * "\t"} * "\n", :extension => 'bed') do |interval_file|
           iargs[interval_file_field] = interval_file 
           iargs[output_field] = output 

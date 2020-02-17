@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/workflow'
+
+$0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Show all studies available in the system
+
+$ #{$0} [options] [study|sample]
+
+Use - to read from STDIN
+
+-h--help Print this help
+
+EOF
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.doc
+  end
+  exit 0
+end
+
+
+elem = ARGV[0]
+
+Workflow.require_workflow "Sample"
+Workflow.require_workflow "HTS"
+
+require 'HTS/tasks/sample'
+
+study_files = Sample.load_study_files
+
+if study_files.include? elem
+  sample_files = study_files[elem]
+  sample_files.each do |sample,files|
+    puts Log.color(:magenta, "#{sample}: ") + files.collect{|p| p * "="} * " "
+  end
+else
+  study_files.each do |study, sample_files|
+    next if elem && ! sample_files.include?(elem)
+    puts Log.color(:magenta, "#{study}")
+    puts Log.color(:magenta, "#{"=" * study.length}")
+    sample_files.each do |sample,files|
+      next if elem && sample != elem
+      puts Log.color(:magenta, "#{sample}: ") + files.collect{|p| p * "="} * " "
+    end
+  end
+end

@@ -150,7 +150,12 @@ module HTS
   task :BAM_orientation_model => :text do
     args = {}
 
-    args["--input"] = step(:mutect2_pre).file('f1r2.tar.gz')
+    f1r2_path = step(:mutect2_pre).file('f1r2.tar.gz')
+    if File.directory?(f1r2_path)
+      args["--input"] = f1r2_path.glob("*.tar.gz")
+    else
+      args["--input"] = f1r2_path
+    end
     args["--output"] = self.tmp_path
     gatk("LearnReadOrientationModel", args)
     nil

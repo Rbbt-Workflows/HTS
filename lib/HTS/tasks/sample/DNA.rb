@@ -30,13 +30,11 @@ module Sample
     elsif orig_bam_files = sample_files["orig.BAM"]
       if options[:by_group]
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
-        #{:task => :BAM_rescore_realign_by_group, :inputs => options, :jobname => sample}
-        job = HTS.job(:BAM_rescore_realign, sample, options)
+        job = HTS.job(:BAM_rescore_realign_by_group, sample, options)
         job.overriden = false
         job
       else
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
-        #{:task => :BAM_rescore_realign, :inputs => options, :jobname => sample}
         job = HTS.job(:BAM_rescore_realign, sample, options)
         job.overriden = false
         job

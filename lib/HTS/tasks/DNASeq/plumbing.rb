@@ -60,7 +60,6 @@ module HTS
   input :bam_file, :binary, "Bam file", nil, :nofile => true
   input :by_group, :boolean, "Separate files by read-group", false
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
-
   input :tmp_dir, :string, "Temporary directory", nil
   task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir|
     args = {}
@@ -122,7 +121,7 @@ module HTS
     end
   end
   dep :BAM_multiplex do |jobname, options,dependencies|
-    bam_files = dependencies.flatten.collect{|dep| dep}
+    bam_files = dependencies.flatten.collect{|dep| dep }
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
   extension :bam
@@ -132,7 +131,7 @@ module HTS
   end
 
   dep :revert_BAM, :compute => :produce
-  dep :BAM, :compute => :produce, 
+  dep :BAM_bwa, :compute => :produce, 
     :fastq1 => :placeholder, :fastq2 => :placeholder,
     :sample_name => :placeholder,
     :read_group_name => :placeholder,
@@ -148,18 +147,19 @@ module HTS
     }
 
     read_groups.collect do |read_group|
-      uBAM = dependencies.first.file('uBAM')[read_group] + ".bam"
-      {:task => :BAM, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, read_group] * "."}
+      uBAM = Step.new dependencies.first.file('uBAM')[read_group] + ".bam"
+      uBAM.dependencies << dependencies.first
+      {:task => :BAM_bwa, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, read_group] * "."}
     end
   end
   dep :BAM_multiplex do |jobname, options,dependencies|
-    bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM}.collect{|dep| dep.path}
+    bam_files = dependencies.flatten.select{|dep| dep.task_name == :BAM_bwa}
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
   extension :bam
   dep_task :BAM_rescore_realign_by_group, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#BAM_sorted" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce
