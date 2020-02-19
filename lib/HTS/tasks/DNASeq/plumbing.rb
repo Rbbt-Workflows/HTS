@@ -59,7 +59,7 @@ module HTS
 
   input :bam_file, :binary, "Bam file", nil, :nofile => true
   input :by_group, :boolean, "Separate files by read-group", false
-  input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
+  input :max_discard_fraction, :boolean, "Max discard fraction", 0.05
   input :tmp_dir, :string, "Temporary directory", nil
   task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir|
     args = {}
@@ -87,6 +87,34 @@ module HTS
     gatk("RevertSam", args, tmp_dir)
     if by_group
       file("uBAM").glob("*")
+    end
+  end
+
+  input :bam_file, :binary, "Bam file", nil, :nofile => true
+  input :by_group, :boolean, "Separate files by read-group", false
+  input :max_discard_fraction, :boolean, "Max discard fraction", 0.05
+  input :tmp_dir, :string, "Temporary directory", nil
+  task :BAMToFastQ_bio => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir|
+    args = {}
+    args["filename"] = bam_file
+
+    if by_group
+      Open.mkdir file("uBAM").find
+      args["collate="] = "1"
+      args["outputperreadgroup="] = "1"
+      args["outputdir="] = file("fastqs").find
+    else
+      args["F"] = file("fasqt1.fq").find
+      args["F2"] = file("fasqt2.fq").find
+
+      args["outputperreadgroup="] = "1"
+    end
+    
+
+
+
+    if by_group
+      file("fastqs").glob("*")
     end
   end
 
@@ -127,7 +155,7 @@ module HTS
   extension :bam
   dep_task :BAM_rescore_mutiplex, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#BAM_sorted" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#Bio_sort" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce

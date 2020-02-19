@@ -120,42 +120,100 @@ module HTS
     nil
   end
 
-  dep :BAM_bwa
+#  dep :BAM_bwa
+#  extension :bam
+#  task :BAM_sorted => :binary do
+#    Open.mkdir files_dir
+#    sorted = file('sorted.bam')
+#    args = {}
+#    args["INPUT"] = step(:BAM_bwa).path
+#    args["OUTPUT"] = sorted
+#    args["SORT_ORDER"] = 'coordinate'
+#    gatk("SortSam", args)
+#    Open.mv sorted, self.path
+#    nil
+#  end
+
   extension :bam
-  task :BAM_sorted => :binary do
+  dep :BAM_bwa
+  input :sorting, :select, "Sorting method", "coordinate", :select_options => %w(coordinate queryname), :nofile => true
+  task :Bio_sorted => :binary do |bam,sorting|
     Open.mkdir files_dir 
     sorted = file('sorted.bam')
 
+    CMD.tool :bamsort do
+      CMD.cmd('conda install -c bioconda biobambam')
+    end
+
+    cpus_input = config('cpus', :biosortinput, :default => 1)
+
+    cpus_output = config('cpus', :biosortoutput, :default => 1)
+
+    cpus_sort = config('cpus', :biosortsorting, :default => 1)
+
     args = {}
-    args["INPUT"] = step(:BAM_bwa).path
-    args["OUTPUT"] = sorted
-    args["SORT_ORDER"] = 'coordinate'
-    gatk("SortSam", args)
+    args["I="] = step(:BAM_bwa).path
+    args["O="] = sorted
+    args["inputthreads="] = cpus_input
+    args["outputthreads="] = cpus_output
+    args["sortthreads="] = cpus_sort
+    args["SO="] = sorting
+
+    CMD.cmd_log(:bamsort, args)
+
     Open.mv sorted, self.path
     nil
   end
+  
 
-  dep :BAM_sorted
+
+
+
+#  dep :Bio_sorted
+#  extension :bam
+#  input :tmp_dir, :string, "Temporary directory", nil
+#  task :BAM_duplicates => :binary do |tmp_dir|
+#    Open.mkdir files_dir 
+#    output = file('out.bam')
+#
+#    args = {}
+#    args["INPUT"] = step(:Bio_sorted).path
+#    args["OUTPUT"] = output
+#    args["METRICS_FILE"] = file('metrics.txt') 
+#    args["ASSUME_SORT_ORDER"] = 'coordinate'
+#    args["CREATE_INDEX"] = 'false'
+#
+#    gatk("MarkDuplicates", args, tmp_dir)
+#
+#    Open.mv output, self.path
+#    nil
+#  end
+
+  dep :Bio_sorted
   extension :bam
   input :tmp_dir, :string, "Temporary directory", nil
-  task :BAM_duplicates => :binary do |tmp_dir|
+  task :Bio_duplicates => :binary do |tmp_dir|
     Open.mkdir files_dir 
-    output = file('out.bam')
+    output= file('out.bam')
+
+    CMD.tool :bammarkduplicates do
+      CMD.cmd('conda install -c bioconda biobambam')
+    end
+
+    cpus = config('cpus', :biomarkduplicates, :default => 1)
 
     args = {}
-    args["INPUT"] = step(:BAM_sorted).path
-    args["OUTPUT"] = output
-    args["METRICS_FILE"] = file('metrics.txt') 
-    args["ASSUME_SORT_ORDER"] = 'coordinate'
-    args["CREATE_INDEX"] = 'false'
+    args["I="] = step(:Bio_sorted).path
+    args["O="] = output
+    args["markthreads="] = cpus
 
-    gatk("MarkDuplicates", args, tmp_dir)
+    CMD.cmd_log(:bammarkduplicates, args)
 
     Open.mv output, self.path
     nil
   end
 
-  dep :BAM_duplicates
+  dep :Bio_duplicates
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
@@ -190,8 +248,8 @@ module HTS
     #{{{ Recalibration
     shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
     if shard == 'true'
-      contigs = Samtools.bam_contigs(step(:BAM_duplicates))
-      bam_file = Samtools.prepare_BAM(step(:BAM_duplicates))
+      contigs = Samtools.bam_contigs(step(:Bio_duplicates))
+      bam_file = Samtools.prepare_BAM(step(:Bio_duplicates))
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
@@ -214,7 +272,7 @@ module HTS
       Open.rm_rf outfiles
       nil
     else
-      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
+      bam_file = interval_list ? Samtools.prepare_BAM(step(:Bio_duplicates)) : step(:Bio_duplicates).path
 
       args["input"] = bam_file
       gatk("BaseRecalibrator", args)
@@ -230,7 +288,7 @@ module HTS
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
     if shard == 'true'
-      contigs = Samtools.bam_contigs(step(:BAM_duplicates))
+      contigs = Samtools.bam_contigs(step(:Bio_duplicates))
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
@@ -266,7 +324,7 @@ module HTS
 
       Open.rm_rf outfiles
     else
-      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
+      bam_file = interval_list ? Samtools.prepare_BAM(step(:Bio_duplicates)) : step(:Bio_duplicates).path
 
       args["intervals"] = nil
       args["input"] = bam_file
@@ -281,7 +339,7 @@ module HTS
   input :skip_rescore, :boolean, "Skip BAM rescore", false
   dep_task :BAM, HTS, :BAM_rescore do |jobname,options|
     if options[:skip_rescore]
-      task = :BAM_duplicates
+      task = :Bio_duplicates
     else
       task = :BAM_rescore
     end
