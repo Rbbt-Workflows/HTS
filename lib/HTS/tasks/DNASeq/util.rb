@@ -293,17 +293,84 @@ module HTS
   end
 
   input :BAM, :file, "BAM file", nil, :nofile => true
+  input :sort_order, :select, "Sort order", :coordinate, :select_options => %w(coordinate queryname)
   extension :bam
-  task :sort_BAM => :binary do |bam|
+  task :sort_BAM => :binary do |bam,sort_order|
     Open.mkdir files_dir 
     sorted = file('sorted.bam')
     
     args = {}
     args["INPUT"] = bam
     args["OUTPUT"] = sorted
-    args["SORT_ORDER"] = 'coordinate'
+    args["SORT_ORDER"] = sort_order
     gatk("SortSam", args)
     Open.mv sorted, self.path
     nil
   end
+
+  input :BAM, :file, "BAM file", nil, :nofile => true
+  input :reads, :integer, "Number of reads in chunk", 10_000_000
+  input :sort_order, :select, "Sort order", :coordinate, :select_options => %w(coordinate queryname)
+  extension :bam
+  task :sort_BAM_split => :binary do |bam,reads,sort_order|
+    Open.mkdir files_dir 
+
+    header = file('header')
+    CMD.cmd_log('samtools', "view -H '#{bam}' > '#{header}'")
+    txt = Open.read(header)
+
+    tmp = file('tmp.sam')
+    sorted = file('sorted.bam')
+    chunks_dir = file('chunk')
+
+    count = 0
+    chunk = 1
+    tmp_io = Open.open(tmp, :mode => 'w') 
+    tmp_io.puts txt
+    TSV.traverse CMD.cmd('samtools', "view '#{bam}'", :pipe => true), :type => :array do |line|
+      tmp_io.puts line
+      count += 1
+
+      if count == reads
+        tmp_io.close
+
+        args = {}
+        args["INPUT"] = tmp
+        args["OUTPUT"] = sorted
+        args["SORT_ORDER"] = sort_order
+        gatk("SortSam", args)
+
+        Open.mv sorted, chunks_dir["chunk_#{chunk}.bam"]
+
+        tmp_io = Open.open(tmp, :mode => 'w') 
+        tmp_io.puts txt
+
+        chunk += 1
+        count = 0
+      end
+    end
+
+    if count != 0
+      tmp_io.close
+
+      args = {}
+      args["INPUT"] = tmp
+      args["OUTPUT"] = sorted
+      args["SORT_ORDER"] = sort_order
+      gatk("SortSam", args)
+
+      Open.mv sorted, chunks_dir["chunk_#{chunk}.bam"]
+    end
+
+    args = {}
+    args["INPUT"] = chunks_dir.glob("*.bam").sort
+    args["OUTPUT"] = self.tmp_path
+    args["ASSUME_SORTED"] = true
+    args["SORT_ORDER"] = sort_order
+    gatk("MergeSamFiles", args)
+
+    Open.rm_rf self.files_dir
+    nil
+  end
+
 end
