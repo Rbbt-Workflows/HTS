@@ -155,7 +155,7 @@ module HTS
   extension :bam
   dep_task :BAM_rescore_mutiplex, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#Bio_sort" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#Bio_sorted" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce
@@ -187,7 +187,7 @@ module HTS
   extension :bam
   dep_task :BAM_rescore_realign_by_group, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#Bio_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce
