@@ -89,8 +89,10 @@ module HTS
 
           Misc.consume_stream io_bwa, true, bwa_bam
 
+          # DEBUG
           #bwa_bam = '/data/tmp/test.bam'
           #Misc.consume_stream io_bwa, false, bwa_bam
+          # DEBUG
 
           uBAM = step('uBAM').path
 
@@ -122,7 +124,7 @@ module HTS
 
   dep :BAM_bwa
   extension :bam
-  task :BAM_sorted => :binary do
+  task :BAM_sorted_old => :binary do
     Open.mkdir files_dir 
     sorted = file('sorted.bam')
 
@@ -133,6 +135,16 @@ module HTS
     gatk("SortSam", args)
     Open.mv sorted, self.path
     nil
+  end
+
+  dep :BAM_bwa
+  input :split_sort, :boolean, "Split sort operations", false
+  dep_task :BAM_sorted, HTS, :sort_BAM_split, :sort_order => 'coordinate', :BAM => :BAM_bwa do |jobname,options,dependencies|
+    if options[:split_sort]
+      {:task => :sort_BAM_split, :jobname => jobname, :inputs => options}
+    else
+      {:task => :sort_BAM, :jobname => jobname, :inputs => options}
+    end
   end
 
   dep :BAM_sorted
