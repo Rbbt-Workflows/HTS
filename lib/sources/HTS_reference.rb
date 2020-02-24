@@ -156,7 +156,7 @@ module Organism
   Organism.claim Organism["Hsa"].b37["b37.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     target.sub!(/\.gz$/,'')
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/human_g1k_v37_decoy.fasta.gz"
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/human_g1k_v37.fasta.gz"
     CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
     nil
   end
