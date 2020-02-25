@@ -109,33 +109,33 @@ module Samtools
 
   def self.BAM_get_chr_reads(bam_file, chr)
     cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
-    CMD.cmd("samtools view -@ #{cpus} -Sb -h '#{bam_file}' #{chr} > #{chr}.bam")
+    CMD.cmd("samtools view --no-PG -@ #{cpus} -Sb -h '#{bam_file}' #{chr} > #{chr}.bam")
   end
 
   def self.header(bam_file)
-    CMD.cmd("samtools view -H #{bam_file}| grep -v \"^@PG\"").read
+    CMD.cmd("samtools view --no-PG -H #{bam_file}| grep -v \"^@PG\"").read
   end
 
   def self.reads_number(bam_file)
-    CMD.cmd("samtools view -c #{bam_file}").read
+    CMD.cmd("samtools view --no-PG -c #{bam_file}").read
   end
 
   def self.BAM_start(bam_file)
-    CMD.cmd("samtools view '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")
+    CMD.cmd("samtools view --no-PG '#{bam_file}'| head -n 1 | cut -f 3,4").read.strip.split("\t")
   end
 
   def self.merge(outbam, inbams)
     cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
-    CMD.cmd("samtools merge -n -@ #{cpus} #{outbam} #{inbams} ")
+    CMD.cmd("samtools merge --no-PG -n -@ #{cpus} #{outbam} #{inbams} ")
   end
 
   def self.BAM_sample_name(bam_file)
-    CMD.cmd(:samtools, "view -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n 1").read.strip
+    CMD.cmd(:samtools, "view --no-PG -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n 1").read.strip
   end
 
   def self.viewSam(inBAM, outSAM)
     cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
-    CMD.cmd("samtools view -@ #{cpus} #{inBAM} > #{outSAM}")
+    CMD.cmd("samtools view --no-PG -@ #{cpus} #{inBAM} > #{outSAM}")
   end
 
   def self.reference_contigs(reference)
@@ -145,7 +145,7 @@ module Samtools
   def self.bam_contigs(bam)
     bam = bam.path if Step === bam
     bam = bam.find if Path === bam
-    CMD.cmd("samtools view -H '#{bam}' | grep ^@SQ | cut -f 2 |sed 's/SN://'").read.split("\n")
+    CMD.cmd("samtools view --no-PG -H '#{bam}' | grep ^@SQ | cut -f 2 |sed 's/SN://'").read.split("\n")
   end
 end
 

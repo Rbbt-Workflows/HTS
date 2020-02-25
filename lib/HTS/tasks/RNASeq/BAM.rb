@@ -83,7 +83,7 @@ module HTS
 
     Open.mkdir files_dir
     CMD.cmd_log("hisat2 -p #{cpus || 1} --dta --#{phred} #{rg_str} --summary-file #{summary} --known-splicesite-infile #{splice_in} --novel-splicesite-outfile #{splice_out} -x #{index} -1 #{fastq1*","} -2 #{fastq2*""} -S #{sam}")
-    CMD.cmd_log("samtools sort -@ #{samtools_cpus || 1} -O BAM -o #{self.tmp_path} #{sam} ")
+    CMD.cmd_log("samtools sort --no-PG -@ #{samtools_cpus || 1} -O BAM -o #{self.tmp_path} #{sam} ")
     Open.rm sam
     nil
   end

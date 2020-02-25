@@ -15,7 +15,7 @@ module HTS
       else
         CMD.cmd_log("#{Rbbt.software.opt.seqan.bin.razers3.find} -tc #{cpus} -i 95 -m 1 -dr 0 -o '#{tmp_bam}' '#{reference}' '#{fastq1}'")
       end
-      CMD.cmd("samtools sort '#{tmp_bam}' > '#{self.tmp_path}'")
+      CMD.cmd("samtools sort --no-PG '#{tmp_bam}' > '#{self.tmp_path}'")
     end
     nil
   end
@@ -51,7 +51,7 @@ module HTS
       else
         CMD.cmd_log("#{Rbbt.software.opt.Bowtie2.bowtie2.find} #{bowtie_args} -p #{cpus} -x '#{reference}' -U '#{fastq1}' -S '#{tmp_bam}'")
       end
-      CMD.cmd("samtools sort '#{tmp_bam}' > '#{self.tmp_path}'")
+      CMD.cmd("samtools sort --no-PG '#{tmp_bam}' > '#{self.tmp_path}'")
     end
     nil
   end
@@ -93,7 +93,7 @@ module HTS
         else
           CMD.cmd_log("#{Rbbt.software.opt.NovoAlign.novoalign.find} -d '#{reference}.nix' -f '#{fastq1}' #{novoalign_args} 1> #{tmp_sam}")
         end
-        CMD.cmd("samtools sort -O BAM  '#{tmp_sam}' > '#{self.tmp_path}'")
+        CMD.cmd("samtools sort --no-PG -O BAM  '#{tmp_sam}' > '#{self.tmp_path}'")
       end
     ensure
       FileUtils.rm fastq1 if File.exists?(fastq1) && original_fastq1 != fastq1

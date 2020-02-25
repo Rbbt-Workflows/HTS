@@ -62,7 +62,7 @@ module HTS
         Misc.with_fifo(file('FilterSam')) do |filter_sam|
 
           if remove_unpaired
-            io_filter = CMD.cmd(:samtools, "view -h -f 0x1 '#{step(:mark_adapters).path}'", :pipe => true)
+            io_filter = CMD.cmd(:samtools, "view -h --no-PG -f 0x1 '#{step(:mark_adapters).path}'", :pipe => true)
 
             Misc.consume_stream io_filter, true, filter_sam
           else

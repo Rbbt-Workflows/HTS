@@ -140,7 +140,7 @@ module HTS
     :platform => :placeholder,
     :sequencing_center => :placeholder do |jobname, options, dependencies|
 
-    read_groups = CMD.cmd("samtools view -H #{options[:bam_file]}").read.split("\n").select{|line| 
+    read_groups = CMD.cmd("samtools view --no-PG -H #{options[:bam_file]}").read.split("\n").select{|line| 
       line =~ /^@RG/
     }.collect{|line| 
       line.split("\t").select{|part| part =~ /^ID:(.*)/}.first.split(":").last

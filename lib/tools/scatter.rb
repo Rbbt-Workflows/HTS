@@ -5,13 +5,13 @@ class Scatter
     Path.setup @directory unless Path === @directory
 
     if Misc.is_filename? bam1
-      @stream1 = CMD.cmd("samtools view -h '#{bam1}'", :pipe => true, :no_fail => true)
+      @stream1 = CMD.cmd("samtools view --no-PG -h '#{bam1}'", :pipe => true, :no_fail => true)
     else
       @stream1 = TSV.get_stream bam1
     end
 
     if Misc.is_filename? bam2
-      @stream2 = CMD.cmd("samtools view -h '#{bam2}'", :pipe => true, :no_fail => true)
+      @stream2 = CMD.cmd("samtools view --no-PG -h '#{bam2}'", :pipe => true, :no_fail => true)
     else
       @stream2 = TSV.get_stream bam2
     end

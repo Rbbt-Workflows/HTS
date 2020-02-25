@@ -187,11 +187,11 @@ module HTS
   task :compare_BAM => :tsv do |bam_1,bam_2|
     reads_1 = file('reads_1')
     Open.write(reads_1, %w(read chr pos qual) * "\t" + "\n")
-    CMD.cmd("samtools view #{bam_1} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_1}")
+    CMD.cmd("samtools view --no-PG #{bam_1} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_1}")
 
     reads_2 = file('reads_2')
     Open.write(reads_2, %w(read chr pos qual) * "\t" + "\n")
-    CMD.cmd("samtools view #{bam_2} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_2}")
+    CMD.cmd("samtools view --no-PG #{bam_2} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_2}")
     
     first = []
     last = []
@@ -316,7 +316,7 @@ module HTS
     Open.mkdir files_dir 
 
     header = file('header')
-    CMD.cmd_log('samtools', "view -H '#{bam}' > '#{header}'")
+    CMD.cmd_log('samtools', "view -H --no-PG '#{bam}' > '#{header}'")
     txt = Open.read(header)
 
     tmp = file('tmp.sam')
@@ -327,7 +327,7 @@ module HTS
     chunk = 1
     tmp_io = Open.open(tmp, :mode => 'w') 
     tmp_io.puts txt
-    TSV.traverse CMD.cmd('samtools', "view '#{bam}'", :pipe => true), :type => :array do |line|
+    TSV.traverse CMD.cmd('samtools', "view --no-PG '#{bam}'", :pipe => true), :type => :array do |line|
       tmp_io.puts line
       count += 1
 
