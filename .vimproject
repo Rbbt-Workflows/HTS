@@ -9,6 +9,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   }
   tools=tools{
    BAMSurgeon.rb
+   BAM_shard.rb
    BWA.rb
    Bowtie.rb
    Delly.rb
@@ -17,6 +18,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    HISAT.rb
    IGV.rb
    NovoAlign.rb
+   Qualimap.rb
    STAR.rb
    SomaticSeq.rb
    Strelka.rb
@@ -31,7 +33,6 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    shard.rb
    stringTie.rb
    svABA.rb
-   Qualimap.rb
   }
   tasks=HTS/tasks{
    BAMSurgeon.rb

@@ -138,16 +138,6 @@ module HTS
   end
 
   dep :BAM_bwa
-  input :split_sort, :boolean, "Split sort operations", false
-  dep_task :BAM_sorted, HTS, :sort_BAM_split, :sort_order => 'coordinate', :BAM => :BAM_bwa do |jobname,options,dependencies|
-    if options[:split_sort]
-      {:task => :sort_BAM_split, :jobname => jobname, :inputs => options}
-    else
-      {:task => :sort_BAM, :jobname => jobname, :inputs => options}
-    end
-  end
-
-  dep :BAM_sorted
   extension :bam
   input :tmp_dir, :string, "Temporary directory", nil
   task :BAM_duplicates => :binary do |tmp_dir|
@@ -155,10 +145,10 @@ module HTS
     output = file('out.bam')
 
     args = {}
-    args["INPUT"] = step(:BAM_sorted).path
+    args["INPUT"] = step(:BAM_bwa).path
     args["OUTPUT"] = output
     args["METRICS_FILE"] = file('metrics.txt') 
-    args["ASSUME_SORT_ORDER"] = 'coordinate'
+    args["ASSUME_SORT_ORDER"] = 'queryname'
     args["CREATE_INDEX"] = 'false'
 
     gatk("MarkDuplicates", args, tmp_dir)
@@ -167,7 +157,45 @@ module HTS
     nil
   end
 
+  #dep :BAM_duplicates
+  #extension :bam
+  #dep_task :BAM_sorted, HTS, :sort_BAM_split, :sort_order => 'coordinate', :BAM => :BAM_duplicates do |jobname,options,dependencies|
+  #  split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
+
+  #  duplicates = dependencies.select{|dep| dep.task_name === :BAM_duplicates }.first
+  #  if duplicates.info[:spark]
+  #    duplicates
+  #  else
+  #    if options[:split_sort]
+  #      {:task => :sort_BAM_split, :jobname => jobname, :inputs => options}
+  #    else
+  #      {:task => :sort_BAM, :jobname => jobname, :inputs => options}
+  #    end
+  #  end
+  #end
+
   dep :BAM_duplicates
+  extension :bam
+  task :BAM_sorted => :binary do 
+    split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
+    duplicates = step(:BAM_duplicates)
+
+    job = if duplicates.info[:spark]
+            duplicates
+          else
+            if split_sort
+              HTS.job(:sort_BAM_split, self.clean_name, :BAM => duplicates)
+            else
+              HTS.job(:sort_BAM, self.clean_name, :BAM => duplicates)
+            end
+          end
+
+    job.produce
+    Open.link job.path, self.tmp_path
+    nil
+  end
+
+  dep :BAM_sorted
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
@@ -199,11 +227,13 @@ module HTS
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 
+    input_bam_job = step(:BAM_sorted)
+
     #{{{ Recalibration
     shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
     if shard == 'true'
-      contigs = Samtools.bam_contigs(step(:BAM_duplicates))
-      bam_file = Samtools.prepare_BAM(step(:BAM_duplicates))
+      contigs = Samtools.bam_contigs(input_bam_job)
+      bam_file = Samtools.prepare_BAM(input_bam_job)
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
@@ -226,7 +256,7 @@ module HTS
       Open.rm_rf outfiles
       nil
     else
-      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
+      bam_file = interval_list ? Samtools.prepare_BAM(input_bam_job) : input_bam_job.path
 
       args["input"] = bam_file
       gatk("BaseRecalibrator", args)
@@ -242,7 +272,7 @@ module HTS
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
     if shard == 'true'
-      contigs = Samtools.bam_contigs(step(:BAM_duplicates))
+      contigs = Samtools.bam_contigs(input_bam_job)
       args["input"] = bam_file
 
       cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
@@ -278,7 +308,7 @@ module HTS
 
       Open.rm_rf outfiles
     else
-      bam_file = interval_list ? Samtools.prepare_BAM(step(:BAM_duplicates)) : step(:BAM_duplicates).path
+      bam_file = interval_list ? Samtools.prepare_BAM(input_bam_job) : input_bam_job.path
 
       args["intervals"] = nil
       args["input"] = bam_file
@@ -293,7 +323,7 @@ module HTS
   input :skip_rescore, :boolean, "Skip BAM rescore", false
   dep_task :BAM, HTS, :BAM_rescore do |jobname,options|
     if options[:skip_rescore]
-      task = :BAM_duplicates
+      task = :BAM_sorted
     else
       task = :BAM_rescore
     end

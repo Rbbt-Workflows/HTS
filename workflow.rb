@@ -298,9 +298,10 @@ module HTS
 
   helper :gatk do |command,args,sin=nil,tmp_dir=nil|
 
-    if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
+    if GATK::SPARK_COMMANDS.include?(command) and config('spark', command, :gatk, :GATK) 
       args, fixed_files = fix_spark_args command, args
       command += "Spark"
+      set_info :spark, true
     end
 
     begin
