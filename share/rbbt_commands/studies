@@ -48,7 +48,7 @@ else
     puts Log.color(:magenta, "#{"=" * study.length}")
     sample_files.each do |sample,files|
       next if elem && sample != elem
-      puts Log.color(:magenta, "#{sample}: ") + files.collect{|p| p * "="} * " "
+      puts Log.color(:magenta, "#{sample}: ") + files.collect{|p| [p[0], [p[1]].flatten * ", "] * "="} * " "
     end
   end
 end
