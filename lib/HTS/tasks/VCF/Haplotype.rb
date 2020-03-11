@@ -29,11 +29,11 @@ module HTS
     args["-ERC"] = "GVCF"
     args["--max-alternate-alleles"] = 3
     args["--create-output-variant-index"] = false
-    shard = config('shard', :gatk, :haplotype, :HaplotypeCaller)
+    shard = config('shard', :HaplotypeCaller, :haplotype,  :gatk)
 
     if shard == 'true'
       contigs = Samtools.reference_contigs reference
-      cpus = config('cpus', :shard, :haplotype, :HaplotypeCaller)
+      cpus = config('cpus', :HaplotypeCaller, :haplotype,  :gatk, :default => 2)
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
       args["--intervals"] ||= nil

@@ -11,7 +11,9 @@ module Sample
     if fastq_files = sample_files[:FASTQ]
       if Array === fastq_files.first && fastq_files.first.length > 1
         options = options.merge({:fastq1_files => fastq_files.first, :fastq2_files => (fastq_files.last || [])})
-        {:task => :BAM_rescore_mutiplex, :inputs => options, :jobname => sample}
+        job = HTS.job(:BAM_rescore_mutiplex, sample, options)
+        job.overriden = false
+        job
       else
         options = options.merge({:fastq1 => fastq_files.first, :fastq2 => fastq_files.last})
         {:inputs => options, :jobname => sample}
@@ -19,7 +21,9 @@ module Sample
     elsif uBAM_files = sample_files[:uBAM]
       if Array === uBAM_files && uBAM_files.length > 1
         options = options.merge({:uBAM_files => uBAM_files})
-        {:task => :BAM_rescore_mutiplex, :inputs => options, :jobname => sample}
+        job = HTS.job(:BAM_rescore_mutiplex, sample, options)
+        job.overriden = false
+        job
       else
         options = options.merge({"HTS#uBAM" => uBAM_files})
         {:inputs => options, :jobname => sample}
@@ -133,7 +137,7 @@ module Sample
   dep :BAM_normal, :compute => [:produce, :canfail]
   dep_task :haplotype, HTS, :haplotype, :BAM => :BAM_normal do |jobname, options, dependencies|
     options = add_sample_options jobname, options
-    options[:BAM] = :BAM if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.first.nil?
+    options[:BAM] = :BAM if dependencies.flatten.reject{|dep| (dep.dependencies.empty? ) || (dep.error? && ! dep.recoverable_error?) }.select{|dep|  dep.task_name == :BAM_normal}.first.nil?
     {:inputs => options, :jobname => jobname}
   end
 

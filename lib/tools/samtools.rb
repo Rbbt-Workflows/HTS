@@ -130,7 +130,7 @@ module Samtools
   end
 
   def self.BAM_sample_name(bam_file)
-    CMD.cmd(:samtools, "view --no-PG -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n 1").read.strip
+    CMD.cmd(:samtools, "view --no-PG -H #{bam_file} | grep \"^@RG\"|grep \"SM:\" | awk '{for(i=1;i<=NF;i++)   if ( $i ~ /SM:.*/ ){ wln=$i; break } ; printf \"%s\\n\",wln}'| cut -d: -f2 | head -n 1").read.strip
   end
 
   def self.viewSam(inBAM, outSAM)

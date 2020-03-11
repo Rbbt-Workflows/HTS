@@ -39,7 +39,7 @@ module Sample
                           dir.glob('WES/*').each do |path|
                             file = File.basename path
                             sample = file.split(".").first
-                            fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz")).sort
+                            fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz") + path.glob("*.fq") + path.glob("*.fq.gz")).sort
                             if fastq_files.any?
                               fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:\.|_)(?:2|reads2)\.fastq/ }
                               fastq1_files = fastq_files - fastq2_files
@@ -150,7 +150,7 @@ module Sample
   end
 
   def self.load_study_files
-    @@study_files ||= Persist.persist("Study_files", :yaml, :file => Rbbt.var.cache.HTS_study_files.find) do
+    @@study_files ||= Persist.persist("Study_files", :yaml, :file => Rbbt.var.cache.HTS_study_files.find, :update => true) do
                         dna = load_study_files_DNA
                         rna = load_study_files_RNA
 

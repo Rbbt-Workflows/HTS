@@ -18,7 +18,7 @@ module HTS
     args["ASSUME_SORT_ORDER"] = 'queryname'
     gatk("MarkDuplicates", args)
     
-    sort = config('spark', :gatk, "MarkDuplicates") != 'true'
+    sort = ! info[:spark] 
 
     if sort
       sorted = file('sorted.bam')

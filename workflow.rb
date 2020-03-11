@@ -287,6 +287,7 @@ module HTS
     if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
       args, fixed_files = fix_spark_args command, args
       command += "Spark"
+      set_info :spark, true
     end
 
     begin
