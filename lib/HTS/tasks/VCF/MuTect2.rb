@@ -136,7 +136,7 @@ module HTS
     args["output"] = self.tmp_path
     args["reference"] = reference
     args["--orientation-bias-artifact-priors"] = step(:BAM_orientation_model).path
-    if contamination.nil? || contamination.path.read.include?("NaN")
+    if contamination.error? || contamination.path.read.include?("NaN")
       set_info :missing_contamination, true
       Log.warn "NaN in contamination file or file missing: #{Log.color :blue, self.path}"
     else

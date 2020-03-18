@@ -31,8 +31,11 @@ module HTS
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,reference|
 
-    variants_file = GATK.prepare_VCF vcf_file(reference, "small_exac")
+    vcf = vcf_file(reference, "small_exac")
 
+    raise ParameterException, "No population VCF for pileup BAM pileup summaries" if vcf.nil?
+
+    variants_file = GATK.prepare_VCF vcf
     args = {}
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
@@ -229,7 +232,7 @@ module HTS
   task :BAM_qualimap => :text do |bam,interval_list|
     bam = Samtools.prepare_BAM(bam)
     outdir = files_dir
-    if interval_list and interval_list.include? '.bed'
+    if interval_list && interval_list != :placeholder && interval_list.include?('.bed')
       TmpFile.with_file(:extension => 'bed') do |fint|
         Open.write(fint) do |f|
           TSV.traverse interval_list, :type => :array do |line|
@@ -245,10 +248,10 @@ module HTS
             f.puts parts * "\t"
           end
         end
-        CMD.cmd_log("qualimap bamqc -bam '#{bam}' --java-mem-size=4G -gff '#{fint}' -outdir '#{outdir}' ")
+        CMD.cmd_log("`realpath $(type -p qualimap)` bamqc -bam '#{bam}' --java-mem-size=8G -gff '#{fint}' -outdir '#{outdir}' ")
       end
     else
-      CMD.cmd_log("qualimap bamqc -bam '#{bam}' --java-mem-size=4G -outdir '#{outdir}' ")
+      CMD.cmd_log("`realpath $(type -p qualimap)` bamqc -bam '#{bam}' --java-mem-size=8G -outdir '#{outdir}' ")
     end
 
     Open.cp File.join(outdir, "genome_results.txt"), self.tmp_path

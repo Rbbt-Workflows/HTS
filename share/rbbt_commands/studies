@@ -15,6 +15,7 @@ $ #{$0} [options] [study|sample]
 Use - to read from STDIN
 
 -h--help Print this help
+-l--list Only list the samples
 
 EOF
 if options[:help]
@@ -29,6 +30,8 @@ end
 
 elem = ARGV[0]
 
+list = options[:list]
+
 Workflow.require_workflow "Sample"
 Workflow.require_workflow "HTS"
 
@@ -39,16 +42,28 @@ study_files = Sample.load_study_files
 if study_files.include? elem
   sample_files = study_files[elem]
   sample_files.each do |sample,files|
-    puts Log.color(:magenta, "#{sample}: ") + files.collect{|p| p * "="} * " "
+    if list
+      puts sample
+    else
+      puts Log.color(:magenta, "#{sample}: ") + files.collect{|k,v| [k, [v].flatten*","] * "="} * "; "
+    end
   end
 else
   study_files.each do |study, sample_files|
     next if elem && ! sample_files.include?(elem)
-    puts Log.color(:magenta, "#{study}")
-    puts Log.color(:magenta, "#{"=" * study.length}")
+    if list
+      puts "*" + study + "\n"
+    else
+      puts Log.color(:magenta, "#{study}")
+      puts Log.color(:magenta, "#{"=" * study.length}")
+    end
     sample_files.each do |sample,files|
       next if elem && sample != elem
-      puts Log.color(:magenta, "#{sample}: ") + files.collect{|p| [p[0], [p[1]].flatten * ", "] * "="} * " "
+      if list
+        puts sample
+      else
+        puts Log.color(:magenta, "#{sample}: ") + files.collect{|k,v| [k, [v].flatten* ","] * "="} * "; "
+      end
     end
   end
 end

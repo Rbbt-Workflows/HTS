@@ -14,14 +14,19 @@ module Samtools
 
   Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
   Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
-  Rbbt.claim Rbbt.software.opt.bcftools, :install, Rbbt.share.install.software.bcftools.find
+  Rbbt.claim Rbbt.software.opt.bcftools, :install do
+    Rbbt.software.opt.HTSLib.produce
+    url = "https://github.com/samtools/bcftools.git"
+    extra = "--with-htslib='#{Rbbt.software.opt.HTSLib.find}'"
+    {:git => url, :extra => extra}
+  end
 
   CMD.tool :samtools do
     Rbbt.software.opt.HTSLib.produce
     Rbbt.software.opt.Samtools.produce
   end
 
-  CMD.tool :bcftools, Rbbt.software.opt.Samtools
+  CMD.tool :bcftools, Rbbt.software.opt.bcftools
 
   #Samtools_CMD='samtools'
   
