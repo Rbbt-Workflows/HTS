@@ -19,6 +19,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    IGV.rb
    NovoAlign.rb
    Qualimap.rb
+   FastQC.rb
    STAR.rb
    SomaticSeq.rb
    Strelka.rb
@@ -45,6 +46,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    sample.rb
    sequenza.rb
    test.rb
+   FastQC.rb
 
    RNASeq=RNASeq{
     BAM.rb

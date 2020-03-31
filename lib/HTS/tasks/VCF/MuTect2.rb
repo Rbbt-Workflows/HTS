@@ -59,11 +59,13 @@ module HTS
     # UPDATE FOR GATK 4.1.2
     #args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
 
-    shard = config('shard', :gatk, :mutect, :mutect2)
+    shard = config('shard', :mutect2, :mutect, :gatk)
 
     if shard == 'true'
       contigs = Samtools.reference_contigs reference
-      cpus = config('cpus', :shard, :mutect, :mutect2)
+
+      cpus = config('cpus', :mutect2, :mutect, :shard)
+
       headervcf = file('tmp.header')
       args["interval-padding"] ||= GATKShard::GAP_SIZE 
       args["intervals"] ||= nil

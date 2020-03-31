@@ -1,3 +1,5 @@
+require 'tools/Qualimap'
+
 module HTS
 
   #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
@@ -248,10 +250,10 @@ module HTS
             f.puts parts * "\t"
           end
         end
-        CMD.cmd_log("`realpath $(type -p qualimap)` bamqc -bam '#{bam}' --java-mem-size=8G -gff '#{fint}' -outdir '#{outdir}' ")
+        CMD.cmd_log(:qualimap, "bamqc -bam '#{bam}' --java-mem-size=8G -gff '#{fint}' -outdir '#{outdir}' ")
       end
     else
-      CMD.cmd_log("`realpath $(type -p qualimap)` bamqc -bam '#{bam}' --java-mem-size=8G -outdir '#{outdir}' ")
+      CMD.cmd_log(:qualimap, "bamqc -bam '#{bam}' --java-mem-size=8G -outdir '#{outdir}' ")
     end
 
     Open.cp File.join(outdir, "genome_results.txt"), self.tmp_path

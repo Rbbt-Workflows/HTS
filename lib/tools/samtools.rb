@@ -55,6 +55,7 @@ module Samtools
     dir = Rbbt.var.bam_indices[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
 
+    CMD.get_tool :samtools
     linked = dir[basename].find
     if ! File.exists?(linked + ".bai") || Persist.newer?(linked + ".bai", file)
 
@@ -82,6 +83,8 @@ module Samtools
 
     dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
+
+    CMD.get_tool :samtools
 
     linked = dir[basename].find
     if ! File.exists?(linked + ".fai") || Persist.newer?(linked + ".fai", file)

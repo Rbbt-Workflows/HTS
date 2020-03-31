@@ -323,4 +323,5 @@ require 'HTS/tasks/test'
 require 'HTS/tasks/RNASeq'
 require 'HTS/tasks/IGV'
 require 'HTS/tasks/BAMSurgeon'
+require 'HTS/tasks/FastQC'
 require 'HTS/tasks/sample' if defined? Sample
