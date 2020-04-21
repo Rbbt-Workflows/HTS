@@ -4,7 +4,7 @@ module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :germline_resource, :file, "Germline resource", :dbsnp, :nofile => true
   extension :vcf
   task :muse => :text do |tumor,normal, reference, germline_resource|
