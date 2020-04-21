@@ -3,7 +3,7 @@ module HTS
 
   input :tumor_bam_file, :file, "Tumor BAM", nil, :nofile => true
   input :normal_bam_file, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :genome_reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :genome_reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :mutect2_vcf, :file, "Mutect2 vcf file",nil, :nofile => true
   input :varscan_snv, :file, "Varscan vcf file containing SNVs",nil, :nofile => true
   input :varscan_indel, :file, "Varscan vcf file containing SNVs",nil, :nofile => true

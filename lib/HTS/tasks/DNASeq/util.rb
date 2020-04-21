@@ -167,26 +167,7 @@ module HTS
   end
 
 
-  input :bam, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
-  task :BAM_summary => :text do |bam,reference|
-    args = {}
-
-    reference = reference_file reference
-    orig_reference = reference
-
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
-    bam = Samtools.prepare_BAM(bam)
-
-    args["--INPUT"] = bam
-    args["--REFERENCE_SEQUENCE"] = reference
-    args["-O"] = self.tmp_path
-    gatk("CollectAlignmentSummaryMetrics", args)
-    nil
-  end
-
-
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :bam_1, :file, "BAM file", nil, :nofile => true
   input :bam_2, :file, "BAM file", nil, :nofile => true
   task :compare_BAM => :tsv do |bam_1,bam_2|
