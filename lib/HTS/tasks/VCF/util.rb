@@ -3,7 +3,7 @@ module HTS
 
   input :truth_vcf_file, :file, "Truth VCF"
   input :input_vcf, :file, "VCF to compare"
-  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38)
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :hap_py => :tsv do |truth,input,reference|
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference

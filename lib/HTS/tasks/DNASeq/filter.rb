@@ -1,6 +1,6 @@
 module HTS
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file"
   input :fastq2, :file, "FASTQ 2 file", nil
   extension "fastq.gz"
@@ -17,7 +17,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file"
   input :fastq2, :file, "FASTQ 2 file", nil
   input :max_missmatches, :integer, "Maximum number of allowed missmatches", 2
@@ -50,7 +50,7 @@ module HTS
   end
 
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file"
   input :fastq2, :file, "FASTQ file 2", nil
   extension "fastq.gz"
@@ -71,7 +71,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file"
   input :fastq2, :file, "FASTQ file 2", nil
   input :novoalign_args, :string, "NovoAlign arguments", "-F STDFQ -R 0 -r All 9999 -o SAM -o FullNW"

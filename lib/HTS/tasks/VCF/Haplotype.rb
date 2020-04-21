@@ -1,6 +1,6 @@
 module HTS
   input :BAM, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
   extension :vcf
   task :haplotype => :text do |bam,reference,interval_list|

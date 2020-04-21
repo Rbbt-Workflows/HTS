@@ -44,7 +44,7 @@ module HTS
 
   dep :mark_adapters
   dep :uBAM
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :bwa_mem_args, :string, "Arg string", "-M -p"
   input :remove_unpaired, :boolean, "Remove possible unpaired reads", false
   extension :bam
@@ -198,7 +198,7 @@ module HTS
   dep :BAM_sorted
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :BAM_rescore => :binary do |interval_list,reference|
 
     interval_list = nil if interval_list == "none"

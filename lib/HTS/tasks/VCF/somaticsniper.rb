@@ -12,7 +12,7 @@ somatic_score is set to 40 according to documentation in the web page
   EOF
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :quality, :integer, "Mapping quality filter threshold", 1
   input :somatic_score, :integer, "Filtering somatic snv output with somatic quality less than", 40 
   extension :vcf

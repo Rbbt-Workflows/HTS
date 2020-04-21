@@ -30,7 +30,7 @@ module HTS
   #dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   
   input :bam_file, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,reference|
 
     vcf = vcf_file(reference, "small_exac")
@@ -78,7 +78,7 @@ module HTS
 
 
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension 'pileup.gz'
   task :pileup => :text do |bam,reference|
     orig_reference = reference_file(reference)
@@ -262,7 +262,7 @@ module HTS
 
   input :BAM, :file, "BAM file", nil, :nofile => true
   input :positions, :array, "Genomic position"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :BAM_position_pileup => :tsv do |bam,positions,reference|
     bam = Samtools.prepare_BAM(bam)
     reference = reference_file reference

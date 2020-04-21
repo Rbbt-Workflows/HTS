@@ -3,7 +3,7 @@ module HTS
   input :fastq1, :array, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :array, "FASTQ 2 file", nil, :nofile => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38)
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :read_group_name, :string, "READ_GROUP_NAME BAM field", nil
   input :sample_name, :string, "SAMPLE_NAME BAM field", nil
   input :library_name, :string, "LIBRARY_NAME BAM field", "DefaultLibraryName"
@@ -45,7 +45,7 @@ module HTS
   input :fastq1, :array, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :array, "FASTQ 2 file", nil, :nofile => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38)
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :phred, :select, "Phred Qualities", 'phred33', :select_options => %w(phred33 phred64)
   input :rna_strandness, :select, "RNA Strandness", 'FR', :select_options => %w(FR)
   input :read_group_name, :string, "READ_GROUP_NAME BAM field", nil
@@ -134,7 +134,7 @@ module HTS
 
   dep :RNA_BAM_sorted
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38)
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :RNA_BAM_cigars => :binary do |organism,reference|
     Open.mkdir files_dir 
     fixed = file('fixed.bam')

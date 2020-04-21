@@ -2,7 +2,7 @@ require 'tools/BAM_shard'
 module HTS
 
   input :bam_files, :array, "BAM filenames to multiplex"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension :bam
   task :BAM_multiplex => :binary do |bam_filenames,reference|
     bam_filenames = Dir.glob(File.join(bam_filenames.first, "*.bam")) if Array === bam_filenames && bam_filenames.length == 1 && File.directory?(bam_filenames.first)
