@@ -2,7 +2,7 @@
 module Sample
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   extension :bam
-  dep_task :BAM, HTS, :BAM do |sample,options|
+  dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
     raise "Sample #{ sample } not found" if sample_files.nil?
 
@@ -92,7 +92,6 @@ module Sample
     end
 
     if allow_tumor_only
-      dep :BAM, :compute => :bootstrap
       dep :BAM_normal, :compute => :bootstrap do |sample,options|
         nsample = nil
         sample_files = nil
@@ -105,8 +104,8 @@ module Sample
 
         {:inputs => options, :jobname => sample} if sample_files
       end
-    else
       dep :BAM, :compute => :bootstrap
+    else
       dep :BAM_normal, :compute => :bootstrap do |sample,options|
         nsample = nil
         sample_files = nil
@@ -121,6 +120,7 @@ module Sample
 
         {:inputs => options, :jobname => sample} 
       end
+      dep :BAM, :compute => :bootstrap
     end
     extension :vcf if CALLERS.include?(task.to_s)
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|

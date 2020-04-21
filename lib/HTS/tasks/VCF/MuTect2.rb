@@ -114,9 +114,9 @@ module HTS
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  dep :mutect2_pre
   dep :contamination, :tumor_bam => :tumor, :normal_bam => :normal, :compute => :canfail
   dep :BAM_orientation_model
+  dep :mutect2_pre
   extension :vcf
   task :mutect2_filtered => :text do |reference|
     reference = reference_file reference
