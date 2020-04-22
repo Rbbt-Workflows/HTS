@@ -11,13 +11,10 @@ module HTS
     nextflow_script = File.expand_path(nextflow_script)
     conda_env = File.expand_path(conda_env)
     input= File.expand_path(input)
-    Dir.chdir(files_dir) do
+    Misc.in_dir files('output') do
       FileUtils.mkdir_p("work/conda/")
       FileUtils.mkdir_p(self.path + ".results/")
-      begin
-        FileUtils.ln_s  "#{conda_env}", files_dir + "/work/conda" unless Dir.exist?files_dir + "/work/conda/#{File.basename(conda_env)}"
-      rescue
-      end
+      FileUtils.ln_s  "#{conda_env}", files_dir + "/work/conda" unless Dir.exist?files_dir + "/work/conda/#{File.basename(conda_env)}"
       cmd_str ="export INTOGEN_VEP=vep92; export INTOGEN_RELEASE=v20191009; export INTOGEN_HOME=#{File.dirname(nextflow_script)}; export INTOGEN_GENOME=#{intogen_reference}; export LC_ALL=C.UTF-8; export LANG=C.UTF-8; "
       cmd_str.concat("~/nextflow run $(realpath #{nextflow_script})")
       args = {}
@@ -28,7 +25,7 @@ module HTS
       end
       CMD.cmd_log(cmd_str, args)
     end 
-    FileUtils.ln_s Dir.glob(self.path + ".results/oncodrivefml/*.out.gz")[0], self.path
+    FileUtils.ln_s Dir.glob(self.path + ".results/oncodriveclustl/*.out.gz")[0], self.path
     nil
   end
   
@@ -42,12 +39,12 @@ module HTS
     run_identifier = File.basename(Dir.glob(intogen_pre_path + ".results/signature/*.in.gz")[0],".in.gz")
     datasets_dir = Dir.glob(File.dirname(File.expand_path(inputs[:nextflow_script]))+"/datasets/#{inputs[:intogen_reference]}*").first
     containers_dir =  Dir.glob(File.dirname(File.expand_path(inputs[:nextflow_script]))+"/containers/#{inputs[:intogen_reference]}*").first
-    Dir.chdir(output_path) do
+    Misc.in_dir output_path do
       cmd_str = "export INTOGEN_DATASETS=#{datasets_dir}; export INTOGEN_CONTAINERS=#{containers_dir}; "
       cmd_str += "#{container} #{output_path} #{run_identifier}"
       CMD.cmd_log(cmd_str)
-    FileUtils.mkdir_p(self.path+".files")
-    FileUtils.cp Dir.glob(output_path+"/*.gz"), self.path+".files/"
+      FileUtils.mkdir_p(self.path+".files")
+      FileUtils.cp Dir.glob(output_path + "/*.gz"), self.path + ".files/"
     end
     FileUtils.ln_s output_path + "/#{run_identifier}.stouffer.out.gz", self.path
     nil
