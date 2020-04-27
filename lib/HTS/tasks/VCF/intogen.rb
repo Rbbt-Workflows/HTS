@@ -6,15 +6,14 @@ module HTS
   input :intogen_reference, :select, "Reference code", "hg38", :select_options => %w(hg38 hg19), :nofile => true
   input :conda_env, :file, "Condat environment path", nil, :nofile => true
   task :intogen_pre => :text do |input, resume, nextflow_script, intogen_reference, conda_env|
-    FileUtils.mkdir_p(self.path + ".files/work/conda")
     files_dir= self.path + ".files"
     nextflow_script = File.expand_path(nextflow_script)
     conda_env = File.expand_path(conda_env)
     input= File.expand_path(input)
-    Misc.in_dir files('output') do
+    Misc.in_dir file('output') do
       FileUtils.mkdir_p("work/conda/")
       FileUtils.mkdir_p(self.path + ".results/")
-      FileUtils.ln_s  "#{conda_env}", files_dir + "/work/conda" unless Dir.exist?files_dir + "/work/conda/#{File.basename(conda_env)}"
+      FileUtils.ln_s  "#{conda_env}", file('output') + "/work/conda" unless Dir.exist?file('output') + "/work/conda/#{File.basename(conda_env)}"
       cmd_str ="export INTOGEN_VEP=vep92; export INTOGEN_RELEASE=v20191009; export INTOGEN_HOME=#{File.dirname(nextflow_script)}; export INTOGEN_GENOME=#{intogen_reference}; export LC_ALL=C.UTF-8; export LANG=C.UTF-8; "
       cmd_str.concat("~/nextflow run $(realpath #{nextflow_script})")
       args = {}
