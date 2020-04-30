@@ -359,4 +359,37 @@ module HTS
     nil
   end
 
+  input :BAM, :file, "BAM file", nil, :nofile => true
+  input :min_cov, :integer, "Min. coverage", 5
+  extension :bed
+  task :genomecov => :text do |bam,min_cov|
+    CMD.cmd(:bedtools, "genomecov -bg -max #{min_cov} -ibam '#{bam}'", :pipe => true)
+  end
+
+  dep :genomecov
+  extension :bed
+  task :intervals_from_BAM => :text do
+    last_chr = nil
+    last_start = nil
+    last_eend = nil
+    out = ""
+    TSV.traverse step(:genomecov), :into => out, :type => :array do |line|
+      chr, start, eend, count = line.split("\t")
+      last_chr = chr if last_chr.nil?
+      if last_chr != chr || last_eend != start
+        res = [last_chr, last_start, last_eend] * "\t"
+        last_start = start
+      else
+        res = nil
+      end
+      last_chr = chr 
+      last_eend = eend
+      next unless res
+      res  + "\n"
+    end
+
+    out << [last_chr, last_start, last_eend] * "\t"
+    out
+  end
+
 end

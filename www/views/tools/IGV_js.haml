@@ -28,17 +28,19 @@
 
 - url_tumor = add_GET_param(url_tumor, '_format', 'binary')
 - index_tumor = add_GET_param(index_tumor, '_format', 'binary')
+- reference = normal_bam_job.recursive_inputs["reference"]
+- reference = 'hg19' if reference == 'b37'
 
 :deferjs
-  url_tumor = "#{url_tumor}"
-  index_tumor = "#{index_tumor}"
-  url_normal = "#{url_normal}"
-  index_normal = "#{index_normal}"
+  url_tumor = rbbt.url_add_script_name("#{url_tumor}")
+  index_tumor = rbbt.url_add_script_name("#{index_tumor}")
+  url_normal = rbbt.url_add_script_name("#{url_normal}")
+  index_normal = rbbt.url_add_script_name("#{index_normal}")
   //url_tumor = "file://#{tumor_bam}"
   //index_tumor = "file://#{tumor_bam}.bai"
   //url_normal = "file://#{normal_bam}"
   //index_normal = "file://#{normal_bam}.bai"
-  genome = "hg38"
+  genome = "#{reference}"
   require_js(["/js-find/igv.min.js"], function(){
     var igvDiv = document.getElementById("igv-div");
     var options =
