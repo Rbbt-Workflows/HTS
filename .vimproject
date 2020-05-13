@@ -72,6 +72,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     Strelka.rb
     VarScan.rb
     control_FREEC.rb
+    intogen.rb
     somaticsniper.rb
     svABA.rb
     util.rb
