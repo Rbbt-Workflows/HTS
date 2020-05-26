@@ -5,65 +5,96 @@
 - raise "Job not done" unless tumor_bam_job.done?
 - tumor_bam = Samtools.prepare_BAM tumor_bam_job.path
 
-- normal_bam_job = Sample.job(:BAM_normal, sample)
-- raise "Job not done" unless normal_bam_job.done?
-- normal_bam = Samtools.prepare_BAM normal_bam_job.path
-
 - filename = "tumor.bam"
 - url_tumor = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
 - f = @step.file(:html_resources)[filename].find
 - Open.link tumor_bam, f
 - Open.link tumor_bam + '.bai', f + '.bai'
 - index_tumor = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }.bai")
-
-- filename = "normal.bam"
-- url_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
-- f = @step.file(:html_resources)[filename].find
-- Open.link normal_bam, f
-- Open.link normal_bam + '.bai', f + '.bai'
-- index_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }.bai")
-
-- url_normal = add_GET_param(url_normal, '_format', 'binary')
-- index_normal = add_GET_param(index_normal, '_format', 'binary')
-
 - url_tumor = add_GET_param(url_tumor, '_format', 'binary')
 - index_tumor = add_GET_param(index_tumor, '_format', 'binary')
-- reference = normal_bam_job.recursive_inputs["reference"]
+
+- normal_bam_job = Sample.job(:BAM_normal, sample)
+- if normal_bam_job.done?
+  - normal_bam = Samtools.prepare_BAM normal_bam_job.path
+  - filename = "normal.bam"
+  - url_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
+  - f = @step.file(:html_resources)[filename].find
+  - Open.link normal_bam, f
+  - Open.link normal_bam + '.bai', f + '.bai'
+  - index_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }.bai")
+  - url_normal = add_GET_param(url_normal, '_format', 'binary')
+  - index_normal = add_GET_param(index_normal, '_format', 'binary')
+
+
+
+
+- reference = tumor_bam_job.recursive_inputs["reference"]
 - reference = 'hg19' if reference == 'b37'
 
-:deferjs
-  url_tumor = rbbt.url_add_script_name("#{url_tumor}")
-  index_tumor = rbbt.url_add_script_name("#{index_tumor}")
-  url_normal = rbbt.url_add_script_name("#{url_normal}")
-  index_normal = rbbt.url_add_script_name("#{index_normal}")
-  //url_tumor = "file://#{tumor_bam}"
-  //index_tumor = "file://#{tumor_bam}.bai"
-  //url_normal = "file://#{normal_bam}"
-  //index_normal = "file://#{normal_bam}.bai"
-  genome = "#{reference}"
-  require_js(["/js-find/igv.min.js"], function(){
-    var igvDiv = document.getElementById("igv-div");
-    var options =
-      {
-        genome: genome,
-        tracks: [
-          {
-            "name": "#{ sample } tumor",
-            "url": url_tumor,
-            "indexURL": index_tumor,
-            "format": "bam"
-          },
-          {
-            "name": "#{ sample } normal",
-            "url": url_normal,
-            "indexURL": index_normal,
-            "format": "bam"
-          }
-        ]
-      };
+- if normal_bam
+  :deferjs
+    url_tumor = rbbt.url_add_script_name("#{url_tumor}")
+    index_tumor = rbbt.url_add_script_name("#{index_tumor}")
+    url_normal = rbbt.url_add_script_name("#{url_normal}")
+    index_normal = rbbt.url_add_script_name("#{index_normal}")
+    //url_tumor = "file://#{tumor_bam}"
+    //index_tumor = "file://#{tumor_bam}.bai"
+    //url_normal = "file://#{normal_bam}"
+    //index_normal = "file://#{normal_bam}.bai"
+    genome = "#{reference}"
+    require_js(["/js-find/igv.min.js"], function(){
+      var igvDiv = document.getElementById("igv-div");
+      var options =
+        {
+          genome: genome,
+          tracks: [
+            {
+              "name": "#{ sample } tumor",
+              "url": url_tumor,
+              "indexURL": index_tumor,
+              "format": "bam"
+            },
+            {
+              "name": "#{ sample } normal",
+              "url": url_normal,
+              "indexURL": index_normal,
+              "format": "bam"
+            }
+          ]
+        };
 
-    igv.createBrowser(igvDiv, options)
-      .then(function (browser) {
-        console.log("Created IGV browser");
-      })
-  })
+      igv.createBrowser(igvDiv, options)
+        .then(function (browser) {
+          console.log("Created IGV browser");
+        })
+    })
+- else
+  :deferjs
+    url_tumor = rbbt.url_add_script_name("#{url_tumor}")
+    index_tumor = rbbt.url_add_script_name("#{index_tumor}")
+    //url_tumor = "file://#{tumor_bam}"
+    //index_tumor = "file://#{tumor_bam}.bai"
+    //url_normal = "file://#{normal_bam}"
+    //index_normal = "file://#{normal_bam}.bai"
+    genome = "#{reference}"
+    require_js(["/js-find/igv.min.js"], function(){
+      var igvDiv = document.getElementById("igv-div");
+      var options =
+        {
+          genome: genome,
+          tracks: [
+            {
+              "name": "#{ sample } tumor",
+              "url": url_tumor,
+              "indexURL": index_tumor,
+              "format": "bam"
+            }
+          ]
+        };
+
+      igv.createBrowser(igvDiv, options)
+        .then(function (browser) {
+          console.log("Created IGV browser");
+        })
+    })
