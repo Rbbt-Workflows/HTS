@@ -3,6 +3,7 @@ module HTS
 
   input :input, :file, "Input folder with mafs and dataset.bginfo files", nil, :nofile => true
   input :intogen_reference, :select, "Reference code", "hg38", :select_options => %w(hg38 hg19), :nofile => true
+  resumable
   task :intogen_pre => :text do |input, intogen_reference|
     nextflow_script = config('NXFScript', :intogen)
     conda_env = ENV["CONDA_PREFIX"]
