@@ -1,9 +1,10 @@
 module HTS
   input :BAM, :file, "BAM file", nil, :nofile => true
+  input :BAM_list, :array, "List of BAM files"
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
   extension :vcf
-  task :haplotype => :text do |bam,reference,interval_list|
+  task :haplotype => :text do |bam,bam_list,reference,interval_list|
 
     interval_list = nil if interval_list == "none"
 
@@ -12,10 +13,15 @@ module HTS
 
     reference = GATK.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
+    prepared_bams = []
 
-    bam = bam.path if Step === bam
-    
-    bam = Samtools.prepare_BAM(bam)
+    if bam_list.nil?
+      bam = bam.path if Step === bam
+      bam = Samtools.prepare_BAM(bam)
+    else
+      bam_list.each{ |file| prepared_bams.push(Samtools.prepare_BAM(file))}
+      bam=prepared_bams
+    end
 
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
     output = file('calls.vcf')
@@ -26,7 +32,7 @@ module HTS
     args["-R"] = reference
     args["--intervals"] = interval_list if interval_list
     args["-ip"] = 500 if interval_list
-    args["-ERC"] = "GVCF"
+    args["-ERC"] = bam_list.nil? ? "ERC" : "NONE"
     args["--max-alternate-alleles"] = 3
     args["--create-output-variant-index"] = false
     shard = config('shard', :HaplotypeCaller, :haplotype,  :gatk)
