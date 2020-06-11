@@ -1,6 +1,9 @@
 module HTS
-  Rbbt.claim Rbbt.software.opt.MuSE, :install, "https://github.com/danielfan/MuSE.git"
-  CMD.tool :MuSE, Rbbt.software.opt.MuSE
+  CMD.tool :MuSE, nil, "muse" do
+    CMD.cmd('conda install muse -c bioconda')
+  end
+
+  CMD.get_tool :MuSE
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true

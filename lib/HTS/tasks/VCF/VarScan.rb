@@ -1,7 +1,12 @@
-require 'tools/VarScan'
 require 'tools/fpfilter'
 
 module HTS
+
+  CMD.tool "Varscan", nil, "varscan" do
+        CMD.cmd('conda install varscan -c bioconda')
+  end
+
+  CMD.get_tool "Varscan"
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
@@ -19,7 +24,7 @@ module HTS
     reference = Samtools.prepare_FASTA reference
     CMD.cmd("samtools mpileup -f '#{reference}' -Q 20 '#{normal}' '#{tumor}' > '#{pileup}'")
     io = Misc.in_dir output do
-      monitor_cmd_genome ["java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
+      monitor_cmd_genome ["varscan somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
     end
 
     ConcurrentStream.setup(io) do
@@ -57,7 +62,7 @@ module HTS
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
-      io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
+      io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
       Open.write(output[clean_name + '.snv.vcf'].find, io)
     end
 
@@ -76,7 +81,7 @@ module HTS
     output = file('output')
     Misc.in_dir output do
       Open.ln_s step(:varscan_somatic).path, "#{clean_name}.vcf"
-      CMD.cmd("java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} processSomatic #{clean_name}.vcf")
+      CMD.cmd("varscan processSomatic #{clean_name}.vcf")
     end
     Open.cp output.glob("*.Somatic.vcf").first, self.path
     nil
@@ -146,7 +151,7 @@ module HTS
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
-      self.monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]'| java -jar #{Rbbt.software.opt.jars["VarScan.jar"].produce.find} copynumber --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", {:in => pipe}], clean_name + '.copynumber'
+      self.monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]'| varscan copynumber --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", {:in => pipe}], clean_name + '.copynumber'
     end
   end
 end
