@@ -34,15 +34,14 @@ module HTS
     tumor = Samtools.prepare_BAM(tumor)
     normal = Samtools.prepare_BAM(normal) if normal
 
-    tumor_sample = Samtools.BAM_sample_name(tumor)
-    normal_sample = Samtools.BAM_sample_name(normal) if normal
-    
+    tumor_sample = GATK.BAM_sample_name(tumor)
+    normal_sample = GATK.BAM_sample_name(normal) if normal
+
     raise "No normal sample name" if normal and normal_sample.nil?
 
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
 
     output = file('calls.vcf')
-
     args["input"] = [tumor, normal].compact
     args["output"] = output
     args["reference"] = reference

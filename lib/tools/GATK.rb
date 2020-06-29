@@ -7,6 +7,9 @@ Workflow.require_workflow "DbSNP"
 module GATK
   extend Resource
   self.subdir = 'share/databases/GATK'
+  CMD.tool :gatk, nil, "gatk" do
+    CMD.cmd('conda install gatk4 -c bioconda')
+  end
 
   #def self.organism(org="Hsa")
   #  Organism.default_code(org)
@@ -122,9 +125,6 @@ module GATK
 
     linked
   end
-
-  Rbbt.claim Rbbt.software.opt.GATK, :install, Rbbt.share.install.software.GATK.find
-  CMD.tool :gatk, Rbbt.software.opt.GATK
 
   DbSNP.claim DbSNP["All.vcf.gz.tbi"], :proc do
     args = {}

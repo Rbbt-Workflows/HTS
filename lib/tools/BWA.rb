@@ -6,6 +6,9 @@ require 'rbbt/sources/organism'
 module BWA
   extend Resource
   self.subdir = 'organism/databases/BWA'
+  CMD.tool :bwa, nil, "bwa" do
+    CMD.cmd('conda install bwa -c bioconda')
+  end
 
   #def self.organism(org="Hsa")
   #  Organism.default_code(org)
@@ -15,7 +18,7 @@ module BWA
   #self.search_paths[:default] = :lib
   
   def self.mem(files, reference, args = "")
-    CMD.cmd("#{BWA_CMD} mem #{args} '#{reference}' #{files.collect{|f| "'#{f}'"} * " "} ", :pipe => true)
+    CMD.cmd(:bwa,"mem #{args} '#{reference}' #{files.collect{|f| "'#{f}'"} * " "} ", :pipe => true)
   end
 
   def self.prepare_FASTA(file, dir = nil)
@@ -35,16 +38,12 @@ module BWA
       Misc.in_dir dir do
         FileUtils.ln_s file, linked unless File.exists?(linked)
         FileUtils.ln_s file + '.alt', linked + '.alt' if File.exists?(file + '.alt') && ! File.exists?(linked + '.alt') 
-        CMD.cmd("'#{BWA_CMD}' index '#{ linked }'")
+        CMD.cmd(:bwa, "'index '#{ linked }'")
       end
     end
 
     linked
   end
-
-  Rbbt.claim Rbbt.software.opt.BWA, :install, Rbbt.share.install.software.BWA.find
-
-  BWA_CMD = Rbbt.software.opt.BWA.produce.bwa.find
 
   #Organism.claim Organism["Hsa"].hg19["hg19.fa"], :proc do |target|
   #  FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
@@ -104,7 +103,7 @@ end
 
 if __FILE__ == $0
   Log.severity = 0
-  Rbbt.software.opt.BWA.produce
+  #Rbbt.software.opt.BWA.produce
   BWA.references.hs37d5["reference.fa"].produce
 end
 

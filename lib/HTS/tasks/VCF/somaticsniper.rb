@@ -1,7 +1,7 @@
 require 'tools/fpfilter'
 module HTS
   
-  CMD.tool "bam-somaticsniper", nil, "bam-somaticsniper -v" do
+  CMD.tool "bam-somaticsniper".to_sym, nil, "bam-somaticsniper -v" do
     CMD.cmd('conda install somatic-sniper -c bioconda')
   end
 
@@ -35,9 +35,8 @@ somatic_score is set to 40 according to documentation in the web page
     tumor_sample = GATK.BAM_sample_name(tumor)
     normal_sample = GATK.BAM_sample_name(normal) if normal
 
-    CMD.get_tool 'bam-somaticsniper'
 
-    CMD.cmd_log("bam-somaticsniper -L -G -Q #{somatic_score} -s 0.01 -T 0.85 -N 2 -r 0.001 -F vcf  \
+    CMD.cmd_log("bam-somaticsniper".to_sym,"-L -G -Q #{somatic_score} -s 0.01 -T 0.85 -N 2 -r 0.001 -F vcf  \
                 -q #{quality} \
                 -n '#{normal_sample}' -t '#{tumor_sample}' -f '#{reference}' \
                 '#{tumor}' '#{normal}' '#{self.tmp_path}'")

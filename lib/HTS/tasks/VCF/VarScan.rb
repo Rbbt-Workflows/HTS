@@ -3,10 +3,8 @@ require 'tools/fpfilter'
 module HTS
 
   CMD.tool "Varscan", nil, "varscan" do
-        CMD.cmd('conda install varscan -c bioconda')
+    CMD.cmd('conda install varscan -c bioconda')
   end
-
-  CMD.get_tool "Varscan"
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
@@ -16,6 +14,9 @@ module HTS
   input :tumor_purity, :float, "Tumor sample purity", 1 
   extension 'vcf'
   task :varscan_somatic_alt => :text do |normal,tumor,reference,normal_purity,tumor_purity|
+
+    CMD.get_tool "Varscan"
+
     Open.mkdir files_dir
     output = file('output')
     pileup = file('pileup')
