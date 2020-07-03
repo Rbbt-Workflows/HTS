@@ -53,7 +53,7 @@ module Sample
     sample_study = Sample.sample_study(sample)
     [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
       nsample = normal_sample
-      
+
       sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
       break if sample_files
     end
@@ -62,23 +62,20 @@ module Sample
   end
 
   #{{{ EXPORT HTS METHODS
-
   #{{{ genomic_mutations and variant callers
-  
   {
     :strelka => :strelka,
     :mutect2 => [:mutect2, true],
+    :mutect2_pre => [:mutect2_pre, true],
     :varscan => :varscan_fpfiltered,
     :somatic_sniper => :somatic_sniper_filtered,
     :muse => :muse,
-
     :delly => :delly,
     :svABA => :svABA,
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
-    
-    #:somatic_seq => :somatic_seq,
 
+    #:somatic_seq => :somatic_seq,
     #:varscan_somatic => :varscan_somatic,
     #:varscan_somatic_alt => :varscan_somatic_alt,
     #:varscan_classify => :varscan_classify,
@@ -118,7 +115,7 @@ module Sample
 
         raise ParameterException, "No normal sample found" if sample_files.nil?
 
-        {:inputs => options, :jobname => sample} 
+        {:inputs => options, :jobname => sample}
       end
       dep :BAM, :compute => :bootstrap
     end
@@ -192,7 +189,7 @@ module Sample
     end
   end
   extension "vcf"
-  task :vcf_file => :text do 
+  task :vcf_file => :text do
     sample_files = Sample.sample_files self.clean_name
     if sample_files.include? "VCF"
       TSV.get_stream sample_files["VCF"].first
@@ -201,8 +198,8 @@ module Sample
     end
   end
 
-  dep :vcf_file 
-  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :vcf_file 
+  dep :vcf_file
+  dep_task :genomic_mutations, Sequence, :genomic_mutations, :vcf_file => :vcf_file
 
   #{{{
 
@@ -251,7 +248,7 @@ module Sample
     end
 
     if nsample
-      options = add_sample_options nsample, options 
+      options = add_sample_options nsample, options
       {:inputs => options}
     end
   end
@@ -265,7 +262,7 @@ module Sample
   dep_task :plot_freec_results, HTS, :plot_freec_results, :sample_mateFile => :BAM, :control_mateFile => :BAM_normal
 
   dep Sample, :BAM
-  dep Sample, :BAM_normal 
+  dep Sample, :BAM_normal
   dep Sample, :mutect2
   dep Sample, :somatic_sniper
   dep Sample, :varscan
@@ -300,7 +297,7 @@ module Sample
   end
 
   dep Sample, :BAM
-  dep Sample, :BAM_normal 
+  dep Sample, :BAM_normal
   dep Sample, :mutect2
   dep Sample, :somatic_sniper
   dep Sample, :varscan
@@ -310,7 +307,7 @@ module Sample
 
 
   dep Sample, :BAM
-  dep Sample, :BAM_normal 
+  dep Sample, :BAM_normal
   dep Sample, :mutect2
   dep Sample, :somatic_sniper
   dep Sample, :varscan
@@ -326,7 +323,47 @@ module Sample
     options[:strelka_snv] = strelka.step(:strelka_pre).path
     options[:strelka_indel] = strelka.step(:strelka_filtered_indels).step(:strelka_filtered).dependencies.first
 
-    {:inputs => options} 
+    {:inputs => options}
+  end
+
+  dep Sample, :mutect2_pre do |jobname, options|
+    study_files = Sample.load_study_files.flatten
+    filtered_studies = []
+    study_files.select{|s| s.is_a? Hash}.each do |study|
+      study.select{|sample, files| sample.include? "normal"}.each do |s,f|
+        filtered_studies.push(s)
+      end
+    end
+    filtered_studies.collect {|filtered_study|
+      {:jobname => filtered_study}
+    }
+  end
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :genomicsdb_workspace_path, :string, "Genomics db name", "pon_db"
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  task :generatePON  do |reference, genomicsdb_workspace_path, intervals|
+    FileUtils.mkdir_p TmpFile.tmp_file
+    args = {}
+    args["variant"] = dependencies.collect{|d|
+      dir = TmpFile.tmp_file
+      FileUtils.mkdir_p dir
+      FileUtils.ln_s d.path, dir
+      HTS.prepare_BED(d.path, dir)
+    }
+
+    Misc.in_dir files_dir do
+      args["reference"] = HTS.helpers[:reference_file].call(reference)
+      args["genomicsdb-workspace-path"] = genomicsdb_workspace_path
+      args["merge-input-intervals"] = "TRUE"
+      args["intervals"] = intervals
+      GATK.run_log("GenomicsDBImport", args)
+
+      args = {}
+      args["reference"] = HTS.helpers[:reference_file].call(reference)
+      args["variant"] = "gendb://#{genomicsdb_workspace_path}"
+      args["output"] = self.path
+      GATK.run_log("CreateSomaticPanelOfNormals", args)
+    end
   end
 
   #dep Sample, :BAM

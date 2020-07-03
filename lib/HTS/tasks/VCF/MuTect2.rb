@@ -11,8 +11,9 @@ module HTS
   input :germline_resource, :file, "Germline resource", :gnomad, :nofile => true
   input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
   input :remove_soft_clip, :boolean, "Don't consider soft clip bases", false
+  input :max_mnp_distance, :integer, "Max distance for mnp merge", 0
   extension :vcf
-  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,interval_padding,pon,germline_resource,af_not_in_resource,remove_soft_clip|
+  task :mutect2_pre => :text do |tumor,normal,reference,interval_list,interval_padding,pon,germline_resource,af_not_in_resource,remove_soft_clip,max_mnp_distance|
 
     interval_list = nil if interval_list == "none"
 
@@ -54,6 +55,7 @@ module HTS
     args["germline-resource"] = germline_resource
     args["f1r2-tar-gz"] = file('f1r2.tar.gz')
     args["dont-use-soft-clipped-bases"] = remove_soft_clip if remove_soft_clip
+    args["max-mnp-distance"] = max_mnp_distance
     
     # UPDATE FOR GATK 4.1.2
     #args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
