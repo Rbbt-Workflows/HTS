@@ -151,7 +151,7 @@ module Sample
       var_caller = dep.task_name
 
       variants = TSV.traverse dep, :into => [], :type => :list do |chr, values|
-        pos, id, ref, alt, qual, filter, *rest = values
+        pos, _id, _ref, alt, _qual, filter, *_rest = values
 
         next if only_pass and ! (filter.split(";").include?("PASS")  || filter == ".")
 
@@ -326,48 +326,49 @@ module Sample
     {:inputs => options}
   end
 
-  dep Sample, :mutect2_pre do |jobname, options|
-    study_files = Sample.load_study_files.flatten
-    filtered_studies = []
-    study_files.select{|s| s.is_a? Hash}.each do |study|
-      study.select{|sample, files| sample.include? "normal"}.each do |s,f|
-        filtered_studies.push(s)
-      end
+  input :studies, :array, "Samples to use", Sample.all_studies
+  dep :mutect2_pre, :compute => :produce do |jobname, options|
+    samples = []
+    options[:studies].each do |study|
+      samples += (Sample.study_samples(study))
     end
-    filtered_studies.collect {|filtered_study|
-      {:jobname => filtered_study}
+    normal_samples = samples.flatten.select{|x| x.include?"normal"}.uniq
+    normal_samples.collect {|normal_sample|
+      {:jobname => normal_sample}
     }
   end
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
-  input :genomicsdb_workspace_path, :string, "Genomics db name", "pon_db"
-  input :interval_list, :file, "Interval list", nil, :nofile => true
-  task :generatePON  do |reference, genomicsdb_workspace_path, intervals|
-    FileUtils.mkdir_p TmpFile.tmp_file
-    args = {}
-    args["variant"] = dependencies.collect{|d|
-      dir = TmpFile.tmp_file
-      FileUtils.mkdir_p dir
-      FileUtils.ln_s d.path, dir
-      HTS.prepare_BED(d.path, dir)
-    }
+  extension :vcf
+  task :generatePON => :text  do
+    intervals = dependencies.first.recursive_inputs[:interval_list]
+    reference = dependencies.first.recursive_inputs[:reference]
+    reference = HTS.helpers[:reference_file].call(reference)
 
-    Misc.in_dir files_dir do
-      args["reference"] = HTS.helpers[:reference_file].call(reference)
-      args["genomicsdb-workspace-path"] = genomicsdb_workspace_path
+    bed_dir = file('bed')
+    work_dir = file('work')
+    args = {}
+    args["variant"] = []
+
+    Misc.in_dir bed_dir do
+      dependencies.each do |dep| args["variant"].push(HTS.prepare_BED(dep.path, bed_dir)) end
+    end
+
+    Misc.in_dir work_dir do
+      args["reference"] = reference
+      args["genomicsdb-workspace-path"] = "pon_db"
       args["merge-input-intervals"] = "TRUE"
       args["intervals"] = intervals
       GATK.run_log("GenomicsDBImport", args)
 
       args = {}
-      args["reference"] = HTS.helpers[:reference_file].call(reference)
-      args["variant"] = "gendb://#{genomicsdb_workspace_path}"
-      args["output"] = self.path
+      args["reference"] = reference
+      args["variant"] = "gendb://pon_db"
+      args["output"] = self.tmp_path
       GATK.run_log("CreateSomaticPanelOfNormals", args)
+      Open.rm_rf bed_dir
+      FileUtils.ln_s self.tmp_path, self.path
     end
   end
 
   #dep Sample, :BAM
   #dep_task :collect_fragment_counts, HTS, :collect_fragment_counts, :bam => :BAM
-  #
-
 end

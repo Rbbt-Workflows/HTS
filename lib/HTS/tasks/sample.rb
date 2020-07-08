@@ -189,6 +189,14 @@ module Sample
     nil
   end
 
+  def self.study_samples(study)
+    study_files = load_study_files
+    samples = study_files.find {|s| s.include? study}
+    samples = samples.select{|smpl| smpl.is_a? Hash}
+    samples = samples.map{|hash| hash.keys}.flatten
+    samples.map{|sample| study + ":" + sample}
+  end
+
   def self.sample_study(sample)
     study_files = load_study_files
     if sample.include?(":")

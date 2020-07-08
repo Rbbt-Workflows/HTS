@@ -14,7 +14,7 @@ module HTS
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    CMD.cmd_log("bgzip '#{ linked }'") unless File.exists?(linked + '.gz')
+    CMD.cmd_log("bgzip -c #{file} > '#{ linked + '.gz' }'") unless File.exists?(linked + '.gz')
     if ! File.exists?(linked + ".gz.tbi") || Persist.newer?(linked + ".gz.tbi", file)
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
