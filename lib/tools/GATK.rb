@@ -46,6 +46,27 @@ module GATK
     nil
   end
 
+  def self.sort_VCF(file, dir=nil)
+    file = file.path if Step === file
+    file = file.find if Path === file
+    file = File.expand_path(file)
+
+    digest = Misc.file2md5(file)
+    basename = File.basename(file)
+
+    dir = Rbbt.var.vcf_indices[digest].find if dir.nil?
+    Path.setup(dir) unless Path === dir
+
+    linked = dir[basename].find
+    Misc.in_dir dir do
+      args ={}
+      args["INPUT"] = file
+      args["OUTPUT"] = linked
+      GATK.run_log("SortVcf",args)
+    end
+    linked
+  end
+
   def self.prepare_VCF(file, dir = nil)
     file = file.path if Step === file
     file = file.find if Path === file

@@ -353,7 +353,11 @@ module Sample
     args["variant"] = []
 
     Misc.in_dir bed_dir do
-      dependencies.each do |dep| args["variant"].push(HTS.prepare_BED(dep.path, bed_dir)) end
+      dependencies.each do |dep|
+        vcf = GATK.sort_VCF(dep.path, bed_dir)
+        gvcf = HTS.prepare_BED(vcf, bed_dir)
+        args["variant"].push(gvcf)
+      end
     end
 
     Misc.in_dir work_dir do
