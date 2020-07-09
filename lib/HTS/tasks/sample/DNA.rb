@@ -340,8 +340,12 @@ module Sample
   extension :vcf
   task :generatePON => :text  do
     intervals = dependencies.first.recursive_inputs[:interval_list]
-    reference = dependencies.first.recursive_inputs[:reference]
-    reference = HTS.helpers[:reference_file].call(reference)
+    orig_reference = dependencies.first.recursive_inputs[:reference]
+    orig_reference = HTS.helpers[:reference_file].call(orig_reference)
+
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.uncompress_FASTA orig_reference
 
     bed_dir = file('bed')
     work_dir = file('work')
