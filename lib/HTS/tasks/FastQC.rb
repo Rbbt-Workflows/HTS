@@ -9,7 +9,7 @@ module HTS
 
     CMD.cmd_log(:fastqc, " --outdir '#{files_dir}' '#{fastq_file}'")
 
-    zipfile = Dir.glob(files_dir + '/*').first
+    zipfile = Dir.glob(files_dir + '/*.zip').first
     name = File.basename(zipfile).sub('.zip', '')
 
     CMD.cmd("unzip -p #{zipfile} #{name}/summary.txt").read
