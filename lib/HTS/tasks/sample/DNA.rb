@@ -179,6 +179,7 @@ module Sample
   input :caller, :select, "Caller to use", :mutect2, :select_options => CALLERS
   dep Sample, :mutect2 do |sample,options|
     sample_files = Sample.sample_files sample
+    raise "No sample files found for #{sample}" if sample_files.nil?
     if sample_files.include? "VCF"
       nil
     else

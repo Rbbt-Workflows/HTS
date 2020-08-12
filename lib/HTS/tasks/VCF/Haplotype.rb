@@ -20,7 +20,7 @@ module HTS
       bam = Samtools.prepare_BAM(bam)
     else
       bam_list.each{ |file| prepared_bams.push(Samtools.prepare_BAM(file))}
-      bam=prepared_bams
+      bam = prepared_bams
     end
 
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
