@@ -378,6 +378,20 @@ module Sample
     end
   end
 
+  dep :BAM
+  dep_task :coverage, HTS, :genomecov do |sample,options|
+    options = add_sample_options sample, options
+    options[:BAM] = :BAM
+    {:inputs => options, :jobname => sample}
+  end
+
+  dep :coverage
+  dep_task :low_coverage, HTS, :low_coverage do |sample,options,deps|
+    options = add_sample_options sample, options
+    options[:coverage_file] = deps.first.path
+    {:inputs => options}
+  end
+
   #dep Sample, :BAM
   #dep_task :collect_fragment_counts, HTS, :collect_fragment_counts, :bam => :BAM
 end
