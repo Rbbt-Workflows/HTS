@@ -42,7 +42,8 @@ module HTS
   input :coverage_file, :file, "Coverage file in bed format"
   input :mutations_file, :file,"Mutations file in bed format"
   task :low_coverage => :text do |coverage_file, mutations_file|
-    CMD.cmd(:bedtools, "intersect -a #{coverage_file} -b #{mutations_file}")
+    low_cov_threshold = config('low_cov', :low_coverage, :default => 10)
+    CMD.cmd(:bedtools, "intersect -a #{coverage_file} -b #{mutations_file} -wb | awk '{ if ($4 < #{low_cov_threshold}) result=\"LOW_COVERAGE\"; print $5,$6,$7,result }'")
   end
 
 

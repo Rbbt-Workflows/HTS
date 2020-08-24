@@ -74,7 +74,7 @@ module Sample
     :svABA => :svABA,
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
-
+    :manta_pre => :manta_pre,
     #:somatic_seq => :somatic_seq,
     #:varscan_somatic => :varscan_somatic,
     #:varscan_somatic_alt => :varscan_somatic_alt,
@@ -394,4 +394,10 @@ module Sample
 
   #dep Sample, :BAM
   #dep_task :collect_fragment_counts, HTS, :collect_fragment_counts, :bam => :BAM
+  dep Sample, :BAM
+  dep Sample, :BAM_normal
+  dep_task :manta, HTS, :manta_pre, :tumor => :BAM, :normal => :BAM_normal do |sample,options,deps|
+    options = add_sample_options sample, options
+    {:inputs => options}
+  end
 end
