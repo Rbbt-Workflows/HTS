@@ -16,8 +16,11 @@ module HTS
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference
     reference.sub!(/\.gz$/,'')
+
+    truth = File.expand_path(truth)
+    input = File.expand_path(input)
+
     Misc.in_dir files_dir do
-      vcf_sorted = File.join('.', "input.vcf")
 
       truth_sorted = File.join('.', "truth.vcf")
       truth_io = TSV.get_stream truth
@@ -27,7 +30,7 @@ module HTS
       input_io = TSV.get_stream input
       CMD.cmd('bcftools', "sort > #{input_sorted}", :in => input_io)
 
-      CMD.cmd_log('hap.py', "-o '#{self.clean_name}' -r '#{reference}' #{truth_sorted} #{input_sorted}")
+      CMD.cmd_log('hap.py', " --no-roc -o '#{self.clean_name}' -r '#{reference}' #{truth_sorted} #{input_sorted}")
     end
 
     tsv = TSV.open(file(self.clean_name + '.summary.csv'), :sep => ',', :header_hash => '')
@@ -42,8 +45,7 @@ module HTS
   input :coverage_file, :file, "Coverage file in bed format"
   input :mutations_file, :file,"Mutations file in bed format"
   task :low_coverage => :text do |coverage_file, mutations_file|
-    low_cov_threshold = config('low_cov', :low_coverage, :default => 10)
-    CMD.cmd(:bedtools, "intersect -a #{coverage_file} -b #{mutations_file} -wb | awk '{ if ($4 < #{low_cov_threshold}) result=\"LOW_COVERAGE\"; print $5,$6,$7,result }'")
+    CMD.cmd(:bedtools, "intersect -a #{coverage_file} -b #{mutations_file}")
   end
 
 
