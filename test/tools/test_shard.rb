@@ -7,7 +7,14 @@ require 'tools/samtools'
 require 'tools/GATK'
 
 class TestShard < Test::Unit::TestCase
-  def test_interval_file
+
+  def test_intervals
+    intervals = ["chrM\t1\t70\n", "chrM\t100\t170\n"]
+    iii GATKShard.chunk_intervals(intervals, 50, nil, true)
+  end
+  
+
+  def __test_interval_file
     interval_file = Path.setup("/data/Patients/Bellmunt/data/Padded.b37.bed")
     intervals = GATKShard.chunk_intervals interval_file
     intervals.each do |i|
