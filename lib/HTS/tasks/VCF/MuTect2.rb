@@ -20,6 +20,19 @@ module HTS
     af_not_in_resource = germline_min_af germline_resource if af_not_in_resource.nil? and germline_resource
     germline_resource = vcf_file reference, germline_resource if germline_resource
     germline_resource = GATK.prepare_VCF germline_resource if germline_resource
+
+    pon = nil if pon == 'none'
+    pon = Open.read(pon).strip if pon && Open.exists?(pon) && File.size(pon) < 10
+
+    if pon == 'default' || pon == 'Broad'
+      pon = case reference.to_s
+            when 'b37'
+              Organism["Hsa"].b37.known_sites["panel_of_normals.vcf"].produce.find
+            when 'hg38'
+              Organism["Hsa"].hg38.known_sites["panel_of_normals.vcf"].produce.find
+              raise "No default or Broad panel of normals for reference '#{reference}'"
+            end
+    end
     pon = GATK.prepare_VCF pon if pon
 
     reference = reference_file reference
