@@ -3,8 +3,9 @@ module HTS
   input :BAM_list, :array, "List of BAM files"
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
+  input :reference_confidence_mode, :select, "Mode for emitting reference confidence scores", "NONE", :select_options => %w(NONE BP_RESOLUTION GVCF)
   extension :vcf
-  task :haplotype => :text do |bam,bam_list,reference,interval_list|
+  task :haplotype => :text do |bam,bam_list,reference,interval_list,reference_confidence_mode|
 
     interval_list = nil if interval_list == "none"
 
@@ -32,7 +33,7 @@ module HTS
     args["-R"] = reference
     args["--intervals"] = interval_list if interval_list
     args["-ip"] = 500 if interval_list
-    args["-ERC"] = bam_list.nil? ? "ERC" : "NONE"
+    args["-ERC"] = reference_confidence_mode
     args["--max-alternate-alleles"] = 3
     args["--create-output-variant-index"] = false
     shard = config('shard', :HaplotypeCaller, :haplotype,  :gatk)
