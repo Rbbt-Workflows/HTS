@@ -38,10 +38,7 @@
     index_tumor = rbbt.url_add_script_name("#{index_tumor}")
     url_normal = rbbt.url_add_script_name("#{url_normal}")
     index_normal = rbbt.url_add_script_name("#{index_normal}")
-    //url_tumor = "file://#{tumor_bam}"
-    //index_tumor = "file://#{tumor_bam}.bai"
-    //url_normal = "file://#{normal_bam}"
-    //index_normal = "file://#{normal_bam}.bai"
+
     genome = "#{reference}"
     require_js(["/js-find/igv.min.js"], function(){
       var igvDiv = document.getElementById("igv-div");
