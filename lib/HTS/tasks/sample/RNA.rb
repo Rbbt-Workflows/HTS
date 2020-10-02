@@ -154,10 +154,12 @@ module Sample
           break if sample_files
         end
 
-        if sample_files[:RNA_FASTQ]
-          {:inputs => options, :jobname => sample} if sample_files
-        else
+        if sample_files && sample_files[:RNA_FASTQ]
+          {:inputs => options, :jobname => sample} 
+        elsif sample_files
           {:task => :BAM_normal, :inputs => options, :jobname => sample} if sample_files
+        else
+          nil
         end
       end
     else
