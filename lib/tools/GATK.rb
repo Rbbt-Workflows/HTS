@@ -267,12 +267,17 @@ module GATK
   # -- Claims for mm10
 
   Organism.claim Organism["Mmu"].GRCm38.known_sites["Ensembl.vcf.gz"], :proc do |target|
-    url = "ftp://ftp.ensembl.org/pub/release-96/variation/vcf/mus_musculus/mus_musculus.vcf.gz"
+    url = "ftp://ftp.ensembl.org/pub/release-101/variation/vcf/mus_musculus/mus_musculus.vcf.gz"
     GATK.get_VCF(url, target)
   end
 
   Organism.claim Organism["Mmu"].GRCm38.known_sites["Ensembl.structural.vcf.gz"], :proc do |target|
-    url = "ftp://ftp.ensembl.org/pub/release-96/variation/vcf/mus_musculus/mus_musculus_structural_variations.vcf.gz"
+    url = "ftp://ftp.ensembl.org/pub/release-101/variation/vcf/mus_musculus/mus_musculus_structural_variations.vcf.gz"
+    GATK.get_VCF(url, target)
+  end
+
+  Organism.claim Organism["Rno"]["Rnor_6.0"].known_sites["Ensembl.vcf.gz"], :proc do |target|
+    url = "ftp://ftp.ensembl.org/pub/release-101/variation/vcf/rattus_norvegicus/rattus_norvegicus.vcf.gz"
     GATK.get_VCF(url, target)
   end
 

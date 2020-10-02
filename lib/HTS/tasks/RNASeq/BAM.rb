@@ -176,10 +176,12 @@ module HTS
 
     known_sites = [] 
     known_site_codes = if reference.include?('mm10') || reference.include?('GRCm38')
-                    ["mm10_variation", "mm10_structural"]
-                  else
-                    ["miller_indels", "dbsnp", "1000G_indels"]
-                  end
+                         ["mm10_variation", "mm10_structural"]
+                       elsif reference.include?('rn6') || reference.include?('Rnor_6.0')
+                         ["rn6_variation"]
+                       else
+                         ["miller_indels", "dbsnp", "1000g_snps"]
+                       end
     known_site_codes.each do |file|
       vcf = vcf_file reference, file
       next if vcf.nil?

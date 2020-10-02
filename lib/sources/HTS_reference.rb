@@ -244,4 +244,12 @@ module Organism
     CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")
     nil
   end
+
+  Organism.claim Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa"], :proc do |target|
+    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    url = "ftp://ftp.ensembl.org/pub/release-101/fasta/rattus_norvegicus/dna/Rattus_norvegicus.Rnor_6.0.dna_sm.toplevel.fa.gz"
+    target.sub!(/\.gz$/,'')
+    CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")
+    nil
+  end
 end

@@ -46,13 +46,15 @@ module HTS
       Organism["Hsa"][reference][reference + ".fa"].produce.find
     when 'mm10', 'GRCm38'
       Organism["Mmu"].GRCm38["GRCm38.fa"].produce.find
+    when 'rn6', 'Rno_6.0'
+      Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa"].produce.find
     else
       reference
     end
   end
 
   helper :vcf_file do |reference, file|
-    reference = reference.scan(/(?:b37|hg19|hg38|mm10|GRCm38|GRCh38)(?:_noalt)?/).first 
+    reference = reference.scan(/(?:b37|hg19|hg38|mm10|GRCm38|GRCh38|rn6|Rnor_6\.0)(?:_noalt)?/).first 
     file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
 
     reference = reference.sub('_noalt','')
@@ -85,6 +87,15 @@ module HTS
         Organism["Mmu"]['GRCm38'].known_sites["Ensembl.vcf.gz"].produce.find
       when 'mm10_structural', 'grcm38_variation'
         Organism["Mmu"]['GRCm38'].known_sites["Ensembl.structural.vcf.gz"].produce.find
+      when 'none'
+        nil
+      else
+        Open.exists?(file.to_s) ? file : nil
+      end
+    when 'rn6', 'Rnor_6.0'
+      case file.to_s.downcase
+      when 'rn6_variation', 'rnor_6.0_variation'
+        Organism["Rno"]["Rnor_6.0"].known_sites["Ensembl.vcf.gz"].produce.find
       when 'none'
         nil
       else
