@@ -14,6 +14,7 @@ module STAR
 
   Rbbt.claim Rbbt.software.opt.STAR, :install, Rbbt.share.install.software.STAR.find
 
+  CMD.tool "STAR", Rbbt.software.opt.STAR
 
   def self.build_gft_index(organism, read_length = 100, cpus = nil)
     cpus ||= Rbbt::Config.get("cpus", :STAR_build, :STAR, :default => 1)
@@ -60,7 +61,7 @@ module STAR
 
         Misc.in_dir dir do
           FileUtils.ln_s file, linked unless File.exists?(linked)
-          CMD.cmd_log("STAR --runThreadN #{cpus} --runMode genomeGenerate --genomeDir #{dir} --genomeFastaFiles #{reference} --sjdbGTFfile #{unzipped} --sjdbOverhang #{read_length.to_i - 1}")
+          CMD.cmd_log("STAR", "--runThreadN #{cpus} --runMode genomeGenerate --genomeDir #{dir} --genomeFastaFiles #{reference} --sjdbGTFfile #{unzipped} --sjdbOverhang #{read_length.to_i - 1}")
         end
       end
     end
