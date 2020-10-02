@@ -46,7 +46,7 @@ class GATKShard
           current_size = 0
         end
 
-        current << [chr, start.to_s, (start + size).to_s ]
+        current << [chr, start.to_s, (start + size - 1).to_s ]
         current_size += size
 
         remaining = remaining - size
