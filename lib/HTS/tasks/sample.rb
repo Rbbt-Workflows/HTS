@@ -282,10 +282,11 @@ module Sample
     load_study_workflow(study)
   end
 
-  task :organism => :string do
+  input :organism, :string, "Organism Code", nil
+  task :organism => :string do |organism|
     sample = clean_name
     options = Sample.sample_options(sample).merge(Sample.study_options(sample))
-    options[:organism] || Organism.organism_for_build(options[:reference] || 'b37') || Organism.default_code("Hsa")
+    organism || options[:organism] || Organism.organism_for_build(options[:reference] || 'b37') || Organism.default_code("Hsa")
   end
 
   CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
