@@ -38,7 +38,7 @@ module BWA
       Misc.in_dir dir do
         FileUtils.ln_s file, linked unless File.exists?(linked)
         FileUtils.ln_s file + '.alt', linked + '.alt' if File.exists?(file + '.alt') && ! File.exists?(linked + '.alt') 
-        CMD.cmd(:bwa, "'index '#{ linked }'")
+        CMD.cmd(:bwa, "index '#{ linked }'")
       end
     end
 
