@@ -96,6 +96,10 @@ module HTS
     linked + '.fixed.gtf'
   end
 
+  def self.gsutil(url, target)
+    CMD.cmd_log(:gsutil, "cp '#{url}' '#{target}'")
+  end
+
 end
 
 module Organism
@@ -151,6 +155,27 @@ module Organism
     GATK.get_VCF(url, target)
   end
 
+  Organism.claim Organism["Hsa"].hg38.known_sites["panel_of_normals.vcf"], :proc do |target|
+    url = "gs://gatk-best-practices/somatic-hg38/1000g_pon.hg38.vcf.gz"
+    HTS.gsutil(url, target)
+  end
+
+  Organism.claim Organism["Hsa"].hg38.known_sites["exome_capture.interval_list"], :proc do |target|
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/Broad.human.exome.hg38.interval_list.gz"
+    target = target + '.gz' unless target =~ /\.gz$/
+    CMD.cmd_log("wget '#{url}' -O  #{target}")
+    nil
+  end
+
+  Organism.claim Organism["Hsa"].hg38.known_sites["wgs_calling_regions.interval_list"], :proc do |target|
+    url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/wgs_calling_regions.hg38.interval_list"
+    CMD.cmd_log("wget '#{url}' -O  #{target}")
+    nil
+  end
+
+
+
+
   # -- Claims for b37
   
   Organism.claim Organism["Hsa"].b37["b37.fa"], :proc do |target|
@@ -186,57 +211,84 @@ module Organism
     GATK.get_VCF(url, target)
   end
 
+  Organism.claim Organism["Hsa"].b37.known_sites["panel_of_normals.vcf"], :proc do |target|
+    url = "gs://gatk-best-practices/somatic-b37/Mutect2-WGS-panel-b37.vcf"
+    HTS.gsutil(url, target)
+    nil
+  end
+
+  Organism.claim Organism["Hsa"].b37.known_sites["panel_of_normals.vcf"], :proc do |target|
+    url = "gs://gatk-best-practices/somatic-b37/Mutect2-WGS-panel-b37.vcf"
+    HTS.gsutil(url, target)
+    nil
+  end
+
+  Organism.claim Organism["Hsa"].b37.known_sites["exome_capture.interval_list"], :proc do |target|
+    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Broad.human.exome.b37.interval_list.gz"
+    target = target + '.gz' unless target =~ /\.gz$/
+    CMD.cmd_log("wget '#{url}' -O  #{target}")
+    nil
+  end
+
+  Organism.claim Organism["Hsa"].b37.known_sites["wgs_calling_regions.interval_list"], :proc do |target|
+    url = "https://storage.googleapis.com/genomics-public-data/resources/broad/b37/v0/wgs_calling_regions.hg38.interval_list"
+    CMD.cmd_log("wget '#{url}' -O  #{target}")
+    nil
+  end
+
+
+
+
+
   # -- Claims for hg19
 
-  Organism.claim Organism["Hsa"].hg19["hg19.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
-    TmpFile.with_file do |directory|
-      Misc.in_dir directory do
-        CMD.cmd_log("wget '#{url}' -O - | tar xvfz -")
-        CMD.cmd("cat *.fz > '#{target}' ")
-      end
-    end
-    nil
-  end
+  #Organism.claim Organism["Hsa"].hg19["hg19.fa"], :proc do |target|
+  #  FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+  #  url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
+  #  TmpFile.with_file do |directory|
+  #    Misc.in_dir directory do
+  #      CMD.cmd_log("wget '#{url}' -O - | tar xvfz -")
+  #      CMD.cmd("cat *.fz > '#{target}' ")
+  #    end
+  #  end
+  #  nil
+  #end
 
-  Organism.claim Organism["Hsa"].hg19.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz"
-    GATK.get_VCF(url, target)
-  end
+  #Organism.claim Organism["Hsa"].hg19.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  #  url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz"
+  #  GATK.get_VCF(url, target)
+  #end
 
-  Organism.claim Organism["Hsa"].hg19.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf.gz"
-    GATK.get_VCF(url, target)
-  end
+  #Organism.claim Organism["Hsa"].hg19.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
+  #  url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg19/dbsnp_138.hg19.vcf.gz"
+  #  GATK.get_VCF(url, target)
+  #end
 
-  # -- Claims for  hs37d5
+  ## -- Claims for  hs37d5
 
-  Organism.claim Organism["Hsa"].hs37d5["hs37d5.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
-    target.sub!(/\.gz$/,'')
-    url = "https://storage.googleapis.com/genomics-public-data/references/hs37d5/hs37d5.fa.gz"
-    CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
-    nil
-  end
+  #Organism.claim Organism["Hsa"].hs37d5["hs37d5.fa"], :proc do |target|
+  #  FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+  #  target.sub!(/\.gz$/,'')
+  #  url = "https://storage.googleapis.com/genomics-public-data/references/hs37d5/hs37d5.fa.gz"
+  #  CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
+  #  nil
+  #end
 
-  Organism.claim Organism["Hsa"].hs37d5.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
-    GATK.get_VCF(url, target)
-  end
+  #Organism.claim Organism["Hsa"].hs37d5.known_sites["Miller_1000G_indels.vcf.gz"], :proc do |target|
+  #  url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
+  #  GATK.get_VCF(url, target)
+  #end
 
-  Organism.claim Organism["Hsa"].hs37d5.known_sites["1000G_phase1.indels.vcf.gz"], :proc do |target|
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
-    GATK.get_VCF(url, target)
-  end
+  #Organism.claim Organism["Hsa"].hs37d5.known_sites["1000G_phase1.indels.vcf.gz"], :proc do |target|
+  #  url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/1000G_phase1.snps.high_confidence.b37.vcf.gz"
+  #  GATK.get_VCF(url, target)
+  #end
 
-  Organism.claim Organism["Hsa"].hs37d5.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
-    url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz"
-    GATK.get_VCF(url, target)
-  end
+  #Organism.claim Organism["Hsa"].hs37d5.known_sites["dbsnp_138.vcf.gz"], :proc do |target|
+  #  url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz"
+  #  GATK.get_VCF(url, target)
+  #end
 
-  # -- Claims for  hs37d5
-  
   Organism.claim Organism["Mmu"].GRCm38["GRCm38.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "ftp://ftp.ensembl.org/pub/release-96/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz"
