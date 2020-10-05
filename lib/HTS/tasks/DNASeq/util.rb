@@ -31,9 +31,10 @@ module HTS
   
   input :bam_file, :file, "BAM file", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
-  task :BAM_pileup_sumaries => :text do |bam,reference|
+  input :pileup_germline_resource, :file, "Germline resource for BAM_pileup_sumaries", :small_exac, :nofile => true
+  task :BAM_pileup_sumaries => :text do |bam,reference,pileup_germline_resource|
 
-    vcf = vcf_file(reference, "small_exac")
+    vcf = vcf_file(reference, pileup_germline_resource)
 
     raise ParameterException, "No population VCF for pileup BAM pileup summaries" if vcf.nil?
 
