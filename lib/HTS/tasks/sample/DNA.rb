@@ -130,8 +130,16 @@ module Sample
     end
   end
 
-  dep :BAM, :compute => [:produce, :canfail]
-  dep :BAM_normal, :compute => [:produce, :canfail]
+  dep :BAM_normal, :compute => [:produce, :canfail] do |jobname,options|
+    sample = jobname
+    if Sample.sample_files(sample + "_normal") || (sample.include?(":") && Sample.sample_files(sample.sub(/:.*/, ":normal")))
+      {:inputs => options, :jobname => jobname, :task => :BAM_normal}
+    elsif sample_files = Sample.sample_files(sample)
+      {:inputs => options, :jobname => jobname, :task => :BAM}
+    else
+      raise "Sample #{ sample } not found" if sample_files.nil?
+    end
+  end
   dep_task :haplotype, HTS, :haplotype, :BAM => :BAM_normal do |jobname, options, dependencies|
     options = add_sample_options jobname, options
     options[:BAM] = :BAM if dependencies.flatten.reject{|dep| (dep.dependencies.empty? ) || (dep.error? && ! dep.recoverable_error?) }.select{|dep|  dep.task_name == :BAM_normal}.first.nil?
