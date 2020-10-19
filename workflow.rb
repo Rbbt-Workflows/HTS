@@ -149,18 +149,20 @@ module HTS
       gatk("ScatterIntervalsByNs", args)
     end
 
-    StringIO.new(Open.read(output).split("\n").reject{|line|
+    Open.read(output).split("\n").reject{|line|
       if line =~ /^@SQ/ 
         true
       else
         chr = line.split("\t").first
         if BLACKLISTED_CONTIGS.select{|c| Regexp === c ? c.match(chr) : c === chr }.any?
           true
+        elsif chr == "@HD"
+          true
         else
           line =~ /Nmer$/
         end
       end
-    }.collect{|line| line.split("\t").values_at(0,1,2) * "\t"} * "\n")
+    }.collect{|line| parts = line.split("\t").values_at(0,1,2); parts[1] = parts[1].to_i - 1; parts * "\t"}
   end
 
   helper :monitor_genome do |stream,bgzip=true|

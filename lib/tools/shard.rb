@@ -74,6 +74,7 @@ class GATKShard
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs)
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 5, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 20, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
+
     bar.max = chunks.length if bar
     bar.init if bar
 
@@ -95,7 +96,8 @@ class GATKShard
           iargs[k] = iv
         end
 
-        TmpFile.with_file(intervals.collect{|e| e * "\t"} * "\n", :extension => 'bed') do |interval_file|
+        #TmpFile.with_file(intervals.collect{|e| [e[0], e[1], e[2].to_i + 1] * "\t"} * "\n", :extension => 'bed') do |interval_file|
+        TmpFile.with_file(intervals.collect{|e| [e[0], e[1], e[2].to_i] * "\t"} * "\n", :extension => 'bed') do |interval_file|
           iargs[interval_file_field] = interval_file 
           iargs[output_field] = output 
           GATK.run_log(command, iargs)
