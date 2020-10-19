@@ -295,10 +295,12 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked.replace_extension("dict", 'gz')) || Persist.newer?(linked.replace_extension('dict', 'gz'), file)
+    dict = linked.replace_extension('dict', 'gz')
+    if ! File.exists?(dict) || Persist.newer?(dict, file)
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        Open.rm dict if File.exists?(dict)
         CMD.cmd(:gatk, "CreateSequenceDictionary -R '#{ linked }'")
       end
     end
