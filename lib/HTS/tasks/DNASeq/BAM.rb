@@ -202,8 +202,11 @@ module HTS
   task :BAM_rescore => :binary do |interval_list,reference|
 
     interval_list = nil if interval_list == "none"
-    reference = reference_file reference
-    reference = GATK.prepare_FASTA reference
+
+    orig_reference = reference_file(reference)
+    reference = BWA.prepare_FASTA orig_reference
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
 
     args = {}
     args["reference"] = reference
