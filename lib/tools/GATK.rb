@@ -11,6 +11,8 @@ module GATK
     CMD.cmd('conda install gatk4 -c bioconda')
   end
 
+  Rbbt.claim Rbbt.software.opt.GATK, :install, Rbbt.share.install.software.GATK.find
+
   #def self.organism(org="Hsa")
   #  Organism.default_code(org)
   #end
