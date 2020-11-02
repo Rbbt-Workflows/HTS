@@ -84,7 +84,7 @@ module HTS
             end
           end
 
-          bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1")
+          bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1").strip
           io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
 
           Misc.consume_stream io_bwa, true, bwa_bam
@@ -276,7 +276,7 @@ module HTS
 
     shard = config('shard', :gatk, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
 
-    if shard == 'true'
+    if shard.to_s == 'true'
       contigs = Samtools.bam_contigs(input_bam_job)
       args["input"] = bam_file
 

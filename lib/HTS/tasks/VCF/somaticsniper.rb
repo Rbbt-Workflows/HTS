@@ -36,10 +36,11 @@ somatic_score is set to 40 according to documentation in the web page
     normal_sample = GATK.BAM_sample_name(normal) if normal
 
 
-    CMD.cmd_log("bam-somaticsniper".to_sym,"-L -G -Q #{somatic_score} -s 0.01 -T 0.85 -N 2 -r 0.001 -F vcf  \
-                -q #{quality} \
-                -n '#{normal_sample}' -t '#{tumor_sample}' -f '#{reference}' \
-                '#{tumor}' '#{normal}' '#{self.tmp_path}'")
+    CMD.cmd_log("bam-somaticsniper".to_sym,"-F vcf -L -G \
+                -s 0.01 -T 0.85 -N 2 -r 0.001 \
+                -q #{quality} -Q #{somatic_score}  \
+                -n '#{normal_sample}' -t '#{tumor_sample}' \
+                -f '#{reference}' '#{tumor}' '#{normal}' '#{self.tmp_path}'")
 
     nil
   end
