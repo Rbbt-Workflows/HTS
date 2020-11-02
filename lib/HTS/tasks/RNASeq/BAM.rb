@@ -194,13 +194,13 @@ module HTS
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 
     #{{{ Recalibration
-    shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
+    shard = config('shard', :BaseRecalibrator, :baserecalibrator, :rescore, :gatk)
     if shard == 'true'
       contigs = Samtools.bam_contigs(step(:RNA_BAM_cigars))
       bam_file = Samtools.prepare_BAM(step(:RNA_BAM_cigars))
       args["input"] = bam_file
 
-      cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
+      cpus = config('cpus', :BaseRecalibrator, :baserecalibrator, :rescore, :shard, :gatk)
       args["intervals"] ||= nil
       args["interval-padding"] ||= GATKShard::GAP_SIZE 
       intervals = (interval_list || intervals_for_reference(reference))

@@ -235,13 +235,13 @@ module HTS
     input_bam_job = step(:BAM_sorted)
 
     #{{{ Recalibration
-    shard = config('shard', :gatk, :rescore, :baserecalibrator, :BaseRecalibrator)
-    if shard == 'true'
+    shard = config('shard', :BaseRecalibrator, :baserecalibrator, :rescore, :gatk)
+    if shard.to_s == 'true'
       contigs = Samtools.bam_contigs(input_bam_job)
       bam_file = Samtools.prepare_BAM(input_bam_job)
       args["input"] = bam_file
 
-      cpus = config('cpus', :shard, :rescore, :baserecalibrator, :BaseRecalibrator)
+      cpus = config('cpus', :BaseRecalibrator, :baserecalibrator, :rescore, :shard, :gatk)
       args["intervals"] ||= nil
       intervals = (interval_list || intervals_for_reference(reference))
       bar = self.progress_bar("Processing BaseRecalibrator sharded")
