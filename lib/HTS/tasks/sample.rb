@@ -36,7 +36,7 @@ module Sample
                             end
                           end
 
-                          dir.glob('WES/*').each do |path|
+                          dir.glob('W?S/*').each do |path|
                             file = File.basename path
                             sample = file.split(".").first
                             fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz") + path.glob("*.fq") + path.glob("*.fq.gz")).sort
@@ -74,7 +74,7 @@ module Sample
                             sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam/
                           end
 
-                          dir.glob('WES.orig/*').each do |path|
+                          dir.glob('W?S.orig/*').each do |path|
                             file = File.basename path
                             sample = file.split(".").first
                             orig_files = path.glob("*.bam")
@@ -241,32 +241,40 @@ module Sample
       return study_options(ssample, study)
     end
 
-    options = {}
-    IndiferentHash.setup options
-    load_study_files.each do |study, sample_files|
-      next if sstudy && study.to_s != sstudy.to_s
-      next unless sstudy || Sample.sample_study(sample) == study
-      options_file = Sample.study_dir(study).options.find
-      next unless options_file.exists?
-      study_options = if File.directory? options_file
-                        input_names = STUDY_OPTIONS.keys
-                        input_types = STUDY_OPTIONS
-                        options = Workflow.load_inputs(options_file, input_names, input_types)
-                        Dir.glob(File.join(options_file, "*#*")).each do |od|
-                          options[File.basename(od)] = od
-                        end
-                        options 
-                      else
-                        YAML.load(options_file)
-                      end
-      options.merge! study_options
-    end
-    options
+    @@study_options ||= {}
+    @@study_options[[study,sstudy]] ||= 
+      begin
+        options = {}
+        IndiferentHash.setup options
+        load_study_files.each do |study, sample_files|
+          next if sstudy && study.to_s != sstudy.to_s
+          next unless sstudy || Sample.sample_study(sample) == study
+          options_file = Sample.study_dir(study).options.find
+          next unless options_file.exists?
+          study_options = if File.directory? options_file
+                            input_names = STUDY_OPTIONS.keys
+                            input_types = STUDY_OPTIONS
+                            options = Workflow.load_inputs(options_file, input_names, input_types)
+                            Dir.glob(File.join(options_file, "*#*")).each do |od|
+                              options[File.basename(od)] = od
+                            end
+                            options 
+                          else
+                            YAML.load(options_file)
+                          end
+          options.merge! study_options
+        end
+        options
+      end
   end
 
-  def self.add_sample_options(sample,options)
-    options = Sample.sample_options(sample).merge(options)
-    options = Sample.study_options(sample).merge(options)
+  def self.add_sample_options(sample, options)
+    @@sample_options ||= {}
+    sample_options = @@sample_options[sample] ||= 
+      begin
+        Sample.study_options(sample).merge(Sample.sample_options(sample))
+      end
+    options = sample_options.merge(options)
     load_sample_workflow(sample)
     IndiferentHash.setup options
     options
