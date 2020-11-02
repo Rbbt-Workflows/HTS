@@ -2,7 +2,7 @@ require 'tools/fpfilter'
 
 module HTS
 
-  CMD.tool "Varscan", nil, "varscan" do
+  CMD.tool "varscan", nil, "varscan" do
     CMD.cmd('conda install varscan -c bioconda')
   end
 

@@ -1,5 +1,5 @@
 module HTS
-  CMD.tool :MuSE, nil, "muse" do
+  CMD.tool :MuSE, nil, "MuSE" do
     CMD.cmd('conda install muse -c bioconda')
   end
 
