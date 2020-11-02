@@ -69,8 +69,15 @@ module HTS
 
     reference_file = GATK.prepare_FASTA(reference_file(reference))
 
+    vcfs = output.glob("*.indel.vcf") + output.glob("*.snv.vcf")
+    clean_vcfs = vcfs.collect do |vcf|
+      clean_vcf = vcf.replace_extension('vcf', 'clean.vcf')
+      HTS.vcf_clean_IUPAC_alleles(vcf, Path.setup(clean_vcf))
+      clean_vcf
+    end
+
     args = {}
-    args["INPUT"] = output.glob("*.indel.vcf") + output.glob("*.snv.vcf")
+    args["INPUT"] = clean_vcfs
     args["OUTPUT"] = self.tmp_path
     args["SEQUENCE_DICTIONARY"] = reference_file.replace_extension('dict', true)
     gatk("MergeVcfs", args)

@@ -53,20 +53,26 @@ somatic_score is set to 40 according to documentation in the web page
     reference = Samtools.prepare_FASTA orig_reference
     reference = HTS.uncompress_FASTA orig_reference
 
-    args = {}
-    args["bam-file"] = step(:somatic_sniper).inputs[:tumor]
-    args["vcf-file"] = step(:somatic_sniper).path
-    args["output"] = self.tmp_path
-    args["reference"] = reference
-    args["sample"] = GATK.BAM_sample_name(step(:somatic_sniper).inputs[:tumor])
-    FPFilter.filter(args.to_hash)
+    TmpFile.with_file nil, true, :extension => :vcf do |tmpfile1|
+      TmpFile.with_file nil, true, :extension => :vcf do |tmpfile2|
+        args = {}
+        args["bam-file"] = step(:somatic_sniper).inputs[:tumor]
+        args["vcf-file"] = step(:somatic_sniper).path
+        args["output"] = tmpfile1
+        args["reference"] = reference
+        args["sample"] = GATK.BAM_sample_name(step(:somatic_sniper).inputs[:tumor])
+        FPFilter.filter(args.to_hash)
 
-    args = {}
-    args["reference"] = reference
-    args["variant"] = self.tmp_path
-    args["output"] = self.path
-    args["exclude-filtered"] = true
-    args["exclude-non-variants"] = true
-    GATK.run_log("SelectVariants", args)
+        HTS.vcf_clean_IUPAC_alleles(tmpfile1, Path.setup(tmpfile2))
+
+        args = {}
+        args["reference"] = reference
+        args["variant"] = tmpfile2
+        args["output"] = self.tmp_path
+        args["exclude-filtered"] = true
+        args["exclude-non-variants"] = true
+        GATK.run_log("SelectVariants", args)
+      end
+    end
   end
 end
