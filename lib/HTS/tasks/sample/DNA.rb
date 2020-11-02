@@ -130,6 +130,64 @@ module Sample
     end
   end
 
+
+
+  dep :mutect2, :canfail => true
+  dep :strelka, :canfail => true
+  dep :muse, :canfail => true
+  dep :somatic_sniper, :canfail => true
+  #dep :varscan
+  task :caller_cohort => :array do
+    dependencies.collect do |dep|
+      next if dep.error?
+      name = dep.task_name.to_s
+      Open.cp(dep.path, file(name))
+    end
+    Path.setup(files_dir).glob("*")
+  end
+
+  dep :caller_cohort, :compute => :produce
+  dep Sequence, :genomic_mutations, :vcf_file => :placeholder do |jobname,options,dependencies|
+    cohort = dependencies.flatten.select{|dep| dep.task_name.to_s === "caller_cohort" }.first
+    cohort.dependencies.collect{|dep| {:inputs => options.merge(:vcf_file => dep), :jobname => dep.task_name.to_s} }
+  end
+  task :combined_caller_cohort => :tsv do
+    tsv = TSV.setup({}, "Genomic Mutation~Caller#:type=:flat")
+    dependencies[1..-1].each do |dep| 
+      name = dep.clean_name.to_s
+      dep.load.each do |mutation|
+        tsv[mutation] ||= []
+        tsv[mutation]  << name
+      end
+    end
+    tsv
+  end
+
+  dep :caller_cohort, :compute => :produce
+  extension :vcf
+  task :combined_caller_vcfs => :text do
+    list = {}
+    step(:caller_cohort).dependencies.each do |dep|
+      next if dep.error?
+      name = dep.task_name.to_s
+      list[name] = dep.path
+    end
+    
+    HTS.combine_caller_vcfs(list)
+  end
+
+  dep :combined_caller_vcfs
+  input :min_callers, :integer, "Min number of callers to pass variant", 2
+  extension :vcf
+  task :consensus_somatic_variants => :text do |min_callers|
+    TSV.traverse step(:combined_caller_vcfs), :into => :stream, :type => :array do |line|
+      next line if line =~ /^#/
+      num = line.split("\t")[6].split(";").collect{|f| f.split("--").first}.uniq.length
+      next unless num >= min_callers
+      line
+    end
+  end
+
   dep :BAM_normal, :compute => [:produce, :canfail] do |jobname,options|
     sample = jobname
     if Sample.sample_files(sample + "_normal") || (sample.include?(":") && Sample.sample_files(sample.sub(/:.*/, ":normal")))
