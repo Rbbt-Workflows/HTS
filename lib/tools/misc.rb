@@ -28,10 +28,15 @@ module HTS
 
   def self.vcf_clean_IUPAC_alleles(input, output)
     iupac = Misc::IUPAC2BASE.select{|k,v| v.length > 1}.collect{|k,v| k}
-    TSV.traverse input, :into => output, :type => :array do |line|
-      next if iupac.include?(line.split("\t")[3])
-      line
+
+    Open.write(output) do |foutput|
+      TSV.traverse input, :into => foutput, :type => :array do |line|
+        next if iupac.include?(line.split("\t")[3])
+        line
+      end
+      foutput.join
     end
+    nil
   end
 
   def self.combine_caller_vcfs(list)
