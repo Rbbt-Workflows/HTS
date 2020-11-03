@@ -84,7 +84,7 @@ module HTS
             end
           end
 
-          bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1").strip
+          bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1").to_s.strip
           io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
 
           Misc.consume_stream io_bwa, true, bwa_bam
