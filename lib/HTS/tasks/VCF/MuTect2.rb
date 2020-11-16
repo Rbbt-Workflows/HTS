@@ -148,8 +148,9 @@ module HTS
 
     contamination = step(:contamination)
 
+    output = file('output')
     args["variant"] = tmp
-    args["output"] = self.tmp_path
+    args["output"] = output
     args["reference"] = reference
     args["--orientation-bias-artifact-priors"] = step(:BAM_orientation_model).path
     if contamination.error? || contamination.path.read.include?("NaN")
@@ -160,6 +161,7 @@ module HTS
       args["contamination-table"] = contamination.path
     end
     gatk("FilterMutectCalls", args)
+    Open.link output, self.tmp_path
     nil
   end
 

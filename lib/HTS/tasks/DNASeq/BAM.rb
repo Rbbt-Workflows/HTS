@@ -183,11 +183,13 @@ module HTS
     job = if duplicates.info[:spark]
             duplicates
           else
-            if split_sort
-              HTS.job(:sort_BAM_split, self.clean_name, :BAM => duplicates)
-            else
-              HTS.job(:sort_BAM, self.clean_name, :BAM => duplicates)
-            end
+            job = if split_sort
+                    HTS.job(:sort_BAM_split, self.clean_name, :BAM => duplicates)
+                  else
+                    HTS.job(:sort_BAM, self.clean_name, :BAM => duplicates)
+                  end
+            self.dependencies = self.dependencies + [job]
+            job
           end
 
     job.produce

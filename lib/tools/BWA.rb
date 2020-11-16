@@ -6,6 +6,9 @@ require 'rbbt/sources/organism'
 module BWA
   extend Resource
   self.subdir = 'organism/databases/BWA'
+
+  Rbbt.claim Rbbt.software.opt.BWA, :install, Rbbt.share.install.software.BWA.find
+
   CMD.tool :bwa, nil, "bash -c 'type bwa'" do
     CMD.cmd('conda install bwa -c bioconda')
   end

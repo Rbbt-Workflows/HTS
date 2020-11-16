@@ -120,15 +120,17 @@ module HTS
       truth_io = TSV.get_stream truth
       Open.write(truth_sorted_orig, truth_io)
 
-      CMD.cmd("grep '##' #{truth_sorted_orig} > #{truth_sorted_tmp}")
-      CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}")
-      CMD.cmd("grep '##FORMAT' #{input_sorted} >> #{truth_sorted_tmp}")
-      CMD.cmd("echo '##FORMAT=<ID=,Number=R,Type=Integer,Description=>' >> #{truth_sorted_tmp}")
-      CMD.cmd("echo '##FORMAT=<ID=GT,Number=R,Type=String,Description=>' >> #{truth_sorted_tmp}")
+      CMD.cmd("echo '##fileformat=VCFv4.2' > #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("grep '##' #{truth_sorted_orig} >> #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("grep '##FORMAT' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("echo '##FORMAT=<ID=,Number=R,Type=Integer,Description=>' >> #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("echo '##FORMAT=<ID=GT,Number=R,Type=String,Description=>' >> #{truth_sorted_tmp}", :nofail => true)
 
       ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the
-      CMD.cmd("grep '#CHR' #{truth_sorted_orig} >> #{truth_sorted_tmp}")
-      CMD.cmd("grep -v '#' #{truth_sorted_orig} |grep -v _alt| grep -v _random >> #{truth_sorted_tmp}")
+      CMD.cmd("grep '#CHR' #{truth_sorted_orig} >> #{truth_sorted_tmp}", :nofail => true)
+      CMD.cmd("grep -v '#' #{truth_sorted_orig} |grep -v _alt| grep -v _random >> #{truth_sorted_tmp}", :nofail => true)
 
       Open.open(truth_sorted_tmp) do |io|
         Open.open(truth_sorted_tmp2, :mode => 'w') do |file|

@@ -1,14 +1,14 @@
 module Sample
 
-  class << self
-    alias original_task_info task_info
+  #class << self
+  #  alias original_task_info task_info
 
-    def task_info(*args)
-      info = original_task_info(*args)
-      info[:input_defaults] = {}
-      info
-    end
-  end
+  #  def task_info(*args)
+  #    info = original_task_info(*args)
+  #    info[:input_defaults] = {}
+  #    info
+  #  end
+  #end
 
   def self.load_study_files_DNA
     @@study_files_DNA ||= begin

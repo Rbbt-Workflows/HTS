@@ -17,6 +17,8 @@ module HTS
 
     reference = Samtools.prepare_FASTA(reference)
 
+    reference = reference.sub('.gz', '')
+
     Open.mkdir files_dir
 
     panel_height = depth * 7 * 2
