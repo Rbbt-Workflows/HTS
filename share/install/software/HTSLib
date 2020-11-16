@@ -1,6 +1,6 @@
 #!/bin/bash
 
 name='HTSLib'
-url="https://github.com/samtools/htslib.git"
+url="https://github.com/samtools/htslib.git 1.11.0"
 
-install_git "$name" "$url" --disable-s3 --disable-lzma
+install_git "$name" "$url" --disable-s3 
