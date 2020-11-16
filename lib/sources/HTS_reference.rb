@@ -120,7 +120,7 @@ module Organism
     nil
   end
 
-  Organism.claim Organism["Hsa"].hg38["hg38.fa.gz"], :proc do |target|
+  Organism.claim Organism["Hsa"].hg38["hg38.fa"], :proc do |target|
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
     target.sub!(/\.gz$/,'')
