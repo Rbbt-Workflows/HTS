@@ -124,7 +124,7 @@ module Organism
     FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
     target.sub!(/\.gz$/,'')
-    CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")
+    CMD.cmd_log("wget '#{url}' -O - | bgzip > #{target}.gz")
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta.64.alt"
     CMD.cmd_log("wget '#{url}' -O #{target}.alt")
     nil
