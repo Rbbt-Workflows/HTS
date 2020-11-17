@@ -9,9 +9,7 @@ module BWA
 
   Rbbt.claim Rbbt.software.opt.BWA, :install, Rbbt.share.install.software.BWA.find
 
-  CMD.tool :bwa, nil, "bash -c 'type bwa'" do
-    CMD.cmd('conda install bwa -c bioconda')
-  end
+  CMD.tool :bwa, Rbbt.software.opt.BWA, "bash -c 'type bwa'"
 
   #def self.organism(org="Hsa")
   #  Organism.default_code(org)
