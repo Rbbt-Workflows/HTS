@@ -4,4 +4,10 @@ name='Strelka'
 url="https://github.com/Illumina/strelka.git"
 
 unset CPLUS_INCLUDE_PATH LIBRARY_PATH LD_LIBRARY_PATH C_INCLUDE_PATH LD_RUN_PATH PKG_CONFIG_PATH
-install_git "$name" "$url" 
+get_git "$name" "$url"
+sed -i 's/DEVELOPER_MODE true/DEVELOPER_MODE false/' "$OPT_SCM_DIR/$name/CMakeLists.txt"
+(cd "$OPT_SCM_DIR/$name/"; mkdir build; cd build; cmake -DMAKE_INSTALL_PREFIX=/ --build-type=Release .. ; ../configure --prefix="$(opt_dir $name)" --build-type=Release; make install)
+setup $name
+clean_build
+sed -i "s:scriptDir=os.path.abspath(os.path.dirname(__file__)):scriptDir=\"$(opt_dir $name)/bin\":" "$(opt_dir $name)/bin/configureStrelka*Workflow.py"
+

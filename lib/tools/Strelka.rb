@@ -19,13 +19,17 @@ module Strelka
 
   Rbbt.claim Rbbt.software.opt.Strelka, :install, Rbbt.share.install.software.Strelka.find
 
+  CMD.tool "configureStrelkaSomaticWorkflow.py", Rbbt.software.opt.Strelka
+
   def self.runSomatic(tumor, normal, reference, output, cpus, interval_list)
-    cmd_config ="configureStrelkaSomaticWorkflow.py"
-    cmd_string = "'#{ cmd_config }' --tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}' "
-   
+    #cmd_config = Rbbt.software.opt.Strelka.produce.bin["configureStrelkaSomaticWorkflow.py"].find 
+    cmd_config = "configureStrelkaSomaticWorkflow.py"
+
+    cmd_string = "--tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}' "
     cmd_string += " --normalBam='#{normal}' " unless normal.nil?
     cmd_string += " --callRegions='#{interval_list}' " unless interval_list.nil?
-    CMD.cmd_log(cmd_string)    
+
+    CMD.cmd_log(cmd_config, cmd_string)    
     cmd_workflow = File.join(output, "runWorkflow.py")
 
     CMD.cmd_log("'#{ cmd_workflow }' --mode local -j #{cpus}")
