@@ -1,6 +1,6 @@
 #!/bin/bash
 
 name='IGV'
-url="http://data.broadinstitute.org/igv/projects/downloads/2.4/IGV_2.4.10.zip"
+url="https://data.broadinstitute.org/igv/projects/downloads/2.4/IGV_2.4.19.zip"
 
 install_src "$name" "$url" 

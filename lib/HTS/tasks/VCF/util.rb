@@ -182,7 +182,9 @@ module HTS
 
       CMD.cmd_log('rtg', "format #{reference} -o '#{sdf}'")
 
-      CMD.cmd('rtg', "vcfeval --all-records -t #{sdf} -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read
+      text = CMD.cmd('rtg', "vcfeval --all-records -t #{sdf} -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      text = text.collect{|line| line.gsub(/^  */,'')}
+      TSV.open(StringIO.new(text * "\n"), :header_hash => '', :sep => /\s+/, :type => :list)
     end
 
   end

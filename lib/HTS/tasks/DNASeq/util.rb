@@ -232,10 +232,10 @@ module HTS
             f.puts parts * "\t"
           end
         end
-        CMD.cmd_log(:qualimap, "bamqc -bam '#{bam}' --java-mem-size=8G -gff '#{fint}' -outdir '#{outdir}' ")
+        CMD.cmd_log(:qualimap, "bamqc -bam '#{bam}' --java-mem-size=8G -gff '#{fint}' -outdir '#{outdir}' ", :xvfb => true)
       end
     else
-      CMD.cmd_log(:qualimap, "bamqc -bam '#{bam}' --java-mem-size=8G -outdir '#{outdir}' ")
+      CMD.cmd_log(:qualimap, "bamqc -bam '#{bam}' --java-mem-size=8G -outdir '#{outdir}' ", :xvfb => true)
     end
 
     Open.cp File.join(outdir, "genome_results.txt"), self.tmp_path
