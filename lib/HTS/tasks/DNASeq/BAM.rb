@@ -124,23 +124,7 @@ module HTS
 
   dep :BAM_bwa
   extension :bam
-  task :BAM_sorted_old => :binary do
-    Open.mkdir files_dir 
-    sorted = file('sorted.bam')
-
-    args = {}
-    args["INPUT"] = step(:BAM_bwa).path
-    args["OUTPUT"] = sorted
-    args["SORT_ORDER"] = 'coordinate'
-    gatk("SortSam", args)
-    Open.mv sorted, self.path
-    nil
-  end
-
-  dep :BAM_bwa
-  extension :bam
-  input :tmp_dir, :string, "Temporary directory", nil
-  task :BAM_duplicates => :binary do |tmp_dir|
+  task :BAM_duplicates => :binary do 
     Open.mkdir files_dir 
     output = file('out.bam')
 
@@ -151,42 +135,33 @@ module HTS
     args["ASSUME_SORT_ORDER"] = 'queryname'
     args["CREATE_INDEX"] = 'false'
 
-    gatk("MarkDuplicates", args, tmp_dir)
+    gatk("MarkDuplicates", args)
 
     Open.mv output, self.path
     nil
   end
 
-  #dep :BAM_duplicates
-  #extension :bam
-  #dep_task :BAM_sorted, HTS, :sort_BAM_split, :sort_order => 'coordinate', :BAM => :BAM_duplicates do |jobname,options,dependencies|
-  #  split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
-
-  #  duplicates = dependencies.select{|dep| dep.task_name === :BAM_duplicates }.first
-  #  if duplicates.info[:spark]
-  #    duplicates
-  #  else
-  #    if options[:split_sort]
-  #      {:task => :sort_BAM_split, :jobname => jobname, :inputs => options}
-  #    else
-  #      {:task => :sort_BAM, :jobname => jobname, :inputs => options}
-  #    end
-  #  end
-  #end
-
-  dep :BAM_duplicates
+  input :skip_duplicates, :boolean, "Skip MarkDuplicates", false
+  dep :BAM_duplicates do |jobname,options|
+    if options[:skip_duplicates]
+      task = :BAM_bwa
+    else
+      task = :BAM_duplicates
+    end
+    {:task => task, :jobname => jobname, :inputs => options}
+  end
   extension :bam
   task :BAM_sorted => :binary do 
     split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
-    duplicates = step(:BAM_duplicates)
+    dep = dependencies.first
 
-    job = if duplicates.info[:spark]
-            duplicates
+    job = if dep.info[:spark]
+            dep
           else
             job = if split_sort
-                    HTS.job(:sort_BAM_split, self.clean_name, :BAM => duplicates)
+                    HTS.job(:sort_BAM_split, self.clean_name, :BAM => dep)
                   else
-                    HTS.job(:sort_BAM, self.clean_name, :BAM => duplicates)
+                    HTS.job(:sort_BAM, self.clean_name, :BAM => dep)
                   end
             self.dependencies = self.dependencies + [job]
             job

@@ -304,7 +304,7 @@ module HTS
     end
 
     begin
-      GATK.run(command, args, sin)
+      GATK.run(command, args, sin, tmp_dir)
     ensure
       fixed_files.each{|f| Open.rm f } if fixed_files
     end
