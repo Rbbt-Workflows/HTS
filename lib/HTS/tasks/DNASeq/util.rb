@@ -373,24 +373,28 @@ module HTS
     last_chr = nil
     last_start = nil
     last_eend = nil
-    out = ""
-    TSV.traverse step(:genomecov), :into => out, :type => :array do |line|
-      chr, start, eend, count = line.split("\t")
-      last_chr = chr if last_chr.nil?
-      if last_chr != chr || last_eend != start
-        res = [last_chr, last_start, last_eend] * "\t"
-        last_start = start
-      else
-        res = nil
+    min = recursive_inputs[:min_cov].to_s
+    Misc.open_pipe(false) do |sin|
+      io = TSV.traverse step(:genomecov), :into => :stream, :type => :array do |line|
+        chr, start, eend, count = line.split("\t")
+        next unless count == min
+        last_chr = chr if last_chr.nil?
+        if last_chr != chr || last_eend != start
+          res = [last_chr, last_start, last_eend] * "\t"
+          last_start = start
+        else
+          res = nil
+        end
+        last_chr = chr 
+        last_eend = eend
+        next unless res
+        res  + "\n"
       end
-      last_chr = chr 
-      last_eend = eend
-      next unless res
-      res  + "\n"
-    end
 
-    out << [last_chr, last_start, last_eend] * "\t"
-    out
+      Misc.consume_stream(io, false, sin, false)
+
+      sin << [last_chr, last_start, last_eend] * "\t" << "\n"
+    end
   end
 
 end
