@@ -466,4 +466,17 @@ module Sample
     options = add_sample_options sample, options
     {:inputs => options}
   end
+
+  dep :BAM, :compute => [:produce, :canfail]
+  dep :BAM_normal, :compute => [:produce, :canfail]
+  dep_task :intervals_from_BAM, HTS, :intervals_from_BAM do |sample,options,dependencies|
+    options = add_sample_options sample, options
+    bam_normal = dependencies.flatten.select{|dep| dep.task_name.to_s == "BAM_normal"}.first
+    if bam_normal.error? && ! bam_normal.recoverable_error?
+      options[:BAM] = :BAM 
+    else
+      options[:BAM] = :BAM_normal 
+    end
+    {:inputs => options, :jobname => sample}
+  end
 end

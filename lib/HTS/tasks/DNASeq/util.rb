@@ -361,7 +361,7 @@ module HTS
   end
 
   input :BAM, :file, "BAM file", nil, :nofile => true
-  input :min_cov, :integer, "Min. coverage", 5
+  input :min_cov, :integer, "Min. coverage", 20
   extension :bed
   task :genomecov => :text do |bam,min_cov|
     CMD.cmd(:bedtools, "genomecov -bg -max #{min_cov} -ibam '#{bam}'", :pipe => true)
@@ -374,19 +374,19 @@ module HTS
     last_start = nil
     last_eend = nil
     min = recursive_inputs[:min_cov].to_s
-    Misc.open_pipe(false) do |sin|
+    Misc.open_pipe do |sin|
       io = TSV.traverse step(:genomecov), :into => :stream, :type => :array do |line|
         chr, start, eend, count = line.split("\t")
         next unless count == min
-        last_chr = chr if last_chr.nil?
-        if last_chr != chr || last_eend != start
-          res = [last_chr, last_start, last_eend] * "\t"
+        if (last_chr && last_chr != chr) || (last_eend && last_eend != start)
+          res = [last_chr, last_start, last_eend] * "\t" 
           last_start = start
         else
           res = nil
         end
         last_chr = chr 
         last_eend = eend
+        last_start = start if last_start.nil?
         next unless res
         res  + "\n"
       end
@@ -394,6 +394,8 @@ module HTS
       Misc.consume_stream(io, false, sin, false)
 
       sin << [last_chr, last_start, last_eend] * "\t" << "\n"
+    rescue
+      sin.stream_raise_exception $!
     end
   end
 
