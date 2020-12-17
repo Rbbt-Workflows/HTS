@@ -93,6 +93,102 @@ module HTS
   end
 
 
+  #input :truth_vcf, :file, "Truth VCF"
+  #input :input_vcf, :file, "VCF to compare"
+  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  #input :somatic, :boolean, "Do somatic instead of germline", false
+  #task :vcfeval => :tsv do |truth,input,reference,somatic|
+  #  orig_reference = reference_file(reference)
+  #  reference = BWA.prepare_FASTA orig_reference
+  #  reference = Samtools.prepare_FASTA orig_reference
+
+  #  truth = File.expand_path(truth) if Misc.is_filename? truth
+  #  input = File.expand_path(input) if Misc.is_filename? input
+
+  #  Misc.in_dir files_dir do
+  #    input_sorted = File.join('.', "input.vcf")
+  #    truth_sorted = File.join('.', "truth.vcf")
+  #    sdf = File.join('.', "sdf")
+
+  #    truth_sorted_orig = File.join('.', "truth.orig.vcf")
+  #    truth_sorted_tmp = File.join('.', "truth.tmp.vcf")
+  #    truth_sorted_tmp2 = File.join('.', "truth.tmp2.vcf")
+
+  #    input_io = TSV.get_stream input
+  #    CMD.cmd('bcftools', "sort |cut -f 1-10 > #{input_sorted}", :in => input_io)
+
+  #    truth_io = TSV.get_stream truth
+  #    Open.write(truth_sorted_orig, truth_io)
+
+  #    CMD.cmd("echo '##fileformat=VCFv4.2' > #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("grep '##' #{truth_sorted_orig} >> #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("grep '##FORMAT' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("echo '##FORMAT=<ID=,Number=R,Type=Integer,Description=>' >> #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("echo '##FORMAT=<ID=GT,Number=R,Type=String,Description=>' >> #{truth_sorted_tmp}", :nofail => true)
+
+  #    ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the
+  #    CMD.cmd("grep '#CHR' #{truth_sorted_orig} >> #{truth_sorted_tmp}", :nofail => true)
+  #    CMD.cmd("grep -v '#' #{truth_sorted_orig} |grep -v _alt| grep -v _random >> #{truth_sorted_tmp}", :nofail => true)
+
+  #    Open.open(truth_sorted_tmp) do |io|
+  #      Open.open(truth_sorted_tmp2, :mode => 'w') do |file|
+  #        TSV.traverse io, :type => :array do |line|
+  #          value = case line
+  #                  when /^##/
+  #                    line
+  #                  when /^#/
+  #                    line + "\t" + "FORMAT" + "\t"  + clean_name
+  #                  else
+  #                    next if line.split("\t")[4].split(",").include? line.split("\t")[3]
+  #                    line = (line.split("\t")[0..4] + ["", ".",""]) * "\t"
+  #                    if line =~ /^chr/ || ! reference.include?("hg38")
+  #                      line + "\t" + "GT" + "\t"  + "0/1"
+  #                    else
+  #                      "chr" + line + "\t" + "GT" + "\t"  + "0/1"
+  #                    end
+  #                  end
+  #          file.puts value
+  #        end
+  #      end
+  #    end
+
+  #    if ! Open.read(input_sorted).include? "FORMAT=<ID=GT"
+  #      TmpFile.with_file do |tmpfile|
+  #        Path.setup(tmpfile)
+  #        TSV.traverse input_sorted, :type => :array, :into => tmpfile do |line|
+  #          if line =~ /^#CHR/
+  #            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' + "\n" + line
+  #          elsif line =~ /^#/
+  #            line
+  #          else
+  #            parts = line.split("\t")
+  #            parts[8] += ":GT"
+  #            parts[9] += ":0/1"
+  #            parts * "\t"
+  #          end
+  #        end.join
+  #        Open.mv tmpfile, input_sorted
+  #      end
+  #    end
+
+  #    CMD.cmd('bcftools', "sort '#{truth_sorted_tmp2}' > #{truth_sorted}")
+
+  #    CMD.cmd('bgzip', "#{truth_sorted}")
+  #    CMD.cmd('bgzip', "#{input_sorted}")
+  #    CMD.cmd('tabix', "#{truth_sorted}.gz")
+  #    CMD.cmd('tabix', "#{input_sorted}.gz")
+
+  #    CMD.cmd_log('rtg', "format #{reference} -o '#{sdf}'")
+
+  #    text = CMD.cmd('rtg', "vcfeval --all-records -t #{sdf} -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+  #    text = text.collect{|line| line.gsub(/^  */,'')}
+  #    TSV.open(StringIO.new(text * "\n"), :header_hash => '', :sep => /\s+/, :type => :list)
+  #  end
+
+  #end
+
   input :truth_vcf, :file, "Truth VCF"
   input :input_vcf, :file, "VCF to compare"
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
@@ -110,70 +206,24 @@ module HTS
       truth_sorted = File.join('.', "truth.vcf")
       sdf = File.join('.', "sdf")
 
-      truth_sorted_orig = File.join('.', "truth.orig.vcf")
-      truth_sorted_tmp = File.join('.', "truth.tmp.vcf")
-      truth_sorted_tmp2 = File.join('.', "truth.tmp2.vcf")
-
       input_io = TSV.get_stream input
-      CMD.cmd('bcftools', "sort |cut -f 1-10 > #{input_sorted}", :in => input_io)
+      CMD.cmd('bcftools', "sort |cut -f 1-11 > #{input_sorted}", :in => input_io)
 
       truth_io = TSV.get_stream truth
-      Open.write(truth_sorted_orig, truth_io)
+      CMD.cmd('bcftools', "sort |cut -f 1-11 > #{truth_sorted}", :in => truth_io)
 
-      CMD.cmd("echo '##fileformat=VCFv4.2' > #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("grep '##' #{truth_sorted_orig} >> #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("grep '##contig' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("grep '##FORMAT' #{input_sorted} >> #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("echo '##FORMAT=<ID=,Number=R,Type=Integer,Description=>' >> #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("echo '##FORMAT=<ID=GT,Number=R,Type=String,Description=>' >> #{truth_sorted_tmp}", :nofail => true)
+      truth_sample = begin
+                       CMD.cmd("grep 'tumor_sample=' '#{truth_sorted}'").read.strip.split("=").last
+                     rescue
+                       TSV.open(truth_sorted).fields.last
+                     end
 
-      ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the
-      CMD.cmd("grep '#CHR' #{truth_sorted_orig} >> #{truth_sorted_tmp}", :nofail => true)
-      CMD.cmd("grep -v '#' #{truth_sorted_orig} |grep -v _alt| grep -v _random >> #{truth_sorted_tmp}", :nofail => true)
+      input_sample = begin
+                       CMD.cmd("grep 'tumor_sample=' '#{input_sorted}'").read.strip.split("=").last
+                     rescue
+                       TSV.open(input_sorted).fields.last
+                     end
 
-      Open.open(truth_sorted_tmp) do |io|
-        Open.open(truth_sorted_tmp2, :mode => 'w') do |file|
-          TSV.traverse io, :type => :array do |line|
-            value = case line
-                    when /^##/
-                      line
-                    when /^#/
-                      line + "\t" + "FORMAT" + "\t"  + clean_name
-                    else
-                      next if line.split("\t")[4].split(",").include? line.split("\t")[3]
-                      line = (line.split("\t")[0..4] + ["", ".",""]) * "\t"
-                      if line =~ /^chr/ || ! reference.include?("hg38")
-                        line + "\t" + "GT" + "\t"  + "0/1"
-                      else
-                        "chr" + line + "\t" + "GT" + "\t"  + "0/1"
-                      end
-                    end
-            file.puts value
-          end
-        end
-      end
-
-      if ! Open.read(input_sorted).include? "FORMAT=<ID=GT"
-        TmpFile.with_file do |tmpfile|
-          Path.setup(tmpfile)
-          TSV.traverse input_sorted, :type => :array, :into => tmpfile do |line|
-            if line =~ /^#CHR/
-              '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' + "\n" + line
-            elsif line =~ /^#/
-              line
-            else
-              parts = line.split("\t")
-              parts[8] += ":GT"
-              parts[9] += ":0/1"
-              parts * "\t"
-            end
-          end.join
-          Open.mv tmpfile, input_sorted
-        end
-      end
-
-      CMD.cmd('bcftools', "sort '#{truth_sorted_tmp2}' > #{truth_sorted}")
 
       CMD.cmd('bgzip', "#{truth_sorted}")
       CMD.cmd('bgzip', "#{input_sorted}")
@@ -182,12 +232,11 @@ module HTS
 
       CMD.cmd_log('rtg', "format #{reference} -o '#{sdf}'")
 
-      text = CMD.cmd('rtg', "vcfeval --all-records -t #{sdf} -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      text = CMD.cmd('rtg', "vcfeval --all-records -t #{sdf} --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
       text = text.collect{|line| line.gsub(/^  */,'')}
       TSV.open(StringIO.new(text * "\n"), :header_hash => '', :sep => /\s+/, :type => :list)
     end
 
   end
-
 
 end

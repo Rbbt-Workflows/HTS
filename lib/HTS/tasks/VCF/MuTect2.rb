@@ -11,7 +11,7 @@ module HTS
   input :germline_resource, :file, "Germline resource", :gnomad, :nofile => true
   input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
   input :remove_soft_clip, :boolean, "Don't consider soft clip bases", false
-  input :max_mnp_distance, :integer, "Max distance for mnp merge", 0
+  input :max_mnp_distance, :integer, "Max distance for mnp merge", 1
   extension :vcf
   task :mutect2_pre => :text do |tumor,normal,reference,interval_list,interval_padding,pon,germline_resource,af_not_in_resource,remove_soft_clip,max_mnp_distance|
 

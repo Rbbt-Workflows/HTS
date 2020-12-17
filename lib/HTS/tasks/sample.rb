@@ -234,7 +234,8 @@ module Sample
 
   STUDY_OPTIONS = {:organism => :string, :reference => :string, :interval_list => :file, 
                    :pon => :file, :germline_resource => :file, :skip_rescore => :boolean,
-                   :remove_unpaired => :boolean, :remove_soft_clip => :boolean}
+                   :skip_duplicates => :boolean, :remove_unpaired => :boolean,
+                   :remove_soft_clip => :boolean}
 
   def self.study_options(sample, sstudy = nil)
     if sample.include?(":") and sstudy.nil?
