@@ -67,6 +67,7 @@ module Sample
     :strelka => :strelka,
     :mutect2 => [:mutect2, true],
     :mutect2_pre => [:mutect2_pre, true],
+    :mutect2_filtered => [:mutect2_filtered, true],
     :varscan => :varscan_fpfiltered,
     :somatic_sniper => :somatic_sniper_filtered,
     :muse => :muse,
