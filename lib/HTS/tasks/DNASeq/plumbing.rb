@@ -5,7 +5,7 @@ module HTS
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension :bam
   task :BAM_multiplex => :binary do |bam_filenames,reference|
-    bam_filenames = Dir.glob(File.join(bam_filenames.first, "*.bam")) if Array === bam_filenames && bam_filenames.length == 1 && File.directory?(bam_filenames.first)
+    bam_filenames = Dir.glob(File.join(bam_filenames.first, "*.bam")) if Array === bam_filenames && bam_filenames.length == 1 && ! Step === bam_filenames && File.directory?(bam_filenames.first)
     bam_filenames = bam_filenames.collect{|f| Step === f ? f.path : f}
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
@@ -148,8 +148,11 @@ module HTS
 
     read_groups.collect do |read_group|
       uBAM = Step.new dependencies.first.file('uBAM')[read_group] + ".bam"
-      uBAM.dependencies << dependencies.first
-      {:task => :BAM_bwa, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, read_group] * "."}
+      #uBAM.dependencies << dependencies.first
+      #{:task => :BAM_bwa, :inputs => options.merge({"HTS#uBAM" => uBAM}), :jobname => [jobname, read_group] * "."}
+      job = HTS.job(:BAM_bwa, [jobname, read_group] * ".",  options.merge({"HTS#uBAM" => uBAM}))
+      job.step(:mark_adapters).dependencies += [dependencies.flatten.first]
+      job
     end
   end
   dep :BAM_multiplex do |jobname, options,dependencies|
@@ -164,7 +167,7 @@ module HTS
 
   dep :revert_BAM, :compute => :produce
   extension :bam
-  dep_task :BAM_rescore_realign, HTS, :BAM_rescore do |jobname,options, dependencies|
+  dep_task :BAM_rescore_realign, HTS, :BAM_rescore do |jobname,options,dependencies|
     {:inputs => options.merge("HTS#uBAM" =>  dependencies.first), :jobname => jobname}
   end
 end
