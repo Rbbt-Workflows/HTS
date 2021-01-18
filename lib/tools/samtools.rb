@@ -98,8 +98,8 @@ module Samtools
     linked
   end
   
-  def self.BAM_sort(bam_file,to_sam=false, queryname=true)
-  	cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+  def self.BAM_sort(bam_file, to_sam=false, queryname=true)
+  	cpus = Rbbt::Config.get("cpus", :samtools_sort, :samtools, :sort, :default => nil)
     format_str=" -O BAM "
     if to_sam
       format_str=" -O SAM "

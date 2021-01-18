@@ -153,12 +153,15 @@ module HTS
   extension :bam
   task :BAM_sorted => :binary do 
     split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
+    samtools_sort = config :samtools_sort, :bam_sort, :bam, :sort, :GATK, :default => false
     dep = dependencies.first
 
     job = if dep.info[:spark]
             dep
           else
-            job = if split_sort
+            job = if samtools_sort
+                    HTS.job(:sort_BAM_samtools, self.clean_name, :BAM => dep)
+                  elsif split_sort
                     HTS.job(:sort_BAM_split, self.clean_name, :BAM => dep)
                   else
                     HTS.job(:sort_BAM, self.clean_name, :BAM => dep)

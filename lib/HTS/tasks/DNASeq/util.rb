@@ -296,6 +296,18 @@ module HTS
   end
 
   input :BAM, :file, "BAM file", nil, :nofile => true
+  extension :bam
+  task :sort_BAM_samtools => :binary do |bam|
+    Open.mkdir files_dir 
+    sorted = file('sorted.bam')
+    max_mem = config :max_mem, :samtools_sort_max_mem, :samtools_max_mem, :sort_samtools, :samtools, :sort
+    threads = config :threads, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
+
+    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}'", "-m" => max_mem, "--threads" => threads)
+    nil
+  end
+
+  input :BAM, :file, "BAM file", nil, :nofile => true
   input :reads, :integer, "Number of reads in chunk", 10_000_000
   input :sort_order, :select, "Sort order", :coordinate, :select_options => %w(coordinate queryname)
   extension :bam
