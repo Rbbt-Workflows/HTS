@@ -1,10 +1,17 @@
 
 module Sample
+
+  task :missing_data => :string do 
+    sample = clean_name
+    raise "Sample #{ sample } not found"
+  end
+
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   extension :bam
   dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
-    raise "Sample #{ sample } not found" if sample_files.nil?
+
+    next {:task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -114,7 +121,7 @@ module Sample
           break if sample_files
         end
 
-        raise ParameterException, "No normal sample found" if sample_files.nil?
+        next {:task => :missing_data, :jobname => sample} if sample_files.nil?
 
         {:inputs => options, :jobname => sample}
       end
@@ -196,7 +203,7 @@ module Sample
     elsif sample_files = Sample.sample_files(sample)
       {:inputs => options, :jobname => jobname, :task => :BAM}
     else
-      raise "Sample #{ sample } not found" if sample_files.nil?
+      {:task => :missing_data, :jobname => sample}
     end
   end
   dep_task :haplotype, HTS, :haplotype, :BAM => :BAM_normal do |jobname, options, dependencies|
@@ -246,7 +253,9 @@ module Sample
   input :caller, :select, "Caller to use", :mutect2, :select_options => CALLERS
   dep Sample, :mutect2 do |sample,options|
     sample_files = Sample.sample_files sample
-    raise "No sample files found for #{sample}" if sample_files.nil?
+
+    next {:task => :missing_data, :jobname => sample} if sample_files.nil?
+
     if sample_files.include? "VCF"
       nil
     else
