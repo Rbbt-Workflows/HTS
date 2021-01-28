@@ -58,7 +58,7 @@ module HTS
 
 
   input :bam_file, :binary, "Bam file", nil, :nofile => true
-  input :by_group, :boolean, "Separate files by read-group", false
+  input :by_group, :boolean, "Separate files by read-group", true
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
   input :tmp_dir, :string, "Temporary directory", nil
   task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir|
