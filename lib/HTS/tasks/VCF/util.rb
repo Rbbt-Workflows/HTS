@@ -215,12 +215,14 @@ module HTS
       truth_sample = begin
                        CMD.cmd("grep 'tumor_sample=' '#{truth_sorted}'").read.strip.split("=").last
                      rescue
+                       Log.warn "Could not find tumor_sample field in truth VCF, using last field"
                        TSV.open(truth_sorted).fields.last
                      end
 
       input_sample = begin
                        CMD.cmd("grep 'tumor_sample=' '#{input_sorted}'").read.strip.split("=").last
                      rescue
+                       Log.warn "Could not find tumor_sample field in input VCF, using last field"
                        TSV.open(input_sorted).fields.last
                      end
 
@@ -230,9 +232,13 @@ module HTS
       CMD.cmd('tabix', "#{truth_sorted}.gz")
       CMD.cmd('tabix', "#{input_sorted}.gz")
 
-      CMD.cmd_log('rtg', "format #{reference} -o '#{sdf}'")
+      sdf = Persist.persist("RTG SDF #{orig_reference}", :path, :other => {:reference => reference}) do |filename|
+        CMD.cmd_log('rtg', "format #{reference} -o '#{filename}'")
+      end
 
-      text = CMD.cmd('rtg', "vcfeval --all-records -t #{sdf} --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      Open.ln_s sdf, './sdf'
+
+      text = CMD.cmd('rtg', "vcfeval --all-records -t '#{sdf}' --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
       text = text.collect{|line| line.gsub(/^  */,'')}
       TSV.open(StringIO.new(text * "\n"), :header_hash => '', :sep => /\s+/, :type => :list)
     end

@@ -11,7 +11,7 @@ module Sample
   dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
 
-    next {:task => :missing_data, :jobname => sample} if sample_files.nil?
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -121,7 +121,7 @@ module Sample
           break if sample_files
         end
 
-        next {:task => :missing_data, :jobname => sample} if sample_files.nil?
+        next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
         {:inputs => options, :jobname => sample}
       end
@@ -129,6 +129,10 @@ module Sample
     end
     extension :vcf if CALLERS.include?(task.to_s)
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+      sample = jobname
+      sample_files = Sample.sample_files sample
+      next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
+
       options = add_sample_options jobname, options
 
       if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
@@ -203,7 +207,7 @@ module Sample
     elsif sample_files = Sample.sample_files(sample)
       {:inputs => options, :jobname => jobname, :task => :BAM}
     else
-      {:task => :missing_data, :jobname => sample}
+      {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
     end
   end
   dep_task :haplotype, HTS, :haplotype, :BAM => :BAM_normal do |jobname, options, dependencies|
@@ -254,7 +258,7 @@ module Sample
   dep Sample, :mutect2 do |sample,options|
     sample_files = Sample.sample_files sample
 
-    next {:task => :missing_data, :jobname => sample} if sample_files.nil?
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     if sample_files.include? "VCF"
       nil

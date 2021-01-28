@@ -150,6 +150,7 @@ module HTS
     end
     {:task => task, :jobname => jobname, :inputs => options}
   end
+
   extension :bam
   task :BAM_sorted => :binary do 
     split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
