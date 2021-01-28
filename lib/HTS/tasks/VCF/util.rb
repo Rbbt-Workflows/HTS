@@ -192,8 +192,7 @@ module HTS
   input :truth_vcf, :file, "Truth VCF"
   input :input_vcf, :file, "VCF to compare"
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
-  input :somatic, :boolean, "Do somatic instead of germline", false
-  task :vcfeval => :tsv do |truth,input,reference,somatic|
+  task :vcfeval => :tsv do |truth,input,reference|
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
