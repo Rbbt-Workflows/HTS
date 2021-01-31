@@ -299,7 +299,8 @@ module HTS
     max_mem = config :max_mem, :samtools_sort_max_mem, :samtools_max_mem, :sort_samtools, :samtools, :sort
     threads = config :threads, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
 
-    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}'", "-m" => max_mem, "--threads" => threads)
+    Open.mkdir self.files_dir
+    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{files_dir}", "-m" => max_mem, "--threads" => threads)
     nil
   end
 
