@@ -52,7 +52,7 @@ module STAR
     if ! File.exists?(dir.Genome) || Persist.newer?(dir.Genome, file)
       Open.ln_s file, linked
 
-      TmpFile.with_file do |unzipped|
+      TmpFile.with_file(nil, true, :tmpdir => dir) do |unzipped|
         if Open.gzip?(linked)
           CMD.cmd("gunzip -c '#{ linked }' > #{unzipped}")
         else

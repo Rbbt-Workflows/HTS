@@ -13,25 +13,25 @@ module HTS
 
     args= {}
     args["INPUT"] = bam_filenames
-    args["OUTPUT"] = unsorted
+    args["OUTPUT"] = self.tmp_path
     args["METRICS_FILE"] = file('metrics.txt')
     args["ASSUME_SORT_ORDER"] = 'queryname'
     gatk("MarkDuplicates", args)
     
-    sort = ! info[:spark] 
+    #sort = ! info[:spark] 
 
-    if sort
-      sorted = file('sorted.bam')
-      args= {}
-      args["INPUT"] = unsorted
-      args["OUTPUT"] = sorted
-      args["SORT_ORDER"] = 'coordinate'
-      gatk("SortSam", args)
-      FileUtils.rm unsorted
-      Open.mv sorted, self.path
-    else
-      Open.mv unsorted, self.path
-    end
+    #if sort
+    #  sorted = file('sorted.bam')
+    #  args= {}
+    #  args["INPUT"] = unsorted
+    #  args["OUTPUT"] = sorted
+    #  args["SORT_ORDER"] = 'coordinate'
+    #  gatk("SortSam", args)
+    #  FileUtils.rm unsorted
+    #  Open.mv sorted, self.path
+    #else
+    #  Open.mv unsorted, self.path
+    #end
     nil
   end
 
@@ -127,7 +127,7 @@ module HTS
   extension :bam
   dep_task :BAM_rescore_mutiplex, HTS, :BAM_rescore do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
-    {:inputs => options.merge("HTS#BAM_sorted" =>  mutiplex), :jobname => jobname}
+    {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce

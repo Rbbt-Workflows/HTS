@@ -35,16 +35,18 @@ module HTS
 
   dep :strelka_pre
   extension :vcf
+  input :only_pass, :boolean, "Only filter variants based on PASS status", true
   input :strelka_filter_tier, :boolean, "Take only tier 1 variants from strelka", true
   input :strelka_filter_evs, :integer, "Strelka EVS minimum score filter", 15
   input :strelka_filter_qs, :integer, "Strelka QS(S|I) minimum score filter", 15
-  task :strelka_filtered => :text do |tier,evs,qs|
+  task :strelka_filtered => :text do |pass,tier,evs,qs|
     TSV.traverse step(:strelka_pre), :into => :stream, :type => :array do |line|
       next line if line[0] =~ /^#/
 
       chr = line.split("\t").first
       next unless chr =~ /^(chr)?[0-9MTXY]+$/
       next unless line =~ /PASS/
+      next line if pass
       qs_nt = line.split(";").select{|d| d =~ /^QS(S|I)_NT/}.first.split("=").last.to_i
       next unless qs_nt >= qs
       tqs_nt = line.split(";").select{|d| d =~ /^TQS(S|I)_NT/}.first.split("=").last.to_i
