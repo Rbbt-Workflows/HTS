@@ -214,20 +214,26 @@ module HTS
       truth_sample = begin
                        CMD.cmd("grep 'tumor_sample=' '#{truth_sorted}'").read.strip.split("=").last
                      rescue
-                       Log.warn "Could not find tumor_sample field in truth VCF, using last field"
-                       TSV.open(truth_sorted).fields.last
+                       if TSV.parse_header(truth_sorted).fields.include? "TUMOR"
+                         Log.warn "Could not find tumor_sample field in truth VCF, using TUMOR"
+                         "TUMOR"
+                       else
+                         Log.warn "Could not find tumor_sample field in truth VCF, using last field"
+                         TSV.open(truth_sorted).fields.last
+                       end
                      end
 
       input_sample = begin
                        CMD.cmd("grep 'tumor_sample=' '#{input_sorted}'").read.strip.split("=").last
                      rescue
-                       Log.warn "Could not find tumor_sample field in input VCF, using last field"
-                       TSV.open(input_sorted).fields.last
+                       if TSV.parse_header(input_sorted).fields.include? "TUMOR"
+                         Log.warn "Could not find tumor_sample field in input VCF, using TUMOR"
+                         "TUMOR"
+                       else
+                         Log.warn "Could not find tumor_sample field in input VCF, using last field"
+                         TSV.open(input_sorted).fields.last
+                       end
                      end
-
-      truth_sample ||= "TUMOR" 
-      input_sample ||= "TUMOR" 
-
 
       CMD.cmd('bgzip', "#{truth_sorted}")
       CMD.cmd('bgzip', "#{input_sorted}")
