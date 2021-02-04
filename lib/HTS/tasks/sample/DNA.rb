@@ -321,6 +321,7 @@ module Sample
   dep_task :BAM_qualimap_normal, HTS, :BAM_qualimap, :bam => :BAM_normal, :interval_list => nil do |jobname,options|
     nsample = nil
     sample_files = nil
+    sample = jobname
     sample_study = Sample.sample_study(sample)
     [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
       nsample = normal_sample

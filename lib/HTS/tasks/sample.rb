@@ -1,14 +1,28 @@
 module Sample
 
-  #class << self
-  #  alias original_task_info task_info
+  STUDY_OPTIONS = {
+    :organism => :string,
+    :reference => :string,
+    :interval_list => :file,
+    :pon => :file,
+    :germline_resource => :file,
+    :skip_rescore => :boolean,
+    :skip_duplicates => :boolean,
+    :remove_unpaired => :boolean,
+    :remove_soft_clip => :boolean
+  }
 
-  #  def task_info(*args)
-  #    info = original_task_info(*args)
-  #    info[:input_defaults] = {}
-  #    info
-  #  end
-  #end
+  class << self
+    alias original_task_info task_info
+
+    def task_info(*args)
+      info = original_task_info(*args)
+      defaults = IndiferentHash.setup(info[:input_defaults])
+      STUDY_OPTIONS.keys.each{|input| defaults.delete input}
+      info[:input_defaults] = defaults
+      info
+    end
+  end
 
   def self.load_study_files_DNA
     @@study_files_DNA ||= begin
@@ -232,10 +246,6 @@ module Sample
     IndiferentHash.setup({:sample_name => sample})
   end
 
-  STUDY_OPTIONS = {:organism => :string, :reference => :string, :interval_list => :file, 
-                   :pon => :file, :germline_resource => :file, :skip_rescore => :boolean,
-                   :skip_duplicates => :boolean, :remove_unpaired => :boolean,
-                   :remove_soft_clip => :boolean}
 
   def self.study_options(sample, sstudy = nil)
     if sample.include?(":") and sstudy.nil?

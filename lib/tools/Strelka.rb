@@ -25,6 +25,8 @@ module Strelka
     #cmd_config = Rbbt.software.opt.Strelka.produce.bin["configureStrelkaSomaticWorkflow.py"].find 
     cmd_config = "configureStrelkaSomaticWorkflow.py"
 
+    Open.rm_rf output
+    Open.mkdir output
     cmd_string = "--tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}' "
     cmd_string += " --normalBam='#{normal}' " unless normal.nil?
     cmd_string += " --callRegions='#{interval_list}' " unless interval_list.nil?
