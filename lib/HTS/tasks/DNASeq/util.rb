@@ -220,6 +220,7 @@ module HTS
   task :BAM_qualimap => :text do |bam,interval_list|
     bam = Samtools.prepare_BAM(bam)
     outdir = files_dir
+    Open.mkdir outdir
     if interval_list && interval_list != :placeholder && interval_list.include?('.bed')
       TmpFile.with_file(:extension => 'bed') do |fint|
         Open.write(fint) do |f|

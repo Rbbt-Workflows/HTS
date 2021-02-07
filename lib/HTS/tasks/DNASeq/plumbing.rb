@@ -160,14 +160,14 @@ module HTS
     {:jobname => jobname, :inputs => options.merge(:bam_files => bam_files)}
   end
   extension :bam
-  dep_task :BAM_rescore_realign_by_group, HTS, :BAM_rescore do |jobname,options, dependencies|
+  dep_task :BAM_rescore_realign_by_group, HTS, :BAM do |jobname,options, dependencies|
     mutiplex = dependencies.flatten.select{|dep| dep.task_name == :BAM_multiplex}.first
     {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
   dep :revert_BAM, :compute => :produce
   extension :bam
-  dep_task :BAM_rescore_realign, HTS, :BAM_rescore do |jobname,options,dependencies|
+  dep_task :BAM_rescore_realign, HTS, :BAM do |jobname,options,dependencies|
     {:inputs => options.merge("HTS#uBAM" =>  dependencies.first), :jobname => jobname}
   end
 end

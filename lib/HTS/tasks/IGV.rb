@@ -17,7 +17,7 @@ module HTS
 
     reference = Samtools.prepare_FASTA(reference)
 
-    reference = reference.sub('.gz', '')
+    #reference = reference.sub('.gz', '')
 
     Open.mkdir files_dir
 
@@ -25,7 +25,7 @@ module HTS
     panel_height *= 2 if normal
 
     margin = 20
-    IGV.run <<-EOF
+    IGV.run <<-EOF, reference
 new
 genome #{reference}
 snapshotDirectory #{files_dir}

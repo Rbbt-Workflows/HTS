@@ -3,13 +3,13 @@ require 'rbbt/resource'
 
 module IGV
 
-  def self.run(script, height = 5000, width = 2000)
+  def self.run(script, reference = nil, height = 5000, width = 2000)
     Log.debug "IGV script:\n" << script
     TmpFile.with_file(script) do |script_file|
       #CMD.cmd_log("xvfb-run --server-args='-screen 0 #{height}x#{width}x24' --auto-servernum --server-num=1 java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.produce["igv.jar"].find}' -b '#{script_file}'")
       #CMD.cmd_log("xvfb-run --server-args='-screen 0 #{height}x#{width}x24' --auto-servernum --server-num=1 \
       #            java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.produce["lib/igv.jar"].find}' -b '#{script_file}'")
-      CMD.cmd_log("java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.produce["lib/igv.jar"].find}' -b '#{script_file}'", :xvfb => true)
+      CMD.cmd_log("java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.glob("**/igv.jar").first}' -b '#{script_file}' -g '#{reference}'", :xvfb => true)
     end
   end
 

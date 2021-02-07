@@ -36,8 +36,13 @@ module Sample
         {:inputs => options, :jobname => sample}
       end
     elsif bam_files = sample_files[:BAM]
-      options = options.merge({"HTS#BAM" => [bam_files].flatten.first})
-      {:inputs => options, :jobname => sample}
+      #options = options.merge({"HTS#BAM" => [bam_files].flatten.first})
+      #{:inputs => options, :jobname => sample}
+      path = [bam_files].flatten.first
+      job = Step.new path
+      job.task_name = :BAM
+      job.workflow = HTS
+      job
     elsif orig_bam_files = sample_files["orig.BAM"]
       if options[:by_group]
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
@@ -298,7 +303,10 @@ module Sample
     {:inputs => options, :jobname => sample} if sample_files
   end
   dep :genomic_mutations
-  dep_task :mutation_BAM_img, HTS, :mutation_BAM_img, :tumor => :BAM, :normal => :BAM_normal, :positions => :genomic_mutations do |jobname,options|
+  dep :organism
+  input :positions, :array, "List of positions to image. Use list of genomic mutations by default", :genomic_mutations
+  dep_task :mutation_BAM_img, HTS, :mutation_BAM_img, :organism => :organism, :tumor => :BAM, :normal => :BAM_normal do |jobname,options|
+    options = add_sample_options jobname, options
     if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
       options[:normal] = nil
     end
