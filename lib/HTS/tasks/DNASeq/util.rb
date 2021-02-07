@@ -36,6 +36,14 @@ module HTS
 
     vcf = vcf_file(reference, pileup_germline_resource)
 
+    germline_resource = if reference.include?('mm10') || reference.include?('GRCm38')
+                          Log.warn "Germline resource #{pileup_germline_resource} not found for #{reference} using mm10_variation instead"
+                          vcf = vcf_file(reference, "mm10_variation")
+                       elsif reference.include?('rn6') || reference.include?('Rnor_6.0')
+                          Log.warn "Germline resource #{pileup_germline_resource} not found for #{reference} using rn6_variation instead"
+                          vcf = vcf_file(reference, "rn6_variation")
+                       end if vcf.nil?
+
     raise ParameterException, "No population VCF for pileup BAM pileup summaries" if vcf.nil?
 
     variants_file = GATK.prepare_VCF vcf
