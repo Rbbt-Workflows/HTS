@@ -3,13 +3,14 @@ module Sample
   STUDY_OPTIONS = {
     :organism => :string,
     :reference => :string,
+    :type_of_sequencing => :string,
     :interval_list => :file,
     :pon => :file,
     :germline_resource => :file,
     :skip_rescore => :boolean,
     :skip_duplicates => :boolean,
     :remove_unpaired => :boolean,
-    :remove_soft_clip => :boolean
+    :remove_soft_clip => :boolean,
   }
 
   class << self

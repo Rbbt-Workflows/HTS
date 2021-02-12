@@ -6,7 +6,7 @@ module SomaticSeq
   Rbbt.claim Rbbt.software.opt.SomaticSeq, :install, Rbbt.share.install.software.SomaticSeq.find
   SOMATICSEQ_CMD = Rbbt.software.opt.SomaticSeq["somaticseq_parallel.py"]
 
-  Rbbt.tool :somaticseq, Rbbt.software.opt.SomaticSeq, "python3 #{SOMATICSEQ_CMD}" #, "python3 #{SOMATICSEQ_CMD}"
+  CMD.tool :somaticseq, Rbbt.software.opt.SomaticSeq, "python3 #{SOMATICSEQ_CMD}" #, "python3 #{SOMATICSEQ_CMD}"
     
   def self.run(args)
     args = args.to_hash.merge('add_option_dashes' => true)

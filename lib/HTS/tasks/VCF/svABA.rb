@@ -15,11 +15,20 @@ module HTS
     tumor = Samtools.prepare_BAM(tumor) if tumor
 
     reference = Samtools.prepare_FASTA(reference)
-    exclude = Delly.exclude(orig_reference)
 
     Open.mkdir files_dir
-    SvABA.call(tumor, normal, reference, svABA_options, output)
+    cpus = config :cpus, :svaba, :svABA, :default => 1
+    SvABA.call(tumor, normal, reference, svABA_options, output, cpus)
     
-    Dir.glob(output + '**')
+    Dir.glob(output + '/**')
+  end
+
+  dep :svABA
+  extension :vcf
+  task :svABA_indels => :text do
+    file = step(:svABA).join.file('output/svABA.svaba.somatic.indel.vcf')
+    tumor_bam = step(:svABA).inputs[:tumor]
+    normal_bam = step(:svABA).inputs[:normal]
+    SvABA.fix_vcf_sample_names(file, tumor_bam, normal_bam)
   end
 end

@@ -103,4 +103,49 @@ module HTS
     str
   end
 
+  def self.add_vcf_sample_header(vcf, tumor_sample, normal_sample)
+    TSV.traverse vcf, :type => :array, :into => :stream do |line|
+      next line unless line =~ /^(?:#|CHR)/
+      if line =~ /^#?CHR/
+        "##tumor_sample=#{tumor_sample}" + "\n" +
+          "##normal_sample=#{normal_sample}" + "\n" +
+          line
+      else
+        line
+      end
+    end
+  end
+
+  def self.add_vcf_genotype(vcf)
+
+    found = false
+    TSV.traverse vcf, :type => :array, :into => :stream do |line|
+      found = true if line =~ /^##FORMAT=<ID=GT,/
+      next line if line =~ /^##/
+      if  line =~ /^#CHR/
+        if ! found 
+          format_line = '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' << "\n"
+          next format_line + line 
+        else
+          next line
+        end
+      end
+      parts = line.split("\t")
+
+      format = parts[8].split(":")
+      
+      if ! format.include? "GT"
+        parts[8] += ":GT"
+        (9..parts.length-1).each do |pos|
+          donor = parts[pos].split(":")
+          hash = Misc.zip2hash(format, donor)
+
+          parts[pos] += ":1/0"
+        end
+      end
+
+      parts * "\t"
+    end
+  end
+
 end

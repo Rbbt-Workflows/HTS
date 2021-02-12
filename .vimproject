@@ -12,13 +12,15 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    BWA.rb
    Bowtie.rb
    Delly.rb
+   FastQC.rb
    FuSeq.rb
    GATK.rb
    HISAT.rb
+   HapPy.rb
    IGV.rb
    NovoAlign.rb
+   Pindel.rb
    Qualimap.rb
-   FastQC.rb
    STAR.rb
    SomaticSeq.rb
    Strelka.rb
@@ -33,7 +35,6 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    shard.rb
    stringTie.rb
    svABA.rb
-   HapPy.rb
   }
   tasks=HTS/tasks{
    BAMSurgeon.rb
@@ -65,8 +66,10 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    VCF=VCF{
     Delly.rb
     Haplotype.rb
+    Manta.rb
     MuSE.rb
     MuTect2.rb
+    Pindel.rb
     SomaticSeq.rb
     Strelka.rb
     VarScan.rb
@@ -74,6 +77,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     intogen.rb
     somaticsniper.rb
     svABA.rb
+    vcfeval.rb
     util.rb
    }
 

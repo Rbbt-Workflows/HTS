@@ -8,9 +8,11 @@ require 'HTS/tasks/VCF/control_FREEC'
 require 'HTS/tasks/VCF/MuSE'
 require 'HTS/tasks/VCF/somaticsniper'
 require 'HTS/tasks/VCF/SomaticSeq'
-require 'HTS/tasks/VCF/util'
 require 'HTS/tasks/VCF/intogen'
 require 'HTS/tasks/VCF/Manta'
+require 'HTS/tasks/VCF/Pindel'
+require 'HTS/tasks/VCF/vcfeval'
+require 'HTS/tasks/VCF/util'
 
 module HTS
 

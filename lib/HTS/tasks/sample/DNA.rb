@@ -85,9 +85,12 @@ module Sample
     :muse => :muse,
     :delly => :delly,
     :svABA => :svABA,
+    :svABA_indels => :svABA_indels,
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
     :manta_pre => :manta_pre,
+    :manta_somatic => :manta_somatic,
+    :pindel_indels => :pindel_indels,
     #:somatic_seq => :somatic_seq,
     #:varscan_somatic => :varscan_somatic,
     #:varscan_somatic_alt => :varscan_somatic_alt,
@@ -153,6 +156,9 @@ module Sample
   dep :strelka, :canfail => true
   dep :muse, :canfail => true
   dep :somatic_sniper, :canfail => true
+  dep :manta_somatic, :canfail => true
+  dep :pindel_indels, :canfail => true
+  dep :svABA_indels, :canfail => true
   #dep :varscan
   task :caller_cohort => :array do
     dependencies.collect do |dep|

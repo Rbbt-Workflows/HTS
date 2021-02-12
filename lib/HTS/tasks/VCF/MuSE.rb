@@ -33,8 +33,9 @@ module HTS
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :type_of_sequencing, :select, "Whole genome or whole exome", nil, :select_options => %w(WGS WES panel)
   extension :vcf
-  task :muse => :text do |tumor,normal, reference|
+  task :muse => :text do |tumor,normal, reference,type_of_sequencing|
 
     reference = reference_file reference
     orig_reference = reference
@@ -105,7 +106,7 @@ module HTS
       bar.done if bar
     end
 
-    CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt -E -O #{self.tmp_path}")
+    CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt #{type_of_sequencing.to_s == "WGS" ? "-G" : "-E" } -O #{self.tmp_path}")
     nil
   end
 end

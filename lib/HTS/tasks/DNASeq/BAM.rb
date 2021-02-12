@@ -142,8 +142,9 @@ module HTS
   end
 
   input :skip_duplicates, :boolean, "Skip MarkDuplicates", false
+  input :type_of_sequencing, :select, "Whole genome or whole exome", nil, :select_options => %w(WGS WES panel)
   dep :BAM_duplicates do |jobname,options|
-    if options[:skip_duplicates]
+    if options[:skip_duplicates] || (options[:type_of_sequencing].to_s == "panel" && ! options[:skip_duplicates] == false)
       task = :BAM_bwa
     else
       task = :BAM_duplicates
