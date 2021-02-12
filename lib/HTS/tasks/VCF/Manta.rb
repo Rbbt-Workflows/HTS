@@ -96,7 +96,10 @@ module HTS
       CMD.cmd_log("configManta.py", args)
     end
     cmd = file("runWorkflow.py")
-    CMD.cmd_log(cmd)
+
+    cpus = config :cpus, :manta, :Manta, :default => 1
+
+    CMD.cmd_log(cmd, "-j #{cpus}")
     FileUtils.ln_s file("results/variants/somaticSV.vcf.gz"), self.tmp_path
     nil
   end
