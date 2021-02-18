@@ -63,43 +63,44 @@ module Sample
                               sample_files[sample]["FASTQ"] = [fastq1_files, fastq2_files]
                             end
 
-                            bam_files = path.glob("*.bam")
+                            bam_files = path.glob("*.bam") + path.glob("*.BAM")
                             if bam_files.any?
                               sample_files[sample] ||= {}
                               sample_files[sample]["BAM"] = bam_files
                             end
 
                             sample_files[sample] ||= {}
-                            sample_files[sample]["BAM"] = path if path =~ /.*\.bam/
+                            sample_files[sample]["BAM"] = path if path =~ /.*\.bam/i
 
-                            ubam_files = path.glob("*.ubam")
+                            ubam_files = path.glob("*.ubam") + path.glob("*.uBAM")
                             if ubam_files.any?
                               sample_files[sample] ||= {}
                               sample_files[sample]["uBAM"] = ubam_files
                             end
                             sample_files[sample] ||= {}
-                            sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam/
+                            sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam/i
 
-                            orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam")
+                            orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam") + \
+                              path.glob("*.orig.BAM") + path.orig.glob("*.BAM")
                             if orig_files.any?
                               sample_files[sample] ||= {}
                               sample_files[sample]["orig.BAM"] = orig_files
                             end
 
                             sample_files[sample] ||= {}
-                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam/
+                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam/i
                           end
 
                           dir.glob('W?S.orig/*').each do |path|
                             file = File.basename path
                             sample = file.split(".").first
-                            orig_files = path.glob("*.bam")
+                            orig_files = path.glob("*.bam") + path.glob("*.BAM")
                             if orig_files.any?
                               sample_files[sample] ||= {}
                               sample_files[sample]["orig.BAM"] = orig_files
                             end
                             sample_files[sample] ||= {}
-                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/
+                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/i
                           end
 
                           sample_files.delete_if do |sample,info| info.empty? end

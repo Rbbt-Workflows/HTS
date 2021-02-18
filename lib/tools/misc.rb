@@ -148,4 +148,34 @@ module HTS
     end
   end
 
+  def self.genome_info(organism)
+    Persist.persist('genome_info', :yaml, :organism => organism) do
+      sizes = Organism.chromosome_sizes(organism)
+      chromosomes = chromosome_sizes.keys.sort{|a,b| Misc.chr_cmp_strict(a,b)}
+      chromosome_offset = {}
+      chromosomes.each_with_index do |chr,i|
+        offset = 0
+        chromosomes[0..i-1].each{|c| offset += chromosome_sizes[c] } if i > 0
+        chromosome_offset[chr] = offset
+      end
+      total = Misc.sum(chromosome_sizes.collect{|k,v| v}).to_i
+
+      {:total => total,
+       :sizes => sizes,
+       :offsets => chromosome_offset}
+    end
+  end
+  
+  def self.chromosome_progress(chr, pos, organism)
+
+    genome_info = genome_info(organism)
+
+    pos = pos.to_i
+    chr = chr.gsub('chr', '')
+
+    total, chromosome_offset = genome_info.values_at :total, :offsets
+    offset = chromosome_offset[chr]
+    [pos + offset, genome_info[:total]]
+  end
+
 end

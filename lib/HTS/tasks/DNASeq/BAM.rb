@@ -27,7 +27,13 @@ module HTS
     args["SEQUENCING_CENTER"] = sequencing_center
     args["RUN_DATE"] = run_date
 
+    args[:progress_bar] = gatk_read_count_monitor("FastqToSam") do |bar|
+      set_info :reads, bar.ticks
+    end
+
     gatk("FastqToSam", args)
+
+    nil
   end
 
   dep :uBAM, :compute => :produce
@@ -37,6 +43,11 @@ module HTS
     args["INPUT"] = step(:uBAM).path
     args["METRICS"] = file('metrics.txt')
     args["OUTPUT"] = self.tmp_path
+
+    max = step(:uBAM).info[:reads]
+    args[:progress_bar] = gatk_read_count_monitor("MarkIlluminaAdapters", max) do |bar|
+      set_info :reads, bar.ticks
+    end
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
     gatk("MarkIlluminaAdapters", args)
@@ -111,6 +122,11 @@ module HTS
           args["ATTRIBUTES_TO_RETAIN"] = "XS"
           args["SORT_ORDER"] = "queryname"
 
+          max = step(:uBAM).info[:reads]
+          args[:progress_bar] = gatk_read_count_monitor("BWA", max) do |bar|
+            set_info :reads, bar.ticks
+          end
+
           gatk("MergeBamAlignment", args)
 
           FileUtils.rm_rf filter_sam if remove_unpaired
@@ -134,6 +150,11 @@ module HTS
     args["METRICS_FILE"] = file('metrics.txt') 
     args["ASSUME_SORT_ORDER"] = 'queryname'
     args["CREATE_INDEX"] = 'false'
+
+    max = step(:BAM_bwa).info[:reads]
+    args[:progress_bar] = gatk_read_count_monitor("BAM_duplicates", max) do |bar|
+      set_info :reads, bar.ticks
+    end
 
     gatk("MarkDuplicates", args)
 
@@ -181,7 +202,8 @@ module HTS
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
-  task :BAM_rescore => :binary do |interval_list,reference|
+  input :known_sites, :array, "List of population resources for this reference"
+  task :BAM_rescore => :binary do |interval_list,reference,known_sites|
 
     interval_list = nil if interval_list == "none"
 
@@ -195,19 +217,21 @@ module HTS
     args["intervals"] = interval_list if interval_list
     args["output"] = file('recal_data.table')
 
-    known_sites = [] 
-    known_site_codes = if reference.include?('mm10') || reference.include?('GRCm38')
-                         ["mm10_variation", "mm10_structural"]
-                       elsif reference.include?('rn6') || reference.include?('Rnor_6.0')
-                         ["rn6_variation"]
-                       else
-                         ["miller_indels", "dbsnp", "1000g_snps"]
-                       end
-    known_site_codes.each do |file|
-      vcf = vcf_file reference, file
-      next if vcf.nil?
-      vcf = GATK.prepare_VCF vcf 
-      known_sites << vcf
+    if known_sites.nil?
+      known_sites = [] 
+      known_site_codes = if reference.include?('mm10') || reference.include?('GRCm38')
+                           ["mm10_variation", "mm10_structural"]
+                         elsif reference.include?('rn6') || reference.include?('Rnor_6.0')
+                           ["rn6_variation"]
+                         else
+                           ["miller_indels", "dbsnp", "1000g_snps"]
+                         end
+      known_site_codes.each do |file|
+        vcf = vcf_file reference, file
+        next if vcf.nil?
+        vcf = GATK.prepare_VCF vcf 
+        known_sites << vcf
+      end
     end
 
     args["known-sites"] = known_sites

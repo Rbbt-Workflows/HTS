@@ -20,7 +20,7 @@ module HTS
     cpus = config :cpus, :pindel, :Pindel, :default => 1
     Pindel.call(tumor, normal, reference, insert_size, output, cpus)
     
-    Dir.glob(File.join(output,'*')).slit("\n")
+    Dir.glob(File.join(output,'*')).split("\n")
   end
 
   dep :pindel_pre

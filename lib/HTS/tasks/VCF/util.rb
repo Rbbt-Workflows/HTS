@@ -86,5 +86,40 @@ module HTS
     CMD.cmd(:bedtools, "intersect -a #{coverage_file} -b #{mutations_file}")
   end
 
+  input :mutations, :array, "Array of genomic mutations"
+  input :bam, :file, "BAM file"
+  input :add_chr, :boolean, "Add chr prefix to BED contigs (auto-detects if not specified)"
+  task :mutation_read_counts => :tsv do |mutations,bam,add_chr|
+
+    bam_contigs =  Samtools.bam_contigs(bam)
+
+    add_chr = bam_contigs.first.include? 'chr' if add_chr.nil?
+    add_txt = add_chr ? 'add' : 'remove'
+
+    TmpFile.with_file(Misc.genomic_mutations_to_BED(mutations, add_txt, bam_contigs)) do |bed|
+      TmpFile.with_file(CMD.cmd("samtools view -H '#{bam}' | grep -P \"@SQ\tSN:\" | sed 's/@SQ\tSN://' | sed 's/\tLN:/\t/'", :pipe => true)) do |genome|
+        CMD.cmd(:bedtools, "coverage -counts -sorted -a #{bed} -b '#{bam}' -g #{genome} > #{self.tmp_path}")
+      end
+    end
+    nil
+  end
+
+  input :mutations, :array, "Array of genomic mutations"
+  input :bam, :file, "BAM file", nil, :nofile => true
+  input :add_chr, :boolean, "Add chr prefix to BED contigs (auto-detects if not specified)"
+  task :mutation_pileup => :tsv do |mutations,bam,add_chr|
+
+    bam_contigs =  Samtools.bam_contigs(bam)
+
+    add_chr = bam_contigs.first.include? 'chr' if add_chr.nil?
+    add_txt = add_chr ? 'add' : 'remove'
+
+    mutations = mutations.select{|m| %w(A C T G).include? m.split(":").last}
+    TmpFile.with_file(Misc.genomic_mutations_to_BED(mutations, add_txt, bam_contigs)) do |bed|
+      CMD.cmd(:samtools, "mpileup -l #{bed} '#{bam}' | paste - #{bed} > #{self.tmp_path}")
+    end
+    nil
+  end
+
 
 end

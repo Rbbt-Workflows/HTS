@@ -32,6 +32,7 @@ module Sample
         job.overriden = false
         job
       else
+        uBAM_files = uBAM_files.first if Array === uBAM_files
         options = options.merge({"HTS#uBAM" => uBAM_files})
         {:inputs => options, :jobname => sample}
       end
@@ -78,8 +79,7 @@ module Sample
   {
     :strelka => :strelka,
     :mutect2 => [:mutect2, true],
-    :mutect2_pre => [:mutect2_pre, true],
-    :mutect2_filtered => [:mutect2_filtered, true],
+    :mutect2_filters => [:mutect2_filters, true],
     :varscan => :varscan_fpfiltered,
     :somatic_sniper => :somatic_sniper_filtered,
     :muse => :muse,
@@ -88,6 +88,7 @@ module Sample
     :svABA_indels => :svABA_indels,
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
+    :sequenza_CNV => :sequenza_CNV,
     :manta_pre => :manta_pre,
     :manta_somatic => :manta_somatic,
     :pindel_indels => :pindel_indels,
@@ -507,5 +508,13 @@ module Sample
       options[:BAM] = :BAM_normal 
     end
     {:inputs => options, :jobname => sample}
+  end
+
+  dep :BAM
+  dep :genomic_mutations
+  dep :sequenza_CNV
+  dep_task :pyclone, HTS, :pyclone, :copynumber => :sequenza_CNV, :bam => :BAM, :mutations => :genomic_mutations do |jobname,options|
+    options[:sample_name] = jobname
+    {:inputs => options}
   end
 end

@@ -170,4 +170,20 @@ module HTS
   dep_task :BAM_rescore_realign, HTS, :BAM do |jobname,options,dependencies|
     {:inputs => options.merge("HTS#uBAM" =>  dependencies.first), :jobname => jobname}
   end
+
+  input :bam, :file, "BAM file", nil, :nofile => true
+  input :regions, :file, "BED file", nil, :nofile => true
+  input :region_pad, :integer, "BED region padding", 0
+  task :bazam_revert_BAM => :array do |bam,regions,pad|
+    bam = Samtools.prepare_BAM(bam)
+    f1 = file('fastq_1.fq.gz')
+    f2 = file('fastq_2.fq.gz')
+    Open.mkdir files_dir
+    if regions
+      CMD.cmd_log(:bazam, "-bam '#{bam}' -L '#{regions}' -pad #{pad} -r1 '#{f1}' -r2 '#{f2}'")
+    else
+      CMD.cmd_log(:bazam, "-bam '#{bam}' -r1 '#{f1}' -r2 '#{f2}'")
+    end
+    Dir.glob(File.join(files_dir, '*'))
+  end
 end

@@ -69,7 +69,7 @@ module HTS
     args["f1r2-tar-gz"] = file('f1r2.tar.gz')
     args["dont-use-soft-clipped-bases"] = remove_soft_clip if remove_soft_clip
     args["max-mnp-distance"] = max_mnp_distance
-    
+
     # UPDATE FOR GATK 4.1.2
     #args["af-of-alleles-not-in-resource"] = "%.10f" % af_not_in_resource.to_s if af_not_in_resource
 
@@ -132,7 +132,7 @@ module HTS
   dep :BAM_orientation_model
   dep :mutect2_pre
   extension :vcf
-  task :mutect2_filtered => :text do |reference|
+  task :mutect2_filters => :text do |reference|
     reference = reference_file reference
     orig_reference = reference
 
@@ -165,10 +165,10 @@ module HTS
     nil
   end
 
-  dep :mutect2_filtered
+  dep :mutect2_filters
   extension :vcf
   task :mutect2_clean => :text do
-    TSV.traverse step(:mutect2_filtered), :into => :stream, :type => :array do |line|
+    TSV.traverse step(:mutect2_filters), :into => :stream, :type => :array do |line|
       next line if line[0] =~ /^#/
       
       chr = line.split("\t").first

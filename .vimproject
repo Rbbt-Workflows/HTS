@@ -47,6 +47,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    sequenza.rb
    test.rb
    FastQC.rb
+   pyclone.rb
 
    RNASeq=RNASeq{
     BAM.rb
