@@ -7,6 +7,7 @@ module Sample
   end
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
+  input :bazam, :boolean, "Use bazam instead of RevertSam", false
   extension :bam
   dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
@@ -45,7 +46,13 @@ module Sample
       job.workflow = HTS
       job
     elsif orig_bam_files = sample_files["orig.BAM"]
-      if options[:by_group]
+      if options[:bazam]
+        options = options.merge({:bam => [orig_bam_files].flatten.first})
+        options.delete(:bazam)
+        job = HTS.job(:BAM_rescore_realign_bazam, sample, options)
+        job.overriden = false
+        job
+      elsif options[:by_group]
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
         job = HTS.job(:BAM_rescore_realign_by_group, sample, options)
         job.overriden = false

@@ -45,7 +45,7 @@ module HTS
 
       normal_cn = 2
 
-      [mutation, [sample_name, ref_counts, alt_counts || 1, major_cn, minor_cn, normal_cn]]
+      [mutation, [sample_name, ref_counts || 1, alt_counts || 1, major_cn, minor_cn, normal_cn]]
     end
   end
 

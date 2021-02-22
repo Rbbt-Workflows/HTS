@@ -58,16 +58,27 @@ module HTS
   dep :seqz
   task :sequenza => :array do
 
+    reference = self.recursive_inputs[:reference]
+    reference = reference_file(reference)
+    reference = Samtools.prepare_FASTA reference
+    chromosomes = reference.replace_extension('dict', true).read.split("\n")
+      .select{|line| line.split("\t")[1].include?('SN:') }
+      .collect{|line| line.split("\t")[1].sub('SN:', '') }
+
+    chromosomes -= ["MT", "M"]
+
     Open.mkdir self.files_dir
     seq_binned = file('seqz.gz')
     CMD.cmd("'#{SEQUENZA_UTILS}' seqz_binning -w 50 -s '#{step(:seqz).path}' -o - | grep -v ^GL | gzip > '#{seq_binned}'")
             
+
     output_dir = file('output')
     R.run <<-EOF
 rbbt.require('sequenza')
 data.file = '#{seq_binned}'
 
-data <- sequenza.extract(data.file)
+chromosomes = #{R.ruby2R chromosomes}
+data <- sequenza.extract(data.file, chromosome.list=chromosomes)
 CP.data <- sequenza.fit(data)
 
 sequenza.results(sequenza.extract = data, cp.table = CP.data, sample.id = "#{self.clean_name}", out.dir="#{output_dir}")

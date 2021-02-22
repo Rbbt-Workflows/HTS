@@ -35,28 +35,6 @@ module HTS
     nil
   end
 
-  #input :ubam_files, :array, "uBAM filenames to multiplex"
-  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
-  #extension :bam
-  #task :BAM_multi_bwa => :binary do |ubam_filenames,reference|
-  #  args= {}
-  #  ubam_filenames = Dir.glob(File.join(ubam_filenames.first, "*.bam") + File.join(ubam_filenames.first, "*.ubam") ) if Array === ubam_filenames && ubam_filenames.length == 1 && File.directory?(ubam_filenames.first)
-  #  ubam_filenames = ubam_filenames.collect{|f| Step === f ? f.path : f}
-  #  output = file('out.bam')
-
-  #  args["INPUT"] = ubam_filenames
-  #  args["OUTPUT"] = output
-  #  args["METRICS_FILE"] = file('metrics.txt')
-  #  args["ASSUME_SORT_ORDER"] = 'queryname'
-
-  #  FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
-  #  gatk("MarkDuplicates", args)
-  #  
-  #  Open.mv output, self.path
-  #  nil
-  #end
-
-
   input :bam_file, :binary, "Bam file", nil, :nofile => true
   input :by_group, :boolean, "Separate files by read-group", true
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
@@ -88,7 +66,9 @@ module HTS
     if by_group
       file("uBAM").glob("*")
     end
+    nil
   end
+
 
   input :bam_file , :file, "BAM", :nofile => true
   task :revert_BAM_sharded do |bam_file|
@@ -130,7 +110,7 @@ module HTS
     {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
-  dep :revert_BAM, :compute => :produce
+  dep :revert_BAM, :compute => :produce, :by_group => true
   dep :BAM_bwa, :compute => :produce, 
     :fastq1 => :placeholder, :fastq2 => :placeholder,
     :sample_name => :placeholder,
@@ -165,25 +145,47 @@ module HTS
     {:inputs => options.merge("HTS#BAM_duplicates" =>  mutiplex), :jobname => jobname}
   end
 
-  dep :revert_BAM, :compute => :produce
+  dep :revert_BAM, :compute => :produce, :by_group => false
   extension :bam
   dep_task :BAM_rescore_realign, HTS, :BAM do |jobname,options,dependencies|
     {:inputs => options.merge("HTS#uBAM" =>  dependencies.first), :jobname => jobname}
   end
 
-  input :bam, :file, "BAM file", nil, :nofile => true
-  input :regions, :file, "BED file", nil, :nofile => true
-  input :region_pad, :integer, "BED region padding", 0
-  task :bazam_revert_BAM => :array do |bam,regions,pad|
-    bam = Samtools.prepare_BAM(bam)
-    f1 = file('fastq_1.fq.gz')
-    f2 = file('fastq_2.fq.gz')
-    Open.mkdir files_dir
-    if regions
-      CMD.cmd_log(:bazam, "-bam '#{bam}' -L '#{regions}' -pad #{pad} -r1 '#{f1}' -r2 '#{f2}'")
-    else
-      CMD.cmd_log(:bazam, "-bam '#{bam}' -r1 '#{f1}' -r2 '#{f2}'")
-    end
-    Dir.glob(File.join(files_dir, '*'))
+  dep :bazam_revert_BAM_RG, :compute => :produce
+  extension :bam
+  dep_task :BAM_rescore_realign_bazam, HTS, :BAM_rescore_mutiplex do |jobname,options,dependencies|
+    bazam = dependencies.flatten.first
+    bam = bazam.inputs[:bam] 
+    files = CMD.cmd(:samtools, "view '#{bam}' |  head -n 1000 | cut -f 1 |cut -f 1,2 -d : | tr ':' '_' ").read.split("\n").uniq.
+      collect{|l| [bazam.file("RG_" + l + "_R1.fastq.gz"), bazam.file("RG_" + l + "_R2.fastq.gz")] }.flatten
+    fastq1 = files.select{|f| f =~ /R1\.fastq/}
+    fastq2 = files.select{|f| f =~ /R2\.fastq/}
+    options = options.merge("fastq1_files" =>  fastq1, "fastq2_files" => fastq2)
+    {:inputs => options, :jobname => jobname}
   end
+
+
+  #input :ubam_files, :array, "uBAM filenames to multiplex"
+  #input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg19 hg38 GRCh38 hs37d5), :nofile => true
+  #extension :bam
+  #task :BAM_multi_bwa => :binary do |ubam_filenames,reference|
+  #  args= {}
+  #  ubam_filenames = Dir.glob(File.join(ubam_filenames.first, "*.bam") + File.join(ubam_filenames.first, "*.ubam") ) if Array === ubam_filenames && ubam_filenames.length == 1 && File.directory?(ubam_filenames.first)
+  #  ubam_filenames = ubam_filenames.collect{|f| Step === f ? f.path : f}
+  #  output = file('out.bam')
+
+  #  args["INPUT"] = ubam_filenames
+  #  args["OUTPUT"] = output
+  #  args["METRICS_FILE"] = file('metrics.txt')
+  #  args["ASSUME_SORT_ORDER"] = 'queryname'
+
+  #  FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
+  #  gatk("MarkDuplicates", args)
+  #  
+  #  Open.mv output, self.path
+  #  nil
+  #end
+
+
+
 end

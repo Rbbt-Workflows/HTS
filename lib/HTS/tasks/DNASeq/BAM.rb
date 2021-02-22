@@ -122,7 +122,7 @@ module HTS
           args["ATTRIBUTES_TO_RETAIN"] = "XS"
           args["SORT_ORDER"] = "queryname"
 
-          max = step(:uBAM).info[:reads]
+          max = step(:mark_adapters).info[:reads]
           args[:progress_bar] = gatk_read_count_monitor("BWA", max) do |bar|
             set_info :reads, bar.ticks
           end

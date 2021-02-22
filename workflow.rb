@@ -349,6 +349,19 @@ module HTS
     end
   end
 
+  helper :bed_to_intervals do |bed,output,bam|
+    io = TSV.traverse TSV.get_stream(bed), :into => :stream, :type => :array do |line|
+      chr, start, eend, name = line.split("\t")
+
+      [chr, (start.to_i + 1).to_s, eend, '+', name] * "\t"
+    end
+    Open.open(output, :mode => 'w') do |f|
+      header = CMD.cmd(:samtools, "view -H '#{bam}'").read
+      f.puts header
+      Misc.consume_stream(io, false, f)
+    end
+  end
+
 end
 
 require 'HTS/tasks/DNASeq'

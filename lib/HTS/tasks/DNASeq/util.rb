@@ -417,4 +417,42 @@ module HTS
     end
   end
 
+  input :bam, :file, "BAM file", nil, :nofile => true
+  input :bed_file, :file, "BED file", nil, :nofile => true
+  extension :bam
+  task :extract_BAM_region_with_mates_old => :binary do |bam,bed_file|
+    cpus = config :cpus, :samtools_bam, :samtools_view, :samtools, :default => 2
+    TmpFile.with_file do |reads|
+      CMD.cmd_log(:samtools, "view -L '#{bed_file}' '#{bam}' |cut -f 1 > '#{reads}'")
+
+      args = {}
+      args["INPUT"] = bam
+      args["OUTPUT"] = self.tmp_path
+      args["READ_LIST_FILE"] = reads
+      args["FILTER"] = 'includeReadList'
+
+      gatk("FilterSamReads", args)
+
+    end
+    nil
+  end
+
+  input :bam, :file, "BAM file", nil, :nofile => true
+  input :interval_list, :file, "Interval list", nil, :nofile => true
+  extension :bam
+  task :extract_BAM_region_with_mates => :binary do |bam,intervals|
+    if intervals =~ /\.bed$/i
+      fintervals = file('intervals.list')
+      bed_to_intervals(intervals, fintervals, bam)
+      intervals = fintervals
+    end
+    args = {}
+    args["INPUT"] = bam
+    args["OUTPUT"] = self.tmp_path
+    args["INTERVAL_LIST"] = intervals
+    args["FILTER"] = 'includePairedIntervals'
+
+    gatk("FilterSamReads", args)
+    nil
+  end
 end

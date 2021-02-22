@@ -61,6 +61,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     filter.rb
     other_aligners.rb
     plumbing.rb
+    bazam.rb
     util.rb
    }
 
