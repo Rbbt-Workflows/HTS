@@ -25,38 +25,13 @@ module HTS
       sdf = File.join('.', "sdf")
 
       input_io = TSV.get_stream input
-      Misc.sensiblewrite(input_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort | cut -f 1-11", :in => input_io)))
+      Misc.sensiblewrite(input_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort", :in => input_io)))
 
       truth_io = TSV.get_stream truth
       Misc.sensiblewrite(truth_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort", :in => truth_io)))
 
-      truth_fields = TSV.open(truth_sorted).fields
-      truth_sample = nil unless truth_fields.include? truth_sample
-      truth_sample ||= begin
-                       CMD.cmd("grep 'tumor_sample=' '#{truth_sorted}'").read.strip.split("=").last
-                     rescue
-                       if truth_fields.include? "TUMOR"
-                         Log.warn "Could not find tumor_sample field in truth VCF, using TUMOR"
-                         "TUMOR"
-                       else
-                         Log.warn "Could not find tumor_sample field in truth VCF, using last field"
-                         truth_fields.last
-                       end
-                     end
-
-      input_fields = TSV.open(input_sorted).fields
-      input_sample = nil unless input_fields.include? input_sample
-      input_sample ||= begin
-                       CMD.cmd("grep 'tumor_sample=' '#{input_sorted}'").read.strip.split("=").last
-                     rescue
-                       if input_fields.include? "TUMOR"
-                         Log.warn "Could not find tumor_sample field in input VCF, using TUMOR"
-                         "TUMOR"
-                       else
-                         Log.warn "Could not find tumor_sample field in input VCF, using last field"
-                         input_fields.last
-                       end
-                     end
+      truth_sample = HTS.guess_vcf_tumor_sample(truth_sorted)
+      input_sample = HTS.guess_vcf_tumor_sample(input_sorted)
 
       CMD.cmd('bgzip', "#{truth_sorted}")
       CMD.cmd('bgzip', "#{input_sorted}")
