@@ -420,7 +420,7 @@ module HTS
   input :bam, :file, "BAM file", nil, :nofile => true
   input :bed_file, :file, "BED file", nil, :nofile => true
   extension :bam
-  task :extract_BAM_region_with_mates_old => :binary do |bam,bed_file|
+  task :extract_BAM_region_with_mates_samtools => :binary do |bam,bed_file|
     cpus = config :cpus, :samtools_bam, :samtools_view, :samtools, :default => 2
     TmpFile.with_file do |reads|
       CMD.cmd_log(:samtools, "view -L '#{bed_file}' '#{bam}' |cut -f 1 > '#{reads}'")
