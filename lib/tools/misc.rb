@@ -125,10 +125,10 @@ module HTS
       common_format.each do |key|
         match = mformat.select{|k| k.split("--").last == key }.first
         next unless match
-        pos = mformat.index match
+        kpos = mformat.index match
         new_format << match.partition("--").last
-        new_sample1 << msample1[pos]
-        new_sample2 << msample2[pos]
+        new_sample1 << msample1[kpos]
+        new_sample2 << msample2[kpos]
       end
 
       mformat = new_format + mformat
