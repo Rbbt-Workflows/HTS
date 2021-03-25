@@ -68,9 +68,15 @@ module HTS
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 
-    Misc.with_fifo(file('SamToFastq.fastq')) do |s2f_path|
-      Misc.with_fifo(file('bwa.bam')) do |bwa_bam|
-        Misc.with_fifo(file('FilterSam')) do |filter_sam|
+    fsam_to_fastq = file('SamToFastq.fastq')
+    fbwa_bam = file('bwa.bam')
+    ffilter_sam = file('FilterSam')
+    Open.rm fsam_to_fastq
+    Open.rm fbwa_bam
+    Open.rm ffilter_sam
+    Misc.with_fifo(fsam_to_fastq) do |s2f_path|
+      Misc.with_fifo(fbwa_bam) do |bwa_bam|
+        Misc.with_fifo(ffilter_sam) do |filter_sam|
 
           if remove_unpaired
             io_filter = CMD.cmd(:samtools, "view -h --no-PG -f 0x1 '#{step(:mark_adapters).path}'", :pipe => true)
