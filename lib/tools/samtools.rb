@@ -15,7 +15,7 @@ module Samtools
   #Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
   #Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
   Rbbt.claim Rbbt.software.opt.HTSLib, :install do
-    url="https://github.com/samtools/htslib.git 1.11.0"
+    url="https://github.com/samtools/htslib.git"
     extra = "--disable-s3"
     {:git => url, :extra => extra}
   end
