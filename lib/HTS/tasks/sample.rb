@@ -168,7 +168,7 @@ module Sample
   end
 
   def self.load_study_files
-    @@study_files ||= Persist.persist("Study_files", :yaml, :file => Rbbt.var.cache.HTS_study_files.find, :update => true) do
+    @@study_files ||= Persist.persist("Study_files", :marshal, :file => Rbbt.var.cache.HTS_study_files.find, :update => true) do
                         dna = load_study_files_DNA
                         rna = load_study_files_RNA
 
