@@ -26,12 +26,13 @@ end
 
 require 'rbbt/workflow/integration/ansible'
 
+$test_dir = "~/tmp/rbbt/ansible/bootstrap_HTS"
 module ArgoBootstrap
   extend Workflow
   extend Ansible::AnsibleWorkflow
 
   helper :test_dir do
-    "~/tmp/rbbt/ansible/bootstrap_HTS"
+   $test_dir
   end
 
   desc "Prepare environment"
@@ -124,10 +125,11 @@ EOF
   end
   play do |reference|
     reference = "hg38" if reference == 'miniref'
-    shell "rbbt workflow task Sample -W HTS -jn Benchmark combined_caller_vcfs --log 0 -ck 'cpus 2' -r #{reference} &> #{test_dir}/benchmark.log"
+    shell "rbbt workflow task Sample -W HTS -jn Benchmark combined_caller_vcfs --log 0 -ck 'cpus 2' -r #{reference} 2>1 > #{test_dir}/benchmark.log"
     add 'args', chdir: "#{test_dir}/root"
   end
 end
 
 playbook = Ansible.playbook ArgoBootstrap, :run_benchmark
 Ansible.play playbook
+puts Open.read(File.join($test_dir, "benchmark.log")
