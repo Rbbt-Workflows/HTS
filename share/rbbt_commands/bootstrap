@@ -14,7 +14,6 @@ Bootstrap HTS samples
 $ #{$0} [options] <Study> <task>
 
 -h--help Print this help
--c--cpus* Number of concurrent processes to use
 EOF
 if options[:help]
   if defined? rbbt_usage
@@ -25,44 +24,114 @@ if options[:help]
   exit 0
 end
 
-study, task = ARGV
-study ||= "QUINTANA"
-task ||= "mutect2"
+require 'rbbt/workflow/integration/ansible'
 
-cpus = options[:cpus] || 30
+module ArgoBootstrap
+  extend Workflow
+  extend Ansible::AnsibleWorkflow
 
-Workflow.require_workflow "Sample"
-Workflow.require_workflow "HTS"
-require 'HTS/tasks/sample'
+  helper :test_dir do
+    "~/tmp/rbbt/ansible/bootstrap_HTS"
+  end
 
-study_files  = Sample.load_study_files[study]
+  desc "Prepare environment"
+  play 'prepare_env' do 
+    ans :file, path: "#{test_dir}/{{item}}", state: :directory
+    #ans :file, path: "#{test_dir}/root/data/", state: :absent
+    add :loop, <<-EOF.split("\n")
+.source
+root
+root/data
+root/share/data/studies/Benchmark/WES/Benchmark
+root/share/data/studies/Benchmark/WES/Benchmark_normal
+root/share/organisms/Hsa/hg38
+root/software/opt
+root/etc
+EOF
+  end
 
-samples = study_files.keys.reject{|s| s.to_s =~ /normal$/}
+  desc "Set file server"
+  dep
+  play do
+    shell 'rbbt file_server add Organism rbbt.bsc.es'
+  end
 
-# get job args
-job_options = Sample.get_SOPT(Sample.tasks[task.to_sym])
+  desc "Create conda environment"
+  dep
+  play do
+    shell "conda create -p #{test_dir}/root/software/opt/conda"
+  end
 
-task_jobs = samples.collect{|s| Sample.job(task, s, job_options)}
+  desc "Configure conda environment"
+  dep
+  play do
+    shell "grep 'conda activate' #{test_dir}/root/etc/environment || echo 'conda activate ~/software/opt/conda' >> #{test_dir}/root/etc/environment;"
+  end
 
-bwa_cpus = Rbbt::Config.get(:cpus, :bwa, :default => 3).to_i
-bwa_cpus = 15
-spark = Rbbt::Config.get(:spark, :gatk, :default => true)
-shard = Rbbt::Config.get(:shard, :gatk, :default => true)
+  desc "Get Benchmark"
+  dep
+  play do
+   ans 'get_url', url: "https://b2drop.bsc.es/index.php/s/GkLyXQMfxzrtNkt/download", dest: "#{test_dir}/.source/benchmark.zip"
+  end
 
-require 'rbbt/workflow/prepare'
-cpus = cpus.to_i
-{
-  :mark_adapters => cpus,
-  :BAM_bwa => (cpus.to_f / bwa_cpus).ceil,
-  :BAM_sorted => (spark || shard) ? 1 : cpus,
-  :BAM_rescore => (spark || shard) ? 1 : cpus,
-  :BAM => (spark || shard) ? 1 : cpus,
-  :contamination => cpus,
-  :mutect2 => (spark || shard) ? 1 : cpus,
-}.each do |task,ndeps|
-  Step.prepare_dependencies task_jobs, task, ndeps
+  desc "Unpack Benchmark"
+  dep
+  play :unpack_benchmark do
+    ans 'unarchive', src: "#{test_dir}/.source/benchmark.zip", dest: "#{test_dir}/root/data/", remote_src: true
+    ans 'file', path: "#{test_dir}/root/data/benchmark", src: "#{test_dir}/root/data/ARGO-NEAT_minimal.v3", state: :link
+  end
+
+  desc "Prepare tumor sample"
+  dep 
+  play do
+      ans 'file', path: "#{test_dir}/root/share/data/studies/Benchmark/WES/Benchmark/{{item}}", src: "../../../../../../data/benchmark/FASTQ/tumor/{{item}}", state: :link
+      add 'loop', <<-EOF.split("\n")
+tumor_read1.fq.gz
+tumor_read2.fq.gz
+EOF
+  end
+
+  desc "Prepare normal sample"
+  dep
+  play :prepare_normal_sample do
+    ans 'file', path: "#{test_dir}/root/share/data/studies/Benchmark/WES/Benchmark_normal/{{item}}", src: "../../../../../../data/benchmark/FASTQ/normal/{{item}}", state: :link
+    add 'loop', <<-EOF.split("\n")
+normal_read1.fq.gz
+normal_read2.fq.gz
+EOF
+  end
+
+  desc "Prepare miniref reference"
+  dep :prepare_normal_sample
+  play do
+    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/hg38.fa.gz", src: "../../../../../data/benchmark/reference/hg38.fa.gz", state: :link
+  end
+
+  desc "Prepare miniref known sites"
+  dep 
+  play :prepare_miniref_known_sites do
+    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/known_sites", src: "../../../../../data/*/known_sites/", state: :link
+  end
+
+  desc "Run benchmark"
+  input :reference, :select, "Reference code", 'hg38', :select_options => %w(b37 hg38 miniref)
+  dep do |jobname,options|
+    if options[:reference] == "miniref"
+      {:task => :prepare_miniref_known_sites, :jobname => jobname, :inputs => options}
+    else
+      {:task => :prepare_normal_sample, :jobname => jobname, :inputs => options}
+    end
+  end
+  play do |reference|
+    reference = "hg38" if reference == 'miniref'
+    shell "rbbt workflow task Sample -W HTS -jn Benchmark combined_caller_vcfs --log 0 -ck 'cpus 2' -r #{reference} &> #{test_dir}/benchmark.log"
+    add 'args', chdir: "#{test_dir}/root"
+  end
 end
 
-task_jobs.each do |job|
-  job.produce
+if __FILE__ == $0
+ Log.severity = 0
+ playbook = Ansible.playbook ArgoBootstrap, :run_benchmark
+ ppp playbook.to_yaml
+ Ansible.play playbook
 end
