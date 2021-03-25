@@ -105,13 +105,13 @@ EOF
   desc "Prepare miniref reference"
   dep :prepare_normal_sample
   play do
-    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/hg38.fa.gz", src: "../../../../../data/benchmark/reference/hg38.fa.gz", state: :link
+    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/hg38.fa.gz", src: "../../../../data/benchmark/reference/hg38.fa.gz", state: :link
   end
 
   desc "Prepare miniref known sites"
   dep 
   play :prepare_miniref_known_sites do
-    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/known_sites", src: "../../../../../data/*/known_sites/", state: :link
+    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/known_sites", src: "../../../../data/benchmark/known_sites/", state: :link
   end
 
   desc "Run benchmark"
