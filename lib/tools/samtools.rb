@@ -12,8 +12,19 @@ module Samtools
   #self.search_paths = {}
   #self.search_paths[:default] = :lib
 
-  Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
-  Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
+  #Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
+  #Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
+  Rbbt.claim Rbbt.software.opt.HTSLib, :install do
+    url="https://github.com/samtools/htslib.git 1.11.0"
+    extra = "--disable-s3"
+    {:git => url, :extra => extra}
+  end
+  Rbbt.claim Rbbt.software.opt.Samtools, :install do
+    Rbbt.software.opt.HTSLib.produce
+    url = "https://github.com/samtools/samtools.git"
+    extra = "--with-htslib='#{Rbbt.software.opt.HTSLib.find}'"
+    {:git => url, :extra => extra}
+  end
   Rbbt.claim Rbbt.software.opt.bcftools, :install do
     Rbbt.software.opt.HTSLib.produce
     url = "https://github.com/samtools/bcftools.git"
@@ -21,10 +32,7 @@ module Samtools
     {:git => url, :extra => extra}
   end
 
-  CMD.tool :samtools do
-    Rbbt.software.opt.HTSLib.produce
-    Rbbt.software.opt.Samtools.produce
-  end
+  CMD.tool :samtools, Rbbt.software.opt.Samtools.produce
 
   CMD.tool :bcftools, Rbbt.software.opt.bcftools
 
