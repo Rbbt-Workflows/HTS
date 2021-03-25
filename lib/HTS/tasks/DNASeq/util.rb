@@ -393,27 +393,29 @@ module HTS
     last_eend = nil
     min = recursive_inputs[:min_cov].to_s
     Misc.open_pipe do |sin|
-      io = TSV.traverse step(:genomecov), :into => :stream, :type => :array do |line|
-        chr, start, eend, count = line.split("\t")
-        next unless count == min
-        if (last_chr && last_chr != chr) || (last_eend && last_eend != start)
-          res = [last_chr, last_start, last_eend] * "\t" 
-          last_start = start
-        else
-          res = nil
+      begin
+        io = TSV.traverse step(:genomecov), :into => :stream, :type => :array do |line|
+          chr, start, eend, count = line.split("\t")
+          next unless count == min
+          if (last_chr && last_chr != chr) || (last_eend && last_eend != start)
+            res = [last_chr, last_start, last_eend] * "\t" 
+            last_start = start
+          else
+            res = nil
+          end
+          last_chr = chr 
+          last_eend = eend
+          last_start = start if last_start.nil?
+          next unless res
+          res  + "\n"
         end
-        last_chr = chr 
-        last_eend = eend
-        last_start = start if last_start.nil?
-        next unless res
-        res  + "\n"
+
+        Misc.consume_stream(io, false, sin, false)
+
+        sin << [last_chr, last_start, last_eend] * "\t" << "\n"
+      rescue
+        sin.stream_raise_exception $!
       end
-
-      Misc.consume_stream(io, false, sin, false)
-
-      sin << [last_chr, last_start, last_eend] * "\t" << "\n"
-    rescue
-      sin.stream_raise_exception $!
     end
   end
 
