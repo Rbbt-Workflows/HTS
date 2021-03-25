@@ -129,9 +129,5 @@ EOF
   end
 end
 
-if __FILE__ == $0
- Log.severity = 0
- playbook = Ansible.playbook ArgoBootstrap, :run_benchmark
- ppp playbook.to_yaml
- Ansible.play playbook
-end
+playbook = Ansible.playbook ArgoBootstrap, :run_benchmark
+Ansible.play playbook
