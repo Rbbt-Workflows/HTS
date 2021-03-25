@@ -12,8 +12,6 @@ module Samtools
   #self.search_paths = {}
   #self.search_paths[:default] = :lib
 
-  #Rbbt.claim Rbbt.software.opt.HTSLib, :install, Rbbt.share.install.software.HTSLib.find
-  #Rbbt.claim Rbbt.software.opt.Samtools, :install, Rbbt.share.install.software.Samtools.find
   Rbbt.claim Rbbt.software.opt.HTSLib, :install do
     url="https://github.com/samtools/htslib.git"
     extra = "--disable-s3"
@@ -32,7 +30,7 @@ module Samtools
     {:git => url, :extra => extra}
   end
 
-  CMD.tool :samtools, Rbbt.software.opt.Samtools.produce
+  CMD.tool :samtools, Rbbt.software.opt.Samtools
 
   CMD.tool :bcftools, Rbbt.software.opt.bcftools
 
