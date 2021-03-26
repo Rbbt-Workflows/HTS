@@ -20,7 +20,7 @@ module HTS
       CMD.cmd("zcat #{linked} > #{unzipped_linked}") unless File.exists?(unzipped_linked)
       dir.glob("*.gz.*").each do |file|
         unzipped_file = file.sub('.gz.', '.')
-        Open.ln_s file, File.basename(unzipped_file) unless File.exists?(unzipped_file)
+        Open.ln_s File.basename(file), unzipped_file unless File.exists?(unzipped_file)
       end
       unzipped_linked
     else
