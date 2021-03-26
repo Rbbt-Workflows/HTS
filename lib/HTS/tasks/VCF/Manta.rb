@@ -1,6 +1,6 @@
 module HTS
   CMD.tool "configManta.py", nil, "configManta.py -h" do
-    CMD.cmd('pip install manta')
+    CMD.conda(:manta, :python2)
   end
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true

@@ -22,7 +22,7 @@ module Strelka
   #CMD.tool "configureStrelkaSomaticWorkflow.py", Rbbt.software.opt.Strelka
   
   CMD.tool "configureStrelkaSomaticWorkflow.py" do
-    CMD.cmd("(conda activate python2 && conda install strelka -c bioconda)")
+    CMD.conda(:strelka, :python2)
   end
 
   def self.runSomatic(tumor, normal, reference, output, cpus, interval_list)
