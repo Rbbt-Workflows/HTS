@@ -163,7 +163,6 @@ module Sample
   dep :mutect2, :canfail => true
   dep :strelka, :canfail => true
   dep :muse, :canfail => true
-  dep :somatic_sniper, :canfail => true
   dep :manta_somatic, :canfail => true
   dep :pindel_indels, :canfail => true
   dep :svABA_indels, :canfail => true
