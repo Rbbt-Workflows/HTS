@@ -3,12 +3,17 @@ require 'rbbt/resource'
 require 'rbbt/util/cmd'
 module Pindel
 
-  Rbbt.claim Rbbt.software.opt.Pindel, :install do
-    {:git => "https://github.com/genome/pindel.git"}
+  #Rbbt.claim Rbbt.software.opt.Pindel, :install do
+  #  {:git => "https://github.com/genome/pindel.git"}
+  #end
+
+  CMD.tool :pindel, nil, "bash -c 'type pindel'" do
+    CMD.cmd('conda install pindel -c bioconda')
   end
 
-  CMD.tool :pindel, Rbbt.software.opt.Pindel, "bash -c 'type pindel'"
-  CMD.tool :pindel2vcf, Rbbt.software.opt.Pindel, "bash -c 'type pindel2vcf'"
+  CMD.tool :pindel2vcf, nil, "bash -c 'type pindel2vcf'" do
+    CMD.cmd('conda install pindel -c bioconda')
+  end
     
   def self.call(tumor, normal, reference, insert_size, output, cpus = nil)
 

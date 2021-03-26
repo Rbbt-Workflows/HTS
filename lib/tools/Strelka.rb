@@ -5,21 +5,25 @@ require_relative '../tools/samtools'
 module Strelka
   # ToDo pull files out of directory
   
-  Rbbt.claim Rbbt.software.opt.Strelka_bin, :proc do |filename|
-    url = "https://github.com/Illumina/strelka/releases/download/v2.9.2/strelka-2.9.2.centos6_x86_64.tar.bz2"
+  #Rbbt.claim Rbbt.software.opt.Strelka_bin, :proc do |filename|
+  #  url = "https://github.com/Illumina/strelka/releases/download/v2.9.2/strelka-2.9.2.centos6_x86_64.tar.bz2"
 
 
-    TmpFile.with_file do |tmpfile|
-      Open.mkdir tmpfile
-      CMD.cmd_log("wget '#{url}' -O - |tar xvjf - -C #{tmpfile}")
-      codedir = Dir.glob(File.join(tmpfile, "*")).first
-      Open.mv codedir, filename
-    end
+  #  TmpFile.with_file do |tmpfile|
+  #    Open.mkdir tmpfile
+  #    CMD.cmd_log("wget '#{url}' -O - |tar xvjf - -C #{tmpfile}")
+  #    codedir = Dir.glob(File.join(tmpfile, "*")).first
+  #    Open.mv codedir, filename
+  #  end
+  #end
+
+  #Rbbt.claim Rbbt.software.opt.Strelka, :install, Rbbt.share.install.software.Strelka.find
+
+  #CMD.tool "configureStrelkaSomaticWorkflow.py", Rbbt.software.opt.Strelka
+  
+  CMD.tool "configureStrelkaSomaticWorkflow.py" do
+    CMD.cmd("(conda activate python2 && conda install strelka -c bioconda)")
   end
-
-  Rbbt.claim Rbbt.software.opt.Strelka, :install, Rbbt.share.install.software.Strelka.find
-
-  CMD.tool "configureStrelkaSomaticWorkflow.py", Rbbt.software.opt.Strelka
 
   def self.runSomatic(tumor, normal, reference, output, cpus, interval_list)
     #cmd_config = Rbbt.software.opt.Strelka.produce.bin["configureStrelkaSomaticWorkflow.py"].find 
