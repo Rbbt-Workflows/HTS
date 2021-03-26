@@ -1,6 +1,6 @@
 module HTS
   CMD.tool :MuSE, nil, "bash -c 'type MuSE'" do
-    CMD.cmd('pip install muse')
+    CMD.cmd('conda install muse -c bioconda')
   end
 
   #input :tumor, :file, "Tumor BAM", nil, :nofile => true
