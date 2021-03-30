@@ -218,7 +218,7 @@ module Sample
     end
   end
 
-  dep :BAM_normal, :compute => [:produce, :canfail] do |jobname,options|
+  dep :BAM_normal do |jobname,options|
     sample = jobname
     if Sample.sample_files(sample + "_normal") || (sample.include?(":") && Sample.sample_files(sample.sub(/:.*/, ":normal")))
       {:inputs => options, :jobname => jobname, :task => :BAM_normal}

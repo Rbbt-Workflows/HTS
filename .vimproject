@@ -97,9 +97,6 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
   }
  }
  share=share filter="*"{
-  ansible=ansible{
-   bootstrap.yaml
-  }
   rbbt_commands=rbbt_commands{
    bootstrap
    bootstrap2
