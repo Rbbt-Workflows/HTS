@@ -292,7 +292,7 @@ module HTS
       contigs = Samtools.bam_contigs(input_bam_job)
       args["input"] = bam_file
 
-      cpus = config('cpus', :shard, :rescore, :apply_rescore, :apply_bqsr, :ApplyBQSR)
+      cpus = config('cpus', :ApplyBQSR, :apply_bqsr, :apply_rescore, :shard, :gatk)
       #args["intervals"] ||= nil
       #args["interval-padding"] ||= GATKShard::GAP_SIZE 
       #intervals = (interval_list || intervals_for_reference(reference))
