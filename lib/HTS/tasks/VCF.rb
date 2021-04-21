@@ -16,8 +16,8 @@ require 'HTS/tasks/VCF/util'
 
 module HTS
 
-  input :vcf_1, :file, "VCF file"
-  input :vcf_2, :file, "VCF file"
+  input :vcf_1, :file, "VCF to compare"
+  input :vcf_2, :file, "VCF to compare against"
   input :sort, :boolean, "Sort files", true
   task :compare_vcf => :tsv do |vcf_1,vcf_2,sort|
     first = []

@@ -99,7 +99,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
  share=share filter="*"{
   rbbt_commands=rbbt_commands{
    bootstrap
-   bootstrap2
+   bootstrap_samples
    studies
   }
   software=install/software{

@@ -64,7 +64,7 @@ module HTS
     args["intervals"] = interval_list if interval_list
     args["interval-padding"] = interval_padding || GATKShard::GAP_SIZE if interval_list
     args["panel-of-normals"] = pon if pon
-    args["bam-output"] = file('haplotype.bam')
+    #args["bam-output"] = file('haplotype.bam')
     args["germline-resource"] = germline_resource
     args["f1r2-tar-gz"] = file('f1r2.tar.gz')
     args["dont-use-soft-clipped-bases"] = remove_soft_clip if remove_soft_clip

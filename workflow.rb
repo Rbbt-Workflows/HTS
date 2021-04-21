@@ -53,53 +53,82 @@ module HTS
     end
   end
 
-  helper :vcf_file do |reference, file|
-    reference = reference.scan(/(?:b37|hg19|hg38|mm10|GRCm38|GRCh38|rn6|Rnor_6\.0)(?:_noalt)?/).first 
+  helper :vcf_file do |orig_reference, file|
+    reference = orig_reference.scan(/(?:b37|hg19|hg38|mm10|GRCm38|GRCh38|rn6|Rnor_6\.0)(?:_noalt)?/).first 
     file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
 
     reference = reference.sub('_noalt','')
 
-    case reference
-    when 'b37', 'hg19', 'hg38', 'GRCh38'
+    if File.exists?(orig_reference) && File.exists?(File.join(File.dirname(orig_reference), 'known_sites'))
+      directory = Path.setup(File.dirname(orig_reference))
+
       case file.to_s.downcase
       when 'miller_indels', 'miller'
-        Organism["Hsa"][reference].known_sites["Miller_1000G_indels.vcf.gz"].produce.find
+        directory.known_sites["Miller_1000G_indels.vcf.gz"].produce.find
       when '1000g_indels'
-        Organism["Hsa"][reference].known_sites["1000G_phase1.indels.vcf.gz"].produce.find
+        directory.known_sites["1000G_phase1.indels.vcf.gz"].produce.find
       when '1000g_snps_hc', '1000g_snps', '1000g'
-        Organism["Hsa"][reference].known_sites["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
+        directory.known_sites["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
       when 'gnomad'
-        Organism["Hsa"][reference].known_sites["af-only-gnomad.vcf.gz"].produce.find
+        directory.known_sites["af-only-gnomad.vcf.gz"].produce.find
       when 'small_exac'
-        Organism["Hsa"][reference].known_sites["small_exac_common_3.vcf.gz"].produce.find
+        directory.known_sites["small_exac_common_3.vcf.gz"].produce.find
       when 'dbsnp'
         if reference =~ /hg38/
-          Organism["Hsa"][reference].known_sites["dbsnp_146.vcf.gz"].produce.find
+          directory.known_sites["dbsnp_146.vcf.gz"].produce.find
         else
-          Organism["Hsa"][reference].known_sites["dbsnp_138.vcf.gz"].produce.find
+          directory.known_sites["dbsnp_138.vcf.gz"].produce.find
         end
       else
-        Open.exists?(file.to_s) ? file : nil
+        if directory[file.to_s].exists?
+          directory[file.to_s]
+        else
+          Open.exists?(file.to_s) ? file : nil
+        end
       end
-    when 'mm10', 'GRCm38'
-      case file.to_s.downcase
-      when 'mm10_variation', 'grcm38_variation'
-        Organism["Mmu"]['GRCm38'].known_sites["Ensembl.vcf.gz"].produce.find
-      when 'mm10_structural', 'grcm38_variation'
-        Organism["Mmu"]['GRCm38'].known_sites["Ensembl.structural.vcf.gz"].produce.find
-      when 'none'
-        nil
-      else
-        Open.exists?(file.to_s) ? file : nil
-      end
-    when 'rn6', 'Rnor_6.0'
-      case file.to_s.downcase
-      when 'rn6_variation', 'rnor_6.0_variation'
-        Organism["Rno"]["Rnor_6.0"].known_sites["Ensembl.vcf.gz"].produce.find
-      when 'none'
-        nil
-      else
-        Open.exists?(file.to_s) ? file : nil
+    else
+      case reference
+      when 'b37', 'hg19', 'hg38', 'GRCh38'
+        case file.to_s.downcase
+        when 'miller_indels', 'miller'
+          Organism["Hsa"][reference].known_sites["Miller_1000G_indels.vcf.gz"].produce.find
+        when '1000g_indels'
+          Organism["Hsa"][reference].known_sites["1000G_phase1.indels.vcf.gz"].produce.find
+        when '1000g_snps_hc', '1000g_snps', '1000g'
+          Organism["Hsa"][reference].known_sites["1000G_phase1.snps.high_confidence.vcf.gz"].produce.find
+        when 'gnomad'
+          Organism["Hsa"][reference].known_sites["af-only-gnomad.vcf.gz"].produce.find
+        when 'small_exac'
+          Organism["Hsa"][reference].known_sites["small_exac_common_3.vcf.gz"].produce.find
+        when 'dbsnp'
+          if reference =~ /hg38/
+            Organism["Hsa"][reference].known_sites["dbsnp_146.vcf.gz"].produce.find
+          else
+            Organism["Hsa"][reference].known_sites["dbsnp_138.vcf.gz"].produce.find
+          end
+        else
+          Open.exists?(file.to_s) ? file : nil
+        end
+      when 'mm10', 'GRCm38'
+        case file.to_s.downcase
+        when 'mm10_variation', 'grcm38_variation'
+          Organism["Mmu"]['GRCm38'].known_sites["Ensembl.vcf.gz"].produce.find
+        when 'mm10_structural', 'grcm38_variation'
+          Organism["Mmu"]['GRCm38'].known_sites["Ensembl.structural.vcf.gz"].produce.find
+        when 'none'
+          nil
+        else
+          Open.exists?(file.to_s) ? file : nil
+        end
+      when 'rn6', 'Rnor_6.0'
+        case file.to_s.downcase
+        when 'rn6_variation', 'rnor_6.0_variation'
+          Organism["Rno"]["Rnor_6.0"].known_sites["Ensembl.vcf.gz"].produce.find
+        when 'none'
+          nil
+        else
+          Open.exists?(file.to_s) ? file : nil
+        end
       end
     end
   end
@@ -192,7 +221,7 @@ module HTS
   end
 
   helper :gatk_read_count_monitor do |desc, max = nil,&callback|
-  
+
     bar = self.progress_bar(desc)
     bar.max = max if max
 
@@ -299,8 +328,8 @@ module HTS
       args = args_new
 
       case command.to_s
-      #when "BaseRecalibrator"
-      #  args.delete_if{|k,v| k.include? 'interval'}
+        #when "BaseRecalibrator"
+        #  args.delete_if{|k,v| k.include? 'interval'}
       when "SortSam", "ApplyBQSR"
         args['--create-output-bam-index'] = false
       when "MarkDuplicates"

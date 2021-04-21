@@ -96,11 +96,21 @@ class GATKShard
           iargs[k] = iv
         end
 
+        if ENV["_JAVA_OPTIONS"]
+          java_options = ENV["_JAVA_OPTIONS"]
+          max = java_options.scan(/-Xmx(\d+)m/).first[0]
+          java_options = java_options.sub("-Xmx#{max}m", "-Xmx#{(max.to_i / cpus.to_i).to_s}m")
+        else
+          java_options = ""
+        end
+
         #TmpFile.with_file(intervals.collect{|e| [e[0], e[1], e[2].to_i + 1] * "\t"} * "\n", :extension => 'bed') do |interval_file|
         TmpFile.with_file(intervals.collect{|e| [e[0], e[1], e[2].to_i] * "\t"} * "\n", :extension => 'bed') do |interval_file|
           iargs[interval_file_field] = interval_file 
           iargs[output_field] = output 
-          GATK.run_log(command, iargs)
+          Misc.with_env "_JAVA_OPTIONS", java_options do
+              GATK.run_log(command, iargs)
+          end
         end
         output
       end

@@ -61,7 +61,7 @@ module HTS
     nil
   end
 
-  dep :BAM_pileup_sumaries do |jobname,options|
+  dep :BAM_pileup_sumaries, :bam_file => :placeholder do |jobname,options|
     jobs = []
     jobs << {:inputs => options.merge(:bam_file => options[:tumor_bam]), :jobname => jobname}
     jobs << {:inputs => options.merge(:bam_file => options[:normal_bam]), :jobname => jobname + "_normal"} if options[:normal_bam]
@@ -306,10 +306,11 @@ module HTS
     Open.mkdir files_dir 
     sorted = file('sorted.bam')
     max_mem = config :max_mem, :samtools_sort_max_mem, :samtools_max_mem, :sort_samtools, :samtools, :sort
-    threads = config :threads, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
+    cpus = config :cpus, :samtools_sort_cpus, :samtools_cpus, :sort_samtools, :samtools, :sort
+    cpus ||= config :threads, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
 
     Open.mkdir self.files_dir
-    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{files_dir}", "-m" => max_mem, "--threads" => threads)
+    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{files_dir}", "-m" => max_mem, "--threads" => cpus)
     nil
   end
 

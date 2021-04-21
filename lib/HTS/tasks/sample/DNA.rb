@@ -35,11 +35,11 @@ module Sample
       else
         uBAM_files = uBAM_files.first if Array === uBAM_files
         options = options.merge({"HTS#uBAM" => uBAM_files})
-        {:inputs => options, :jobname => sample}
+        job = HTS.job(:BAM, sample, options)
+        job.overriden = false
+        job
       end
     elsif bam_files = sample_files[:BAM]
-      #options = options.merge({"HTS#BAM" => [bam_files].flatten.first})
-      #{:inputs => options, :jobname => sample}
       path = [bam_files].flatten.first
       job = Step.new path
       job.task_name = :BAM

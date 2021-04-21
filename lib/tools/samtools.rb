@@ -66,7 +66,7 @@ module Samtools
     if ! File.exists?(linked + ".bai") || Persist.newer?(linked + ".bai", file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, linked unless File.exists?(linked)
+        Open.ln_s file, linked unless File.exists?(linked)
         cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
         if cpus
           Samtools.run("index -@ #{cpus} '#{ linked }'")

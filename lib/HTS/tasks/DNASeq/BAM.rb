@@ -178,7 +178,6 @@ module HTS
     end
     {:task => task, :jobname => jobname, :inputs => options}
   end
-
   extension :bam
   task :BAM_sorted => :binary do 
     split_sort = config :split_sort, :bam, :gatk, :GATK, :default => false
@@ -213,15 +212,7 @@ module HTS
 
     interval_list = nil if interval_list == "none"
 
-    orig_reference = reference_file(reference)
-    reference = BWA.prepare_FASTA orig_reference
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
-
     args = {}
-    args["reference"] = reference
-    args["intervals"] = interval_list if interval_list
-    args["output"] = file('recal_data.table')
 
     if known_sites.nil?
       known_sites = [] 
@@ -241,6 +232,15 @@ module HTS
     end
 
     args["known-sites"] = known_sites
+
+    orig_reference = reference_file(reference)
+    reference = BWA.prepare_FASTA orig_reference
+    reference = GATK.prepare_FASTA orig_reference
+    reference = Samtools.prepare_FASTA orig_reference
+
+    args["reference"] = reference
+    args["intervals"] = interval_list if interval_list
+    args["output"] = file('recal_data.table')
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 

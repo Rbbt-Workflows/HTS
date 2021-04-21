@@ -27,7 +27,6 @@ if options[:help]
 end
 
 study, task, *samples = ARGV
-study ||= "QUINTANA"
 task ||= "mutect2"
 
 cpus = options[:cpus] || 30

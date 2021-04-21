@@ -301,7 +301,7 @@ module Sample
 
   def self.load_sample_workflow(sample)
     study = sample_study(sample)
-    load_study_workflow(study)
+    load_study_workflow(study) if study
   end
 
   input :organism, :string, "Organism Code", nil
