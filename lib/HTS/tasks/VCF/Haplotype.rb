@@ -40,7 +40,7 @@ module HTS
 
     if shard == 'true'
       contigs = Samtools.reference_contigs reference
-      cpus = config('cpus', :HaplotypeCaller, :haplotype,  :gatk, :default => 2)
+      cpus = config('cpus', :HaplotypeCaller, :haplotype, :shard, :gatk, :default => 2)
       headervcf = file('tmp.header')
       contentvcf = file('tmp.content')
       args["--intervals"] ||= nil

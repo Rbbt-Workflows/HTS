@@ -99,6 +99,7 @@ module Sample
     :manta_pre => :manta_pre,
     :manta_somatic => :manta_somatic,
     :pindel_indels => :pindel_indels,
+    :haplotype => :haplotype,
     #:somatic_seq => :somatic_seq,
     #:varscan_somatic => :varscan_somatic,
     #:varscan_somatic_alt => :varscan_somatic_alt,
