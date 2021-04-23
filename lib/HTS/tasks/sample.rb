@@ -2,9 +2,9 @@ module Sample
 
   helper :organism do 
     study = Sample.sample_study(sample)
-    if Sample.study_dir(study).options.organism.exists?
+    if study && Sample.study_dir(study).options.organism.exists?
       Sample.study_dir(study).options.organism.read.strip
-    elsif Sample.study_dir(study).options.reference.exists?
+    elsif study && Sample.study_dir(study).options.reference.exists?
       reference = Sample.study_dir(study).options.reference.read.strip
       Organism.organism_for_build reference
     else

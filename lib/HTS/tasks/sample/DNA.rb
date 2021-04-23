@@ -3,7 +3,7 @@ module Sample
 
   task :missing_data => :string do 
     sample = clean_name
-    raise "Sample #{ sample } not found"
+    raise "Sample #{ sample } unknown or data missing"
   end
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
@@ -63,6 +63,8 @@ module Sample
         job.overriden = false
         job
       end
+    else
+      {:workflow => Sample, :task => :missing_data, :jobname => sample}
     end
   end
 
@@ -277,12 +279,11 @@ module Sample
   dep Sample, :mutect2 do |sample,options|
     sample_files = Sample.sample_files sample
 
-    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
+    #next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
-    if sample_files.include? "VCF"
+    if sample_files && sample_files.include?("VCF")
       nil
     else
-      {:task => :HTS_genomic_mutations, :inputs => options, :jobname => sample}
       vcaller = options[:caller]
       options[:vcf_file] = vcaller.to_sym
       {:task => vcaller, :jobname => sample, :inputs => options}
@@ -291,7 +292,7 @@ module Sample
   extension "vcf"
   task :vcf_file => :text do
     sample_files = Sample.sample_files self.clean_name
-    if sample_files.include? "VCF"
+    if sample_files && sample_files.include?("VCF")
       TSV.get_stream sample_files["VCF"].first
     else
       TSV.get_stream dependencies.first.path
