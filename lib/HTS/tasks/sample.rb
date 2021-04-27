@@ -1,5 +1,17 @@
 module Sample
 
+  helper :organism do 
+    study = Sample.sample_study(sample)
+    if study && Sample.study_dir(study).options.organism.exists?
+      Sample.study_dir(study).options.organism.read.strip
+    elsif study && Sample.study_dir(study).options.reference.exists?
+      reference = Sample.study_dir(study).options.reference.read.strip
+      Organism.organism_for_build reference
+    else
+      Sample.organism sample
+    end
+  end
+
   STUDY_OPTIONS = {
     :organism => :string,
     :reference => :string,
@@ -314,7 +326,7 @@ module Sample
     organism
   end
 
-  CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
+  CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA haplotype)
 end
 
 require 'HTS/tasks/sample/DNA'

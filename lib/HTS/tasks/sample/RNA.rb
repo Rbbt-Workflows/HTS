@@ -2,7 +2,8 @@ module Sample
 
   dep_task :salmon, HTS, :salmon do |sample,options|
     sample_files = Sample.sample_files sample
-    raise "Sample #{ sample } not found" if sample_files.nil?
+
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -37,12 +38,15 @@ module Sample
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
         {:task => :BAM_rescore_realign, :inputs => options, :jobname => sample}
       end
+    else
+      {:workflow => Sample, :task => :missing_data, :jobname => sample}
     end
   end
 
   dep_task :RNA_BAM, HTS, :RNA_BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
-    raise "Sample #{ sample } not found" if sample_files.nil?
+
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -71,13 +75,16 @@ module Sample
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
         {:task => :BAM_rescore_realign, :inputs => options, :jobname => sample}
       end
+    else
+      {:workflow => Sample, :task => :missing_data, :jobname => sample} 
     end
   end
 
   dep :RNA_BAM
   dep_task :stringtie, HTS, :stringtie do |sample,options,dependencies|
     sample_files = Sample.sample_files sample
-    raise "Sample #{ sample } not found" if sample_files.nil?
+
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -89,7 +96,8 @@ module Sample
   dep :stringtie
   dep_task :htseq_count, HTS, :htseq_count do |sample,options,dependencies|
     sample_files = Sample.sample_files sample
-    raise "Sample #{ sample } not found" if sample_files.nil?
+
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -101,7 +109,8 @@ module Sample
   dep :stringtie
   dep_task :splicing_variants, HTS, :splicing_variants do |sample,options,dependencies|
     sample_files = Sample.sample_files sample
-    raise "Sample #{ sample } not found" if sample_files.nil?
+
+    next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     options = add_sample_options sample, options
 
@@ -230,8 +239,9 @@ module Sample
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
         {:task => :BAM_rescore_realign, :inputs => options, :jobname => sample}
       end
+    else
+      {:workflow => Sample, :task => :missing_data, :jobname => sample}
     end
   end
-
 
 end

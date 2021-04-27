@@ -46,7 +46,9 @@ module HTS
 
     max = step(:uBAM).info[:reads]
     args[:progress_bar] = gatk_read_count_monitor("MarkIlluminaAdapters", max) do |bar|
-      set_info :reads, bar.ticks
+      ticks = bar.ticks
+      ticks = max if ticks.to_i == 0
+      set_info :reads, ticks
     end
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
@@ -130,7 +132,9 @@ module HTS
 
           max = step(:mark_adapters).info[:reads]
           args[:progress_bar] = gatk_read_count_monitor("BWA", max) do |bar|
-            set_info :reads, bar.ticks
+            ticks = bar.ticks
+            ticks = max if ticks.to_i == 0
+            set_info :reads, ticks
           end
 
           gatk("MergeBamAlignment", args)
@@ -159,7 +163,9 @@ module HTS
 
     max = step(:BAM_bwa).info[:reads]
     args[:progress_bar] = gatk_read_count_monitor("BAM_duplicates", max) do |bar|
-      set_info :reads, bar.ticks
+      ticks = bar.ticks
+      ticks = max if ticks.to_i == 0
+      set_info :reads, ticks
     end
 
     gatk("MarkDuplicates", args)

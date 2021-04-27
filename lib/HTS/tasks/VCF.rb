@@ -46,7 +46,7 @@ module HTS
           end
         end
 
-        TSV.traverse TSV.paste_streams([pipe1, pipe2], :header_hash => "", :same_fields => true, :sort => sort), :type => :array do |line|
+        TSV.traverse TSV.paste_streams([pipe1, pipe2], :same_fields => true, :sort => sort), :type => :array do |line|
           next if line =~ /^(?:#|CHR)/
           mutation, chr, pos, id, *parts = line.split("\t", -1)
           case
