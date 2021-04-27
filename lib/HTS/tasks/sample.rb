@@ -305,10 +305,13 @@ module Sample
   end
 
   input :organism, :string, "Organism Code", nil
-  task :organism => :string do |organism|
+  input :reference, :string, "Reference Code", nil
+  task :organism => :string do |organism,reference|
     sample = clean_name
     options = Sample.sample_options(sample).merge(Sample.study_options(sample))
-    organism || options[:organism] || Organism.organism_for_build(options[:reference] || 'b37') || Organism.default_code("Hsa")
+    organism ||= Organism.organism_for_build(reference) if reference
+    organism ||= options[:organism] || Organism.organism_for_build(options[:reference] || 'b37') || Organism.default_code("Hsa")
+    organism
   end
 
   CALLERS = %w(strelka varscan mutect2 muse somatic_sniper delly svABA)
