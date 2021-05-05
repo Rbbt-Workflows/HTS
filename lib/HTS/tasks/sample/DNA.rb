@@ -19,9 +19,7 @@ module Sample
     if fastq_files = sample_files[:FASTQ]
       if Array === fastq_files.first && fastq_files.first.length > 1
         options = options.merge({:fastq1_files => fastq_files.first, :fastq2_files => (fastq_files.last || [])})
-        job = HTS.job(:BAM_rescore_mutiplex, sample, options)
-        job.overriden = false
-        job
+        HTS.job(:BAM_rescore_mutiplex, sample, options)
       else
         options = options.merge({:fastq1 => fastq_files.first, :fastq2 => fastq_files.last})
         {:inputs => options, :jobname => sample}
@@ -29,15 +27,11 @@ module Sample
     elsif uBAM_files = sample_files[:uBAM]
       if Array === uBAM_files && uBAM_files.length > 1
         options = options.merge({:uBAM_files => uBAM_files})
-        job = HTS.job(:BAM_rescore_mutiplex, sample, options)
-        job.overriden = false
-        job
+        HTS.job(:BAM_rescore_mutiplex, sample, options)
       else
         uBAM_files = uBAM_files.first if Array === uBAM_files
-        options = options.merge({"HTS#uBAM" => uBAM_files})
-        job = HTS.job(:BAM, sample, options)
-        job.overriden = false
-        job
+        options = options.merge({"HTS#uBAM" => uBAM_files, :not_overriden => true})
+        HTS.job(:BAM, sample, options)
       end
     elsif bam_files = sample_files[:BAM]
       path = [bam_files].flatten.first
@@ -49,19 +43,13 @@ module Sample
       if options[:bazam]
         options = options.merge({:bam => [orig_bam_files].flatten.first})
         options.delete(:bazam)
-        job = HTS.job(:BAM_rescore_realign_bazam, sample, options)
-        job.overriden = false
-        job
+        HTS.job(:BAM_rescore_realign_bazam, sample, options)
       elsif options[:by_group]
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
-        job = HTS.job(:BAM_rescore_realign_by_group, sample, options)
-        job.overriden = false
-        job
+        HTS.job(:BAM_rescore_realign_by_group, sample, options)
       else
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
-        job = HTS.job(:BAM_rescore_realign, sample, options)
-        job.overriden = false
-        job
+        HTS.job(:BAM_rescore_realign, sample, options)
       end
     else
       {:workflow => Sample, :task => :missing_data, :jobname => sample}

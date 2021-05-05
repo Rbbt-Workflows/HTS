@@ -1,6 +1,13 @@
 module Sample
 
   helper :organism do 
+    if organism = self.recursive_inputs[:organism]
+      return organism
+    end
+    if reference = self.recursive_inputs[:reference]
+      organism = Organism.organism_for_build reference
+      return organism if organism
+    end
     study = Sample.sample_study(sample)
     if study && Sample.study_dir(study).options.organism.exists?
       Sample.study_dir(study).options.organism.read.strip
