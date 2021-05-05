@@ -89,7 +89,7 @@ module Sample
     options = add_sample_options sample, options
 
     dep_RNA_BAM = dependencies.flatten.select{|dep| dep.task_name == :RNA_BAM }.first
-    options = options.merge("HTS#RNA_BAM" => dep_RNA_BAM)
+    options = options.merge("HTS#RNA_BAM" => dep_RNA_BAM, :not_overriden => true)
     {:inputs => options, :jobname => sample}
   end
 
@@ -102,7 +102,7 @@ module Sample
     options = add_sample_options sample, options
 
     dep_stringtie = dependencies.flatten.select{|dep| dep.task_name == :stringtie }.first
-    options = options.merge("HTS#stringtie" => dep_stringtie)
+    options = options.merge("HTS#stringtie" => dep_stringtie, :not_overriden => true)
     {:inputs => options, :jobname => sample}
   end
 
