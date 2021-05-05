@@ -55,13 +55,22 @@ module HTS
     gatk("MarkIlluminaAdapters", args)
   end
 
-  dep :mark_adapters
-  dep :uBAM
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :bwa_mem_args, :string, "Arg string", "-M -p"
   input :remove_unpaired, :boolean, "Remove possible unpaired reads", false
+  input :skip_mark_adapters, :boolean, "Skip mark adapters", false
+  dep :uBAM
+  dep :mark_adapters do |jobname,options,dependencies|
+    if options[:skip_mark_adapters]
+      job = dependencies.flatten.select{|d| d.task_name == :uBAM}.first.dup
+      job.overriden = :uBAM
+      job
+    else
+      {:inputs => options, :jobname => jobname}
+    end
+  end
   extension :bam
-  task :BAM_bwa => :binary do |reference, bwa_mem_args,remove_unpaired|
+  task :BAM_bwa => :binary do |reference, bwa_mem_args,remove_unpaired,skip_mark_adapters|
 
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference
@@ -80,12 +89,17 @@ module HTS
       Misc.with_fifo(fbwa_bam) do |bwa_bam|
         Misc.with_fifo(ffilter_sam) do |filter_sam|
 
+          mark_adapters = if skip_mark_adapters
+                            step(:uBAM)
+                          else
+                            step(:mark_adapters)
+                          end
           if remove_unpaired
-            io_filter = CMD.cmd(:samtools, "view -h --no-PG -f 0x1 '#{step(:mark_adapters).path}'", :pipe => true)
+            io_filter = CMD.cmd(:samtools, "view -h --no-PG -f 0x1 '#{mark_adapters.path}'", :pipe => true)
 
             Misc.consume_stream io_filter, true, filter_sam
           else
-            filter_sam = step(:mark_adapters).path
+            filter_sam = mark_adapters.path
           end
 
           args = {}
@@ -130,7 +144,7 @@ module HTS
           args["ATTRIBUTES_TO_RETAIN"] = "XS"
           args["SORT_ORDER"] = "queryname"
 
-          max = step(:mark_adapters).info[:reads]
+          max = mark_adapters.info[:reads]
           args[:progress_bar] = gatk_read_count_monitor("BWA", max) do |bar|
             ticks = bar.ticks
             ticks = max if ticks.to_i == 0
