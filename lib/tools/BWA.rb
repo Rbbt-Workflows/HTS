@@ -18,8 +18,16 @@ module BWA
   #self.search_paths = {}
   #self.search_paths[:default] = :lib
   
-  def self.mem(files, reference, args = "")
-    CMD.cmd(:bwa,"mem #{args} '#{reference}' #{files.collect{|f| "'#{f}'"} * " "} ", :pipe => true)
+  def self.mem_pipe(files, reference, args = "", io = nil, file = nil)
+    CMD.cmd(:bwa,"mem #{args} '#{reference}' - > #{file} ", :in => io)
+  end
+
+  def self.mem(files, reference, args = "", file = nil)
+    if file
+      CMD.cmd(:bwa,"mem #{args} '#{reference}' #{files.collect{|f| "'#{f}'"} * " "} > #{file} ")
+    else
+      CMD.cmd(:bwa,"mem #{args} '#{reference}' #{files.collect{|f| "'#{f}'"} * " "} ", :pipe => true)
+    end
   end
 
   def self.prepare_FASTA(file, dir = nil)

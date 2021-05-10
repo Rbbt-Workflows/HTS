@@ -56,15 +56,13 @@ module HTS
   end
 
   input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
-  input :bwa_mem_args, :string, "Arg string", "-M -p"
+  input :bwa_mem_args, :string, "Arg string", "-M -p -K 1000000 -v 0"
   input :remove_unpaired, :boolean, "Remove possible unpaired reads", false
   input :skip_mark_adapters, :boolean, "Skip mark adapters", false
   dep :uBAM
   dep :mark_adapters do |jobname,options,dependencies|
     if options[:skip_mark_adapters]
-      job = dependencies.flatten.select{|d| d.task_name == :uBAM}.first.dup
-      job.overriden = :uBAM
-      job
+      nil
     else
       {:inputs => options, :jobname => jobname}
     end
@@ -94,6 +92,7 @@ module HTS
                           else
                             step(:mark_adapters)
                           end
+
           if remove_unpaired
             io_filter = CMD.cmd(:samtools, "view -h --no-PG -f 0x1 '#{mark_adapters.path}'", :pipe => true)
 
@@ -104,34 +103,22 @@ module HTS
 
           args = {}
           args["INPUT"] = filter_sam
-          args["FASTQ"] = s2f_path
+          args["FASTQ"] = "/dev/stdout"
           args["CLIPPING_ATTRIBUTE"] = "XT"
           args["CLIPPING_ACTION"] = "2"
           args["INTERLEAVE"] = "true"
-          #args["NON_PF"] = "true"
 
-          io_s2f = gatk_io("SamToFastq", args)
-          t_s2f = Thread.new do
-            while line = io_s2f.gets
-              Log.debug line
-            end
-          end
+          io = gatk_io("SamToFastq", args)
 
           bwa_mem_args += " -t " << (config('cpus', 'bwa', :default => 8) || "1").to_s.strip
-          io_bwa = BWA.mem([s2f_path], reference, bwa_mem_args)
 
-          Misc.consume_stream io_bwa, true, bwa_bam
-
-          # DEBUG
-          #bwa_bam = '/data/tmp/test.bam'
-          #Misc.consume_stream io_bwa, false, bwa_bam
-          # DEBUG
-
-          uBAM = step('uBAM').path
+          Thread.new do
+            BWA.mem_pipe([s2f_path], reference, bwa_mem_args, io, bwa_bam)
+          end
 
           args = {}
           args["ALIGNED_BAM"] = bwa_bam
-          args["UNMAPPED_BAM"] = uBAM
+          args["UNMAPPED_BAM"] = step('uBAM').path
           args["OUTPUT"] = self.tmp_path
           args["R"] = reference
           args["CREATE_INDEX"] = "false"
@@ -143,6 +130,19 @@ module HTS
           args["PRIMARY_ALIGNMENT_STRATEGY"] = "MostDistant"
           args["ATTRIBUTES_TO_RETAIN"] = "XS"
           args["SORT_ORDER"] = "queryname"
+
+          # FROM GOAST
+          args["VALIDATION_STRINGENCY"] = "SILENT"
+          args["MAX_RECORDS_IN_RAM"]=200_000_000
+          args["EXPECTED_ORIENTATIONS"] = "FR"
+          args["ATTRIBUTES_TO_RETAIN"] = "X0"
+          args["ATTRIBUTES_TO_REMOVE"] = %w(NM MD)
+          args["PAIRED_RUN"] = true
+          args["IS_BISULFITE_SEQUENCE"] = false
+          args["UNMAPPED_READ_STRATEGY"]="COPY_TO_TAG"
+          args["ALIGNER_PROPER_PAIR_FLAGS"]=true 
+          args["UNMAP_CONTAMINANT_READS"]=true 
+          args["ADD_PG_TAG_TO_READS"]=false
 
           max = mark_adapters.info[:reads]
           args[:progress_bar] = gatk_read_count_monitor("BWA", max) do |bar|

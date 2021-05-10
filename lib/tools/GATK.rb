@@ -380,7 +380,7 @@ PrintVariants
 
     tmp_dir ||= self.tmpdir
     if tmp_dir
-      CMD.cmd(:gatk, "--java-options '-Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
+      CMD.cmd(:gatk, "--java-options '-Dsamjdk.compression_level=1 -Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
     else
       CMD.cmd(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
     end
@@ -394,7 +394,7 @@ PrintVariants
 
     tmp_dir ||= self.tmpdir
     if tmp_dir
-      CMD.cmd_log(:gatk, "--java-options '-Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
+      CMD.cmd_log(:gatk, "--java-options '-Dsamjdk.compression_level=1 -Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
     else
       CMD.cmd_log(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
     end

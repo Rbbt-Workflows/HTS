@@ -41,8 +41,9 @@ module HTS
 
   helper :reference_file do |reference|
     reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
-    case reference.sub('_noalt','')
+    ref = case reference.sub('_noalt','')
     when 'hg19', 'hg38', 'b37', 'hs37d5'
+      Organism["Hsa"][reference][reference + ".fa"].produce.find
       Organism["Hsa"][reference][reference + ".fa"].produce.find
     when 'mm10', 'GRCm38'
       Organism["Mmu"].GRCm38["GRCm38.fa"].produce.find
@@ -51,6 +52,13 @@ module HTS
     else
       reference
     end
+
+    begin
+      ref.replace_extension('.fa.gz', '.fa.gz.alt').produce
+    rescue
+    end
+
+    ref
   end
 
   helper :vcf_file do |orig_reference, file|
@@ -310,9 +318,11 @@ module HTS
   helper :fix_spark_args do |command,args|
     fixed_files = []
     if Hash === args
-      args_new = {}
+      args_new = IndiferentHash.setup({})
       args.each do |k,v|
+        k = k.to_s if Symbol === k
         k = k.downcase if k.length > 1
+        next if k == 'progress_bar'
         k = k.gsub('_', '-')
         v = if Array === v
               new = v.collect{|f| fix_file_for_spark(f) }
