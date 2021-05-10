@@ -62,10 +62,12 @@ class GATKShard
   end
 
 
-  def self.cmd(command, args, interval_list, chunk_size = 10_000_000, cpus = nil, contigs = nil, bar = nil, break_interval = false, &callback)
+  def self.cmd(command, args, interval_list, chunk_size = 10_000_000, cpus = nil, contigs = nil, bar = nil, break_interval = nil, &callback)
     interval_file_field = args.keys.select{|f| f =~ /interval/i and f !~ /padding/ }.first
     output_field = args.keys.select{|f| f =~ /output/i }.first
     cpus ||= Rbbt::Config.get('cpus', 'shard', :default => 3) 
+    break_interval = Rbbt::Config.get('break_interval', 'shard', 'GATK', 'gatk', 'interval', :default => false) if break_interval.nil?
+    break_interval = false if break_interval.to_s.downcase == 'false'
 
     q = RbbtProcessQueue.new cpus
 

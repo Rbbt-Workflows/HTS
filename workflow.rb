@@ -41,21 +41,25 @@ module HTS
 
   helper :reference_file do |reference|
     reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
-    ref = case reference.sub('_noalt','')
-    when 'hg19', 'hg38', 'b37', 'hs37d5'
-      Organism["Hsa"][reference][reference + ".fa"].produce.find
-      Organism["Hsa"][reference][reference + ".fa"].produce.find
-    when 'mm10', 'GRCm38'
-      Organism["Mmu"].GRCm38["GRCm38.fa"].produce.find
-    when 'rn6', 'Rno_6.0'
-      Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa"].produce.find
-    else
-      reference
-    end
 
-    begin
-      ref.replace_extension('.fa.gz', '.fa.gz.alt').produce
-    rescue
+    ref = case reference.sub('_noalt','')
+          when 'hg19', 'hg38', 'b37', 'hs37d5'
+            Organism["Hsa"][reference][reference + ".fa"]
+          when 'mm10', 'GRCm38'
+            Organism["Mmu"].GRCm38["GRCm38.fa"]
+          when 'rn6', 'Rno_6.0'
+            Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa"]
+          else
+            reference
+          end
+
+    if Path === ref
+      ref.produce
+      begin
+        ref.dup.replace_extension('fa.gz.alt', true).produce
+      rescue
+      end
+      ref = ref.find
     end
 
     ref
