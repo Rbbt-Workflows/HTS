@@ -93,7 +93,7 @@ module HTS
       uBAM_files = Dir.glob(File.join(uBAM_files, '*.bam')) + Dir.glob(File.join(uBAM_files, '*.ubam')) if (String === uBAM_files && File.directory?(uBAM_files))
       [uBAM_files].flatten.collect do |uBAM|
         read_group_name = File.basename(uBAM).sub(/.u?bam/i,'')
-        options = options.merge({"HTS#uBAM" => uBAM})
+        options = options.merge({"HTS#uBAM" => uBAM, :not_overriden => true})
         {:inputs => options, :jobname => [jobname, read_group_name] * "." }
       end
     else

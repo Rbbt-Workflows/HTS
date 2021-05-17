@@ -34,10 +34,11 @@ class GATKShard
       last_chr = chr if last_chr.nil?
 
       while remaining > 0
-        if break_interval
-          size = [chunk_size, remaining].min
-        else
-          size = remaining
+        size = remaining
+
+        if break_interval && (current_size + remaining) > (chunk_size * 1.2)
+          size = chunk_size - current_size
+          Log.warn("breaking interval #{[chr, start, eend] * ":"} at #{current_size} size #{size} remaining #{remaining} chunksize #{chunk_size}")
         end
 
         if current_size >= chunk_size && (chr != last_chr || (start > last_eend + gap))
@@ -69,13 +70,16 @@ class GATKShard
     break_interval = Rbbt::Config.get('break_interval', 'shard', 'GATK', 'gatk', 'interval', :default => false) if break_interval.nil?
     break_interval = false if break_interval.to_s.downcase == 'false'
 
+    is_bedfile = Misc.is_filename?(interval_list) && interval_list =~ /\.bed$/i 
+
     q = RbbtProcessQueue.new cpus
 
     q.callback &callback
 
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs)
-    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 5, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
-    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 20, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 25
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 10, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 20
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 25, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 20
+    chunks = GATKShard.chunk_intervals(interval_list, chunk_size / 50, contigs, break_interval) if chunks.length < (cpus.to_i * 2) || chunks.length < 20
 
     bar.max = chunks.length if bar
     bar.init if bar
@@ -85,6 +89,11 @@ class GATKShard
 
       q.init do |intervals|
         Log.low "GATKShard processing intervals #{Misc.fingerprint intervals}"
+
+        if ! is_bedfile
+          intervals = intervals.collect{|chr,start,eend| [chr, start.to_i - 1, eend] }
+        end
+
         name = [intervals.first * "__", intervals.last * "__"] * ","
         output = File.join(workdir, name)
 

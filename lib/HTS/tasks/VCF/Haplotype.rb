@@ -36,6 +36,11 @@ module HTS
     args["-ERC"] = reference_confidence_mode
     args["--max-alternate-alleles"] = 3
     args["--create-output-variant-index"] = false
+
+    # from GOAST
+    args["--smith-waterman"] = "FASTEST_AVAILABLE"
+    args["--pair-hmm-implementation"] = "FASTEST_AVAILABLE"
+
     shard = config('shard', :HaplotypeCaller, :haplotype,  :gatk)
 
     if shard == 'true'
