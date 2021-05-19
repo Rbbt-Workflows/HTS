@@ -9,8 +9,13 @@ require 'tools/GATK'
 class TestShard < Test::Unit::TestCase
 
   def test_intervals
-    intervals = ["chrM\t1\t70\n", "chrM\t100\t170\n"]
-    iii GATKShard.chunk_intervals(intervals, 50, nil, true)
+    intervals = ["chr1\t1\t13000", "chr1\t13001\t15000", "chr1\t16000\t18000", "chrM\t1\t7000\n", "chrM\t10000\t14000\n"]
+    Log.with_severity 0 do
+      iii intervals
+      iii GATKShard.chunk_intervals(intervals, 5000, nil, false)
+      iii GATKShard.chunk_intervals(intervals, 5000, nil, true)
+      iii GATKShard.chunk_intervals(intervals, 10000, nil, true)
+    end
   end
   
 

@@ -22,41 +22,69 @@ class GATKShard
       end
     end
 
+    gap = GATKShard::GAP_SIZE * 4
     chunks = []
-    current = []
 
+    current = []
     current_size = 0
+    
     last_eend = 0
     last_chr = nil
-    gap = GATKShard::GAP_SIZE * 4
-    TSV.traverse intervals, :type => :array do |chr,start,eend|
-      remaining = eend - start + 1
-      last_chr = chr if last_chr.nil?
 
-      while remaining > 0
-        size = remaining
-
-        if break_interval && (current_size + remaining) > (chunk_size * 1.2)
-          size = chunk_size - current_size
-          Log.warn("breaking interval #{[chr, start, eend] * ":"} at #{current_size} size #{size} remaining #{remaining} chunksize #{chunk_size}")
-        end
+    if ! break_interval
+      TSV.traverse intervals, :type => :array do |chr,start,eend|
+        interval_size = eend - start + 1
+        last_chr = chr if last_chr.nil?
 
         if current_size >= chunk_size && (chr != last_chr || (start > last_eend + gap))
           chunks << current
           current = []
           current_size = 0
         end
+        current << [chr, start, eend]
+        current_size += interval_size
 
-        current << [chr, start.to_s, (start + size - 1).to_s ]
-        current_size += size
-
-        remaining = remaining - size
-        start += size
+        last_eend = eend
+        last_chr = chr
       end
+    else
+      TSV.traverse intervals, :type => :array do |chr,start,eend|
+        interval_size = eend - start + 1
+        last_chr = chr if last_chr.nil?
 
-      last_eend = eend
-      last_chr = chr
+        if current_size + interval_size > chunk_size * 1.2
+          if current.any? && (current_size + interval_size > chunk_size * 0.8)
+            chunks << current
+            current = []
+            current_size = 0
+          end
+
+          remaining = interval_size
+
+          while remaining > 0
+            partial_size = [remaining, chunk_size - current_size].min
+            Log.low "Breaking interval #{[chr, start, eend]} at #{start + partial_size - 1}" if partial_size != remaining
+            current << [chr, start, start + partial_size - 1]
+            chunks << current
+            current = []
+            current_size = 0
+            remaining = remaining - partial_size
+            start = start + partial_size
+          end
+
+        elsif current_size + interval_size < chunk_size || (chr == last_chr && (start < last_eend + gap))
+          current << [chr, start, eend]
+          current_size += interval_size
+          next
+        else
+          current << [chr, start, eend]
+          chunks << current
+          current = []
+          current_size = 0
+        end
+      end
     end
+
     chunks << current if current.any?
 
     chunks
@@ -126,6 +154,7 @@ class GATKShard
         output
       end
 
+      chunks = chunks.sort_by{ rand }
       TSV.traverse chunks, :type =>:array do |intervals|
         q.process intervals
       end
