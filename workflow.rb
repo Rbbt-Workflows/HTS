@@ -203,7 +203,7 @@ module HTS
           line =~ /Nmer$/
         end
       end
-    }.collect{|line| parts = line.split("\t").values_at(0,1,2); parts[1] = parts[1].to_i - 1; parts * "\t"}
+    }.collect{|line| parts = line.split("\t").values_at(0,1,2); parts[1] = parts[1].to_i; parts * "\t"}
   end
 
   helper :monitor_genome do |stream,bgzip=true|
@@ -340,6 +340,11 @@ module HTS
         args_new[k] = v
       end
       args = args_new
+
+
+      if spark_cpus = config(:cpus, :spark, "spark_" + command, "spark_" + command.downcase, command, command.downcase)
+        args["--spark-master"] = "local[#{spark_cpus}]"
+      end
 
       case command.to_s
         #when "BaseRecalibrator"

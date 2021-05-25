@@ -32,13 +32,22 @@ module HTS
     args["--output"] = output
     args["-R"] = reference
     args["--intervals"] = interval_list if interval_list
-    args["-ip"] = 500 if interval_list
+    args["--interval-padding"] = GATKShard::GAP_SIZE if interval_list
     args["-ERC"] = reference_confidence_mode
     args["--max-alternate-alleles"] = 3
     args["--create-output-variant-index"] = false
+
+    # from GOAST
+    args["--smith-waterman"] = "FASTEST_AVAILABLE"
+    args["--pair-hmm-implementation"] = "FASTEST_AVAILABLE"
+
     shard = config('shard', :HaplotypeCaller, :haplotype,  :gatk)
 
     if shard == 'true'
+
+      break_interval = Rbbt::Config.get('break_interval', 'shard', 'GATK', 'gatk', 'interval', :default => false) if break_interval.nil?
+      break_interval = false if break_interval.to_s.downcase == 'false'
+
       contigs = Samtools.reference_contigs reference
       cpus = config('cpus', :HaplotypeCaller, :haplotype, :shard, :gatk, :default => 2)
       headervcf = file('tmp.header')
@@ -48,7 +57,7 @@ module HTS
       bar = self.progress_bar("Processing HaplotypeCaller sharded")
 
       outfiles = file('output')
-      GATKShard.cmd("HaplotypeCaller", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
+      GATKShard.cmd("HaplotypeCaller", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar, break_interval) do |ioutfile|
         bar.tick
         Open.mv ioutfile, outfiles[File.basename(ioutfile) + '.vcf']
       end

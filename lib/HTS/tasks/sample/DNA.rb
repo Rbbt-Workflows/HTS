@@ -506,6 +506,8 @@ module Sample
     {:inputs => options, :jobname => sample}
   end
 
+  # ToDo: Utilizar todas las mutaciones de la cohorte cuando haya mas de una
+  # muestra
   dep :BAM
   dep :genomic_mutations
   dep :sequenza_CNV

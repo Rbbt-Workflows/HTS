@@ -378,11 +378,14 @@ PrintVariants
 
     arg_string = self.hash2args(args) if Hash === args
 
+    log = false
+    pipe = true
+
     tmp_dir ||= self.tmpdir
     if tmp_dir
-      CMD.cmd(:gatk, "--java-options '-Dsamjdk.compression_level=1 -Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
+      CMD.cmd(:gatk, "--java-options '-Dsamjdk.compression_level=1 -Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => log, :pipe => pipe, :in => sin, :progress_bar => progress_bar)
     else
-      CMD.cmd(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
+      CMD.cmd(:gatk, "#{command} #{arg_string}", :log => log, :pipe => pipe, :in => sin, :progress_bar => progress_bar)
     end
   end
 
@@ -394,9 +397,9 @@ PrintVariants
 
     tmp_dir ||= self.tmpdir
     if tmp_dir
-      CMD.cmd_log(:gatk, "--java-options '-Dsamjdk.compression_level=1 -Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
+      CMD.cmd_log(:gatk, "--java-options '-Dsamjdk.compression_level=1 -Djava.io.tmpdir=#{tmp_dir}' #{command} #{arg_string}", :in => sin, :progress_bar => progress_bar)
     else
-      CMD.cmd_log(:gatk, "#{command} #{arg_string}", :log => true, :pipe => true, :in => sin, :progress_bar => progress_bar)
+      CMD.cmd_log(:gatk, "#{command} #{arg_string}", :in => sin, :progress_bar => progress_bar)
     end
   end
 end
