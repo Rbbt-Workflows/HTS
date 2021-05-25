@@ -268,7 +268,11 @@ module HTS
 
     #{{{ Recalibration
     shard = config('shard', :BaseRecalibrator, :baserecalibrator, :rescore, :gatk)
+
     if shard.to_s == 'true'
+      break_interval = Rbbt::Config.get('break_interval', 'shard', 'GATK', 'gatk', 'interval', :default => false) if break_interval.nil?
+      break_interval = false if break_interval.to_s.downcase == 'false'
+
       contigs = Samtools.bam_contigs(input_bam_job)
       bam_file = Samtools.prepare_BAM(input_bam_job)
       args["input"] = bam_file
@@ -279,7 +283,7 @@ module HTS
       bar = self.progress_bar("Processing BaseRecalibrator sharded")
 
       outfiles = Path.setup(file('outfiles_recall'))
-      GATKShard.cmd("BaseRecalibrator", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
+      GATKShard.cmd("BaseRecalibrator", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar, break_interval) do |ioutfile|
         bar.tick
         Open.mv ioutfile, outfiles[File.basename(ioutfile + '.report')]
         nil
@@ -325,7 +329,7 @@ module HTS
       Open.mkdir outfiles
 
       bar = self.progress_bar("Processing ApplyBQSR sharded")
-      GATKShard.cmd("ApplyBQSR", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
+      GATKShard.cmd("ApplyBQSR", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar, false) do |ioutfile|
         bar.tick
         chr, pos = Samtools.BAM_start ioutfile
         target = outfiles[File.basename(ioutfile) + '.bam']

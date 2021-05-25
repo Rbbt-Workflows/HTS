@@ -8,7 +8,7 @@ require 'tools/GATK'
 
 class TestShard < Test::Unit::TestCase
 
-  def test_intervals
+  def _test_intervals
     intervals = ["chr1\t1\t13000", "chr1\t13001\t15000", "chr1\t16000\t18000", "chrM\t1\t7000\n", "chrM\t10000\t14000\n"]
     Log.with_severity 0 do
       iii intervals
@@ -18,6 +18,21 @@ class TestShard < Test::Unit::TestCase
     end
   end
   
+  def test_hg38
+    Workflow.require_workflow "HTS"
+    reference = "#{ENV["HOME"]}/.rbbt/var/fasta_indices/16beaa30591fbef604f9c752327c4bf0/hg38.fa.gz"
+    intervals = HTS.helpers[:intervals_for_reference].call reference
+    chunks = GATKShard.chunk_intervals intervals, GATKShard::CHUNK_SIZE / 10, nil, false
+    assert !GATKShard.chunks_overlap?(chunks)
+    chunks = Log.with_severity 0 do
+      GATKShard.chunk_intervals intervals, GATKShard::CHUNK_SIZE / 5, nil, true
+    end
+    iii chunks.length
+    assert GATKShard.chunks_overlap?(chunks)
+    GATKShard.chunk_sizes(chunks)
+  end
+  
+
 
   def __test_interval_file
     interval_file = Path.setup("/data/Patients/Bellmunt/data/Padded.b37.bed")

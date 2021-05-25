@@ -458,4 +458,22 @@ module HTS
     gatk("FilterSamReads", args)
     nil
   end
+
+  input :bam, :file, "BAM file", nil, :nofile => true
+  extension :bam
+  task :remove_spillover => :binary do |bam|
+    io_in = CMD.cmd(:samtools, "view -h #{bam}", :pipe => true)
+
+    last = nil
+    io_out = TSV.traverse io_in, :type => :array, :into => :stream, :bar => true do |line|
+      next line if line[0] == "@"
+      pos = line.split("\t")[3].to_i
+      next if last && pos <= last
+      last = pos
+      line
+    end
+
+    CMD.cmd(:samtools, "view -h -b - > #{self.tmp_path}", :in => io_out)
+    nil
+  end
 end
