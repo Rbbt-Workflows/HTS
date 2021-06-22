@@ -32,7 +32,8 @@ module HTS
     cdna = Salmon.prepare_CDNA_FASTA Organism.cdna_fasta(organism).produce.find
     Open.mkdir files_dir
     output = file('output')
-    CMD.cmd_log("salmon quant -l A --index #{cdna}.idx -1 #{fastq1} -2 #{fastq2} --output #{output}")
+    cpus = config :cpus, :salmon, :salmon_quant
+    CMD.cmd_log("salmon", "quant -l A --index #{cdna}.idx -1 #{fastq1} -2 #{fastq2} --output #{output}", "--threads" => cpus )
     Open.cp output["quant.sf"], self.tmp_path
     nil
   end

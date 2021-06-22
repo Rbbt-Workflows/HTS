@@ -87,7 +87,7 @@ module HTS
   end
 
   input :mutations, :array, "Array of genomic mutations"
-  input :bam, :file, "BAM file"
+  input :bam, :file, "BAM file", nil, :nofile => true
   input :add_chr, :boolean, "Add chr prefix to BED contigs (auto-detects if not specified)"
   task :mutation_read_counts => :tsv do |mutations,bam,add_chr|
 
@@ -98,7 +98,7 @@ module HTS
 
     TmpFile.with_file(Misc.genomic_mutations_to_BED(mutations, add_txt, bam_contigs)) do |bed|
       TmpFile.with_file(CMD.cmd("samtools view -H '#{bam}' | grep -P \"@SQ\tSN:\" | sed 's/@SQ\tSN://' | sed 's/\tLN:/\t/'", :pipe => true)) do |genome|
-        CMD.cmd(:bedtools, "coverage -counts -sorted -a #{bed} -b '#{bam}' -g #{genome} > #{self.tmp_path}")
+        CMD.cmd_log(:bedtools, "coverage -counts -sorted -a #{bed} -b '#{bam}' -g #{genome} > #{self.tmp_path}")
       end
     end
     nil
@@ -120,6 +120,46 @@ module HTS
     end
     nil
   end
+
+  input :mutations, :array, "Array of genomic mutations"
+  input :bam, :file, "BAM file", nil, :nofile => true
+  input :add_chr, :boolean, "Add chr prefix to BED contigs (auto-detects if not specified)"
+  task :mutation_support => :tsv do |mutations,bam,add_chr|
+
+    bam_contigs =  Samtools.bam_contigs(bam)
+
+    add_chr = bam_contigs.first.include? 'chr' if add_chr.nil?
+    add_txt = add_chr ? 'add' : 'remove'
+
+    pileup = file('pileup')
+    mutations = mutations.select{|m| %w(A C T G).include? m.split(":").last}
+
+    tsv = TSV.setup({}, :key_field => "Genomic Mutation", :fields => ["Coverage", "Variant Reads"], :type => :list, :cast => :to_i)
+
+    mutations.each do |mutation|
+      tsv[mutation] = [0, 0]
+    end
+
+    TmpFile.with_file(Misc.genomic_mutations_to_BED(mutations, add_txt, bam_contigs)) do |bed|
+      io = CMD.cmd(:samtools, "mpileup -l #{bed} '#{bam}' ", :pipe => true)
+      TSV.traverse io, :type => :array, :bar => self.progress_bar("Calculating mutation support") do |line|
+        chr, pos, ref, depth, bases = line.split("\t")
+        depth = depth.to_i
+        counts = Misc.counts(bases.upcase.chars)
+
+        %w(A C T G).each do |alt|
+          m = [chr, pos, alt] * ":"
+          if tsv[m]
+            tsv[m] = [depth, counts[alt]]
+          end
+        end
+      end
+    end
+
+    tsv
+  end
+
+
 
 
 end
