@@ -31,9 +31,9 @@ module GATK
     tmpdir
   end
 
-  def self.BAM_sample_name(bam_file)
+  def self.BAM_sample_name(bam_file, reference = nil)
     TmpFile.with_file do |tmp_file|
-      GATK.run_log('GetSampleName', :input => bam_file, :output => tmp_file)
+      GATK.run_log('GetSampleName', :input => bam_file, :output => tmp_file, :reference => reference)
       Open.read(tmp_file)
     end
   end

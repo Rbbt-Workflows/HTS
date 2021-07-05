@@ -89,7 +89,17 @@ module Sample
                             end
 
                             sample_files[sample] ||= {}
-                            sample_files[sample]["BAM"] = path if path =~ /.*\.bam/i
+                            sample_files[sample]["BAM"] = path if path =~ /.*\.bam$/i
+
+                            bam_files = path.glob("*.cram") + path.glob("*.CRAM")
+                            if bam_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["CRAM"] = bam_files
+                            end
+
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["CRAM"] = path if path =~ /.*\.cram$/i
+
 
                             ubam_files = path.glob("*.ubam") + path.glob("*.uBAM")
                             if ubam_files.any?
@@ -97,7 +107,7 @@ module Sample
                               sample_files[sample]["uBAM"] = ubam_files
                             end
                             sample_files[sample] ||= {}
-                            sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam/i
+                            sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam$/i
 
                             orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam") + \
                               path.glob("*.orig.BAM") + path.orig.glob("*.BAM")
@@ -107,7 +117,17 @@ module Sample
                             end
 
                             sample_files[sample] ||= {}
-                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam/i
+                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam$/i
+
+                            orig_files = path.glob("*.orig.cram") + path.orig.glob("*.cram") + \
+                              path.glob("*.orig.CRAM") + path.orig.glob("*.CRAM")
+                            if orig_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["orig.CRAM"] = orig_files
+                            end
+
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["orig.CRAM"] = path if path =~ /.*\.orig\.cram$/i
                           end
 
                           dir.glob('W?S.orig/*').each do |path|
@@ -120,6 +140,14 @@ module Sample
                             end
                             sample_files[sample] ||= {}
                             sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/i
+
+                            orig_files = path.glob("*.cram") + path.glob("*.CRAM")
+                            if orig_files.any?
+                              sample_files[sample] ||= {}
+                              sample_files[sample]["orig.CRAM"] = orig_files
+                            end
+                            sample_files[sample] ||= {}
+                            sample_files[sample]["orig.CRAM"] = path if path =~ /.*\.cram$/i
                           end
 
                           sample_files.delete_if do |sample,info| info.empty? end

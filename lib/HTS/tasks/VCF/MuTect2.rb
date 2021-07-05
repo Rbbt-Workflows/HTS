@@ -48,8 +48,8 @@ module HTS
     tumor = Samtools.prepare_BAM(tumor)
     normal = Samtools.prepare_BAM(normal) if normal
 
-    tumor_sample = GATK.BAM_sample_name(tumor)
-    normal_sample = GATK.BAM_sample_name(normal) if normal
+    tumor_sample = GATK.BAM_sample_name(tumor, reference)
+    normal_sample = GATK.BAM_sample_name(normal, reference) if normal
 
     raise "No normal sample name" if normal and normal_sample.nil?
 

@@ -8,7 +8,6 @@ module Sample
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   input :bazam, :boolean, "Use bazam instead of RevertSam", false
-  extension :bam
   dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
 
@@ -39,6 +38,12 @@ module Sample
       job.task_name = :BAM
       job.workflow = HTS
       job
+    elsif cram_files = sample_files[:CRAM]
+      path = [cram_files].flatten.first
+      job = Step.new path
+      job.task_name = :BAM
+      job.workflow = HTS
+      job
     elsif orig_bam_files = sample_files["orig.BAM"]
       if options[:bazam]
         options = options.merge({:bam => [orig_bam_files].flatten.first})
@@ -51,12 +56,19 @@ module Sample
         options = options.merge({:bam_file => [orig_bam_files].flatten.first})
         HTS.job(:BAM_rescore_realign, sample, options)
       end
+    elsif orig_cram_files = sample_files["orig.CRAM"]
+      if options[:by_group]
+        options = options.merge({:bam_file => [orig_cram_files].flatten.first})
+        HTS.job(:BAM_rescore_realign_by_group, sample, options)
+      else
+        options = options.merge({:bam_file => [orig_cram_files].flatten.first})
+        HTS.job(:BAM_rescore_realign, sample, options)
+      end
     else
       {:workflow => Sample, :task => :missing_data, :jobname => sample}
     end
   end
 
-  extension :bam
   dep_task :BAM_normal, Sample, :BAM do |sample,options|
     nsample = nil
     sample_files = nil

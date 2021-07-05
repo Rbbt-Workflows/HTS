@@ -63,7 +63,10 @@ module Samtools
 
     CMD.get_tool :samtools
     linked = dir[basename].find
-    if ! File.exists?(linked + ".bai") || Persist.newer?(linked + ".bai", file)
+    if ! (
+        (File.exists?(linked + ".bai") && ! Persist.newer?(linked + ".bai", file)) ||
+        (File.exists?(linked + ".crai") && ! Persist.newer?(linked + ".crai", file))
+    )
 
       Misc.in_dir dir do
         Open.ln_s file, linked unless File.exists?(linked)

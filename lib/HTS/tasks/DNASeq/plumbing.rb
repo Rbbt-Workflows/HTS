@@ -39,9 +39,19 @@ module HTS
   input :by_group, :boolean, "Separate files by read-group", true
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
   input :tmp_dir, :string, "Temporary directory", nil
-  task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir|
+  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir,reference|
     args = {}
     args["INPUT"] = bam_file
+
+    if bam_file =~ /\.cram/i
+      orig_reference = reference_file(reference)
+      reference = BWA.prepare_FASTA orig_reference
+      reference = GATK.prepare_FASTA orig_reference
+      reference = Samtools.prepare_FASTA orig_reference
+      args["REFERENCE_SEQUENCE"] = reference
+    end
+
 
     if by_group
       Open.mkdir file("uBAM").find
@@ -65,10 +75,10 @@ module HTS
     gatk("RevertSam", args, tmp_dir)
     if by_group
       file("uBAM").glob("*")
+    else
+      nil
     end
-    nil
   end
-
 
   input :bam_file , :file, "BAM", :nofile => true
   task :revert_BAM_sharded do |bam_file|
