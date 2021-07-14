@@ -159,6 +159,15 @@ module Samtools
     Open.read(reference + '.fai').split("\n").collect{|line| line.split("\t").first}
   end
 
+  def self.contig_sizes(reference)
+    sizes = {}
+    Open.read(reference + '.fai').split("\n").collect do |line| 
+      name, size, *rest = line.split("\t")
+      sizes[name] = size.to_i
+    end
+    sizes
+  end
+
   def self.bam_contigs(bam)
     bam = bam.path if Step === bam
     bam = bam.find if Path === bam
