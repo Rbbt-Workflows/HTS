@@ -158,7 +158,7 @@ module HTS
   dep :revert_BAM, :compute => :produce, :by_group => false
   extension :bam
   dep_task :BAM_rescore_realign, HTS, :BAM do |jobname,options,dependencies|
-    {:inputs => options.merge("HTS#uBAM" =>  dependencies.first, :not_overriden => true), :jobname => jobname}
+    {:inputs => options.merge("HTS#uBAM" =>  dependencies.first), :jobname => jobname}
   end
 
   dep :bazam_revert_BAM_RG, :compute => :produce

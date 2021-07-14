@@ -46,22 +46,22 @@ module Sample
       job
     elsif orig_bam_files = sample_files["orig.BAM"]
       if options[:bazam]
-        options = options.merge({:bam => [orig_bam_files].flatten.first})
+        options = options.merge({:bam => [orig_bam_files].flatten.first, :not_overriden => true})
         options.delete(:bazam)
         HTS.job(:BAM_rescore_realign_bazam, sample, options)
       elsif options[:by_group]
-        options = options.merge({:bam_file => [orig_bam_files].flatten.first})
+        options = options.merge({:bam_file => [orig_bam_files].flatten.first, :not_overriden => true})
         HTS.job(:BAM_rescore_realign_by_group, sample, options)
       else
-        options = options.merge({:bam_file => [orig_bam_files].flatten.first})
+        options = options.merge({:bam_file => [orig_bam_files].flatten.first, :not_overriden => true})
         HTS.job(:BAM_rescore_realign, sample, options)
       end
     elsif orig_cram_files = sample_files["orig.CRAM"]
       if options[:by_group]
-        options = options.merge({:bam_file => [orig_cram_files].flatten.first})
+        options = options.merge({:bam_file => [orig_cram_files].flatten.first, :not_overriden => true})
         HTS.job(:BAM_rescore_realign_by_group, sample, options)
       else
-        options = options.merge({:bam_file => [orig_cram_files].flatten.first})
+        options = options.merge({:bam_file => [orig_cram_files].flatten.first, :not_overriden => true})
         HTS.job(:BAM_rescore_realign, sample, options)
       end
     else
