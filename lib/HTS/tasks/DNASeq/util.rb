@@ -46,10 +46,14 @@ module HTS
 
     raise ParameterException, "No population VCF for pileup BAM pileup summaries" if vcf.nil?
 
+    orig_reference = reference_file(reference)
+    reference = GATK.prepare_FASTA orig_reference
+
     variants_file = GATK.prepare_VCF vcf
     args = {}
     args["input"] = Samtools.prepare_BAM bam 
     args["variant"] = variants_file
+    args["reference"] = reference
     args["output"] = self.tmp_path
     args["intervals"] = variants_file
 
