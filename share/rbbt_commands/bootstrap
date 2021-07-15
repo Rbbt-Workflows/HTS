@@ -115,7 +115,7 @@ EOF
   end
 
   desc "Run benchmark"
-  input :reference, :select, "Reference code", 'miniref', :select_options => %w(b37 hg38 miniref)
+  input :reference, :select, "Reference code", 'hg38', :select_options => %w(b37 hg38 miniref)
   dep do |jobname,options|
     if options[:reference] == "miniref"
       {:task => :prepare_miniref_known_sites, :jobname => jobname, :inputs => options}
