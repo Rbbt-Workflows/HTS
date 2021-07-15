@@ -85,8 +85,10 @@ module GATK
     if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
-        Open.rm linked
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        if linked != file
+          Open.rm linked
+          FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        end
         args = {}
         args["input"] = linked
         GATK.run_log("IndexFeatureFile", args)
