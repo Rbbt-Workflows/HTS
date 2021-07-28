@@ -63,18 +63,21 @@ module Samtools
 
     CMD.get_tool :samtools
     linked = dir[basename].find
-    if ! (
+
+    Misc.lock linked do
+      if ! (
         (File.exists?(linked + ".bai") && ! Persist.newer?(linked + ".bai", file)) ||
         (File.exists?(linked + ".crai") && ! Persist.newer?(linked + ".crai", file))
-    )
+      )
 
-      Misc.in_dir dir do
-        Open.ln_s file, linked unless File.exists?(linked)
-        cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
-        if cpus
-          Samtools.run("index -@ #{cpus} '#{ linked }'")
-        else
-          Samtools.run("index '#{ linked }'")
+        Misc.in_dir dir do
+          Open.ln_s file, linked unless Open.exists?(linked)
+          cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+          if cpus
+            Samtools.run("index -@ #{cpus} '#{ linked }'")
+          else
+            Samtools.run("index '#{ linked }'")
+          end
         end
       end
     end

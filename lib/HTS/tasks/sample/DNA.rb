@@ -167,8 +167,8 @@ module Sample
   dep :strelka, :canfail => true
   dep :muse, :canfail => true
   dep :manta_somatic, :canfail => true
-  dep :pindel_indels, :canfail => true
-  dep :svABA_indels, :canfail => true
+  #dep :pindel_indels, :canfail => true
+  #dep :svABA_indels, :canfail => true
   #dep :varscan
   task :caller_cohort => :array do
     dependencies.collect do |dep|
