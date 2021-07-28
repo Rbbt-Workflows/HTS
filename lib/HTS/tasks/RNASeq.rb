@@ -1,6 +1,7 @@
 require 'tools/FuSeq'
 require 'HTS/tasks/RNASeq/BAM'
 require 'HTS/tasks/RNASeq/salmon'
+require 'HTS/tasks/RNASeq/kallisto'
 require 'HTS/tasks/RNASeq/FuSeq'
 require 'HTS/tasks/RNASeq/splicing'
 

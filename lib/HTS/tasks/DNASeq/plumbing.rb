@@ -39,7 +39,7 @@ module HTS
   input :by_group, :boolean, "Separate files by read-group", true
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
   input :tmp_dir, :string, "Temporary directory", nil
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :cram_original_reference, :select, "Reference code used for reading CRAM files", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir,reference|
     args = {}
     args["INPUT"] = bam_file

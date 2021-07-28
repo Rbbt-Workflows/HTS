@@ -52,6 +52,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    RNASeq=RNASeq{
     BAM.rb
     FuSeq.rb
+    kallisto.rb
     salmon.rb
     splicing.rb
    }
