@@ -9,7 +9,7 @@ module HTS
   input :snpFile, :file, "File containing known SNP", nil, :nofile => true
   input :intervals, :file, "List of Intervals for the capture regions", nil, :nofile => true
   input :mate_orientation,:string, "0 (for single ends), RF (Illumina mate-pairs), FR (Illumina paired-ends), FF (SOLiD mate-pairs)" "FR" 
-  dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
+  dep :BAM_pileup_sumaries, :jobname => "Default"
   extension :vcf
   task :control_freeC => :tsv do |sample_mateFile, control_mateFile, reference, snpFile, intervals, mate_orientation|
     output = file('output')

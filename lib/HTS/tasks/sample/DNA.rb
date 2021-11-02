@@ -432,7 +432,7 @@ module Sample
   end
 
   input :studies, :array, "Samples to use", Sample.all_studies
-  dep :mutect2_pre, :compute => :produce do |jobname, options|
+  dep :mutect2_filters, :compute => :produce do |jobname, options|
     samples = []
     options[:studies].each do |study|
       samples += (Sample.study_samples(study))

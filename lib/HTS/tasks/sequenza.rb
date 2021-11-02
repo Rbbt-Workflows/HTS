@@ -51,7 +51,40 @@ module HTS
     orig_reference = reference_file(reference)
     reference = Samtools.prepare_FASTA orig_reference
 
-    CMD.cmd("sequenza-utils", "bam2seqz -gc '#{step(:GC_windows).path}'  -n '#{normal}' -t '#{tumor}' --fasta '#{reference}' | bgzip > #{self.tmp_path}")
+    cpus = config :cpus, :sequenza_bam2seqz, :bam2seqz, :sequenza, :seqz
+    if cpus && cpus.to_i > 1
+      chromosomes = Open.read(reference.replace_extension('dict', true)).split("\n").select{|l| 
+        (m = l.match(/LN:(\d+)/)) && m[1].to_i > 1_000_000
+      }.collect{|l| l.match(/SN:([^\s]+)/)[1]}
+        
+      normal = Samtools.prepare_BAM normal
+      tumor = Samtools.prepare_BAM tumor
+      Open.mkdir files_dir
+      output = file('output')
+      CMD.cmd("sequenza-utils", "bam2seqz -gc '#{step(:GC_windows).path}' --chromosome #{chromosomes.collect{|chr| "'#{chr}'" } * " "} --parallel #{cpus.to_i}  -n '#{normal}' -t '#{tumor}' --fasta '#{reference}' -o #{output}")
+
+      joined = file('joined')
+
+      first = true
+      chromosomes.each do |chr|
+        file = output + "_" + chr
+        if first
+          CMD.cmd("cat #{file} > #{joined}")
+        else
+          CMD.cmd("tail -n +2 #{file} >> #{joined}")
+        end
+        first = false
+      end
+
+      CMD.cmd("bgzip #{joined}")
+
+      FileUtils.mv joined + '.gz', self.tmp_path
+
+      FileUtils.rm_rf files_dir
+      nil
+    else
+      CMD.cmd("sequenza-utils", "bam2seqz -gc '#{step(:GC_windows).path}'  -n '#{normal}' -t '#{tumor}' --fasta '#{reference}' | bgzip > #{self.tmp_path}")
+    end
     nil
   end
 
