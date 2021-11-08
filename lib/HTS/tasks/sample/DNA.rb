@@ -8,6 +8,7 @@ module Sample
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   input :bazam, :boolean, "Use bazam instead of RevertSam", false
+  extension :bam
   dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
 
