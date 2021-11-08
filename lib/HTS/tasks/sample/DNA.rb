@@ -1,6 +1,18 @@
 
 module Sample
 
+  def self.can_produce?(job)
+    return true if job.done?
+    deps = job.dependencies.dup
+    while deps.any?
+      dep = deps.pop
+      return false if dep.task_name == :missing_data
+      next if dep.done?
+      deps.concat dep.dependencies if dep.dependencies
+    end
+    true
+  end
+
   task :missing_data => :string do 
     sample = clean_name
     raise "Sample #{ sample } unknown or data missing"
@@ -8,6 +20,7 @@ module Sample
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false
   input :bazam, :boolean, "Use bazam instead of RevertSam", false
+  extension 'bam'
   dep_task :BAM, HTS, :BAM, :fastq1 => :placeholder, :fastq2 => :placeholder do |sample,options|
     sample_files = Sample.sample_files sample
 
@@ -69,6 +82,7 @@ module Sample
     end
   end
 
+  extension 'bam'
   dep_task :BAM_normal, Sample, :BAM do |sample,options|
     nsample = nil
     sample_files = nil
@@ -80,7 +94,12 @@ module Sample
       break if sample_files
     end
 
-    {:inputs => options, :jobname => nsample} if sample_files
+    if sample_files
+      {:inputs => options, :jobname => nsample}
+    else
+      j = Sample.job(:BAM, sample + "_normal", options)
+      Sample.can_produce?(j) ? j : nil
+    end
   end
 
   #{{{ EXPORT HTS METHODS
@@ -126,9 +145,15 @@ module Sample
           break if sample_files
         end
 
-        {:inputs => options, :jobname => sample} if sample_files
+        if sample_files
+          {:inputs => options, :jobname => nsample}
+        else
+          j = Sample.job(:BAM_normal, sample, options)
+          iif j
+          iif j.dependencies
+          Sample.can_produce?(j) ? j : nil
+        end
       end
-      dep :BAM, :compute => :bootstrap
     else
       dep :BAM_normal, :compute => :bootstrap do |sample,options|
         nsample = nil
@@ -140,17 +165,23 @@ module Sample
           break if sample_files
         end
 
-        next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
-
-        {:inputs => options, :jobname => sample}
+        if sample_files
+          {:inputs => options, :jobname => nsample}
+        else
+          j = Sample.job(:BAM_normal, sample, options)
+          Sample.can_produce?(j) ? j : {:workflow => Sample, :task => :missing_data, :jobname => sample}
+        end
       end
-      dep :BAM, :compute => :bootstrap
     end
+    dep :BAM, :compute => :bootstrap
     extension :vcf if CALLERS.include?(task.to_s)
     dep_task task, HTS, otask, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
       sample = jobname
       sample_files = Sample.sample_files sample
-      next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
+
+      if dependencies.empty? && sample_files.nil?
+        next {:workflow => Sample, :task => :missing_data, :jobname => sample}
+      end
 
       options = add_sample_options jobname, options
 
@@ -221,12 +252,16 @@ module Sample
     end
   end
 
-  dep :BAM_normal do |jobname,options|
+  dep :BAM_normal do |jobname,options,dependencies|
     sample = jobname
     if Sample.sample_files(sample + "_normal") || (sample.include?(":") && Sample.sample_files(sample.sub(/:.*/, ":normal")))
       {:inputs => options, :jobname => jobname, :task => :BAM_normal}
     elsif sample_files = Sample.sample_files(sample)
       {:inputs => options, :jobname => jobname, :task => :BAM}
+    elsif Sample.can_produce?(job = Sample.job(:BAM_normal, jobname))
+      job
+    elsif Sample.can_produce?(job = Sample.job(:BAM, jobname)).done?
+      job
     else
       {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
     end
@@ -278,8 +313,6 @@ module Sample
   input :caller, :select, "Caller to use", :mutect2, :select_options => CALLERS
   dep Sample, :mutect2 do |sample,options|
     sample_files = Sample.sample_files sample
-
-    #next {:workflow => Sample, :task => :missing_data, :jobname => sample} if sample_files.nil?
 
     if sample_files && sample_files.include?("VCF")
       nil
