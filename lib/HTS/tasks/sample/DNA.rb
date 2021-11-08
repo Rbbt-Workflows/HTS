@@ -149,8 +149,6 @@ module Sample
           {:inputs => options, :jobname => nsample}
         else
           j = Sample.job(:BAM_normal, sample, options)
-          iif j
-          iif j.dependencies
           Sample.can_produce?(j) ? j : nil
         end
       end
