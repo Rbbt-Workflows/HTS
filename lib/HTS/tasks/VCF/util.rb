@@ -115,9 +115,15 @@ module HTS
     add_txt = add_chr ? 'add' : 'remove'
 
     mutations = mutations.select{|m| %w(A C T G).include? m.split(":").last}
-    TmpFile.with_file(Misc.genomic_mutations_to_BED(mutations, add_txt, bam_contigs)) do |bed|
-      CMD.cmd(:samtools, "mpileup -l #{bed} '#{bam}' | paste - #{bed} > #{self.tmp_path}")
-    end
+
+    bedfile = file('regions.bed')
+    pileup = file('pileup')
+
+    Open.write(bedfile, Misc.genomic_mutations_to_BED(mutations, add_txt, bam_contigs))
+
+    CMD.cmd(:samtools, "mpileup -l '#{bedfile}' '#{bam}' -o '#{pileup}' -a")
+    CMD.cmd("paste '#{pileup}' '#{bedfile}' > #{self.tmp_path}")
+
     nil
   end
 

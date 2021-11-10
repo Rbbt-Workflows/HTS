@@ -146,7 +146,7 @@ module Sample
         end
 
         if sample_files
-          {:inputs => options, :jobname => nsample}
+          {:inputs => options, :jobname => sample}
         else
           j = Sample.job(:BAM_normal, sample, options)
           Sample.can_produce?(j) ? j : nil
@@ -164,7 +164,7 @@ module Sample
         end
 
         if sample_files
-          {:inputs => options, :jobname => nsample}
+          {:inputs => options, :jobname => sample}
         else
           j = Sample.job(:BAM_normal, sample, options)
           Sample.can_produce?(j) ? j : {:workflow => Sample, :task => :missing_data, :jobname => sample}
