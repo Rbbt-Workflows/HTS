@@ -34,7 +34,7 @@ module HTS
       ref_counts = (base_counts.values - [alt_counts]).max
       cn_key = cn_index[pos.to_i].select{|key| key.split(":").first.sub('chr', '') == chr.sub('chr', '')}.first
 
-      if cn_key && false
+      if cn_key 
         values = copynumber[cn_key]
         major_cn = values[7]
         minor_cn = values[8]

@@ -426,16 +426,27 @@ module HTS
 
   input :bam, :file, "BAM file", nil, :nofile => true
   input :bed_file, :file, "BED file", nil, :nofile => true
+  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38 mm10), :nofile => true
   extension :bam
-  task :extract_BAM_region_with_mates_samtools => :binary do |bam,bed_file|
+  task :extract_BAM_region_with_mates_samtools => :binary do |bam,bed_file,reference|
     cpus = config :cpus, :samtools_bam, :samtools_view, :samtools, :default => 2
+
+
     TmpFile.with_file do |reads|
-      CMD.cmd_log(:samtools, "view -L '#{bed_file}' '#{bam}' |cut -f 1 > '#{reads}'")
+      cpus = config :cpus, :samtools_view, :samtools, :view, :default => 1
+      if reference
+        orig_reference = reference_file(reference)
+        reference = GATK.prepare_FASTA orig_reference
+        CMD.cmd_log(:samtools, "view --threads #{cpus} -L '#{bed_file}' -T #{reference} '#{bam}' |cut -f 1 > '#{reads}'")
+      else
+        CMD.cmd_log(:samtools, "view --threads #{cpus} -L '#{bed_file}' '#{bam}' |cut -f 1 > '#{reads}'")
+      end
 
       args = {}
       args["INPUT"] = bam
       args["OUTPUT"] = self.tmp_path
       args["READ_LIST_FILE"] = reads
+      args["REFERENCE_SEQUENCE"] = reference if reference
       args["FILTER"] = 'includeReadList'
 
       gatk("FilterSamReads", args)
