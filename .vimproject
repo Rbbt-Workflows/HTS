@@ -44,6 +44,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    RNASeq.rb
    VCF.rb
    sample.rb
+   study.rb
    sequenza.rb
    test.rb
    FastQC.rb
@@ -87,6 +88,9 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    sample=sample{
     DNA.rb
     RNA.rb
+   }
+   study=study{
+    DNA.rb
    }
   }
  }

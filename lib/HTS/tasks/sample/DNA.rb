@@ -135,7 +135,7 @@ module Sample
     end
 
     if allow_tumor_only
-      dep :BAM_normal, :compute => :bootstrap do |sample,options|
+      dep :BAM_normal, :compute => :canfail do |sample,options|
         nsample = nil
         sample_files = nil
         sample_study = Sample.sample_study(sample)
@@ -188,6 +188,13 @@ module Sample
       end
       {:inputs => options}
     end
+  end
+
+  dep :BAM_normal
+  dep_task :normal_mutect2_for_panel, HTS, :mutect2_pre, :tumor => :BAM_normal, :normal => nil, :pon => 'none', :max_mnp_distance => 0 do |sample,options,dependencies|
+    options = add_sample_options sample, options
+    bam_normal = dependencies.flatten.first
+    {:inputs => options}
   end
 
 
@@ -463,14 +470,14 @@ module Sample
   end
 
   input :studies, :array, "Samples to use", Sample.all_studies
-  dep :mutect2_filters, :compute => :produce do |jobname, options|
+  dep :mutect2_filters, :compute => :produce, :max_mnp_distance => 0 do |jobname, options|
     samples = []
     options[:studies].each do |study|
       samples += (Sample.study_samples(study))
     end
-    normal_samples = samples.flatten.select{|x| x.include?"normal"}.uniq
+    normal_samples = samples.flatten.select{|x| x.include? "normal" }.uniq
     normal_samples.collect {|normal_sample|
-      {:jobname => normal_sample}
+      {:jobname => normal_sample, :inputs => options}
     }
   end
   extension :vcf
@@ -551,10 +558,31 @@ module Sample
 
   # ToDo: Utilizar todas las mutaciones de la cohorte cuando haya mas de una
   # muestra
+  #dep :BAM
+  #dep :genomic_mutations
+  #dep :sequenza_CNV
+  #dep_task :pyclone, HTS, :pyclone, :copynumber => :sequenza_CNV, :bam => :BAM, :mutations => :genomic_mutations do |jobname,options|
+  #  options[:sample_name] = jobname
+  #  {:inputs => options}
+  #end
+
   dep :BAM
   dep :genomic_mutations
   dep :sequenza_CNV
-  dep_task :pyclone, HTS, :pyclone, :copynumber => :sequenza_CNV, :bam => :BAM, :mutations => :genomic_mutations do |jobname,options|
+  dep :mutect2
+  dep :sequenza_purity
+  dep_task :pyclone, HTS, :pyclone, :copynumber => :sequenza_CNV, :bam => :BAM, :vcf_file => :mutect2, :mutations => :genomic_mutations, :tumor_content => :sequenza_purity do |jobname,options|
+    options[:sample_name] = jobname
+    {:inputs => options}
+  end
+
+  dep :BAM
+  dep :genomic_mutations
+  dep :sequenza_CNV
+  dep :mutect2
+  dep :sequenza_purity
+  dep :organism
+  dep_task :cancer_cell_fraction, HTS, :cancer_cell_fraction, :copynumber => :sequenza_CNV, :bam => :BAM, :vcf_file => :mutect2, :mutations => :genomic_mutations, :tumor_content => :sequenza_purity, :organism => :organism do |jobname,options|
     options[:sample_name] = jobname
     {:inputs => options}
   end

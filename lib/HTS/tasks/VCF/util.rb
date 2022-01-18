@@ -114,6 +114,8 @@ module HTS
     add_chr = bam_contigs.first.include? 'chr' if add_chr.nil?
     add_txt = add_chr ? 'add' : 'remove'
 
+    mutations = mutations.read.split("\n") if IO === mutations
+
     mutations = mutations.select{|m| %w(A C T G).include? m.split(":").last}
 
     bedfile = file('regions.bed')
@@ -164,7 +166,6 @@ module HTS
 
     tsv
   end
-
 
 
 

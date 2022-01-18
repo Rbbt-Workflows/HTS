@@ -410,6 +410,24 @@ module HTS
     end
   end
 
+  helper :capture_intervals do |reference,type='wgs_calling_regions'|
+    reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
+
+    type = 'exome_capture' if %w(wes wxs).include? type.downcase
+    type = 'wgs_calling_regions' if %w(wgs).include? type.downcase
+
+    file = case reference.sub('_noalt','')
+           when 'hg19', 'hg38', 'b37', 'hs37d5'
+             Organism["Hsa"][reference].known_sites[type + '.interval_list']
+           when 'mm10', 'GRCm38'
+             Organism["Mmu"].GRCm38.known_sites[type + '.interval_list']
+           when 'rn6', 'Rno_6.0'
+             Organism["Rno"]["Rnor_6.0"].known_sites[type + '.interval_list']
+           end
+    file.produce
+    file.find
+  end
+
 end
 
 require 'HTS/tasks/DNASeq'
@@ -424,3 +442,4 @@ require 'HTS/tasks/BAMSurgeon'
 require 'HTS/tasks/FastQC'
 require 'HTS/tasks/pyclone'
 require 'HTS/tasks/sample' if defined? Sample
+require 'HTS/tasks/study' if defined? Study
