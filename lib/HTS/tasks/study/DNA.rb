@@ -1,11 +1,13 @@
 module Study
 
   dep Sample, :normal_mutect2_for_panel do |jobname,options|
-    samples = Sample.study_samples(jobname).uniq
-    samples.select{|sample| ! sample.include? 'normal'}.
-      collect do |sample|
+    jobname.split(",").collect do |study|
+      samples = Sample.study_samples(study.strip).uniq
+      samples.select{|sample| ! sample.include? 'normal'}.
+        collect do |sample|
         {:jobname => sample.split(":").last}
-    end
+      end
+    end.flatten
   end
   input :interval_list, :file, "Interval list", nil, :nofile => true
   extension :vcf
@@ -41,7 +43,6 @@ module Study
       args["genomicsdb-workspace-path"] = "./pon_db"
       args["merge-input-intervals"] = "TRUE"
       args["intervals"] = intervals
-      iif args
       GATK.run_log("GenomicsDBImport", args)
 
       args = {}

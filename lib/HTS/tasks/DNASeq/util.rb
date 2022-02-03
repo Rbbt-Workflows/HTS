@@ -36,13 +36,13 @@ module HTS
 
     vcf = vcf_file(reference, pileup_germline_resource)
 
-    germline_resource = if reference.include?('mm10') || reference.include?('GRCm38')
-                          Log.warn "Germline resource #{pileup_germline_resource} not found for #{reference} using mm10_variation instead"
-                          vcf = vcf_file(reference, "mm10_variation")
-                       elsif reference.include?('rn6') || reference.include?('Rnor_6.0')
-                          Log.warn "Germline resource #{pileup_germline_resource} not found for #{reference} using rn6_variation instead"
-                          vcf = vcf_file(reference, "rn6_variation")
-                       end if vcf.nil?
+    if reference.include?('mm10') || reference.include?('GRCm38')
+      Log.warn "Germline resource #{pileup_germline_resource} not found for #{reference} using mm10_variation instead"
+      vcf = vcf_file(reference, "mm10_variation")
+    elsif reference.include?('rn6') || reference.include?('Rnor_6.0')
+      Log.warn "Germline resource #{pileup_germline_resource} not found for #{reference} using rn6_variation instead"
+      vcf = vcf_file(reference, "rn6_variation")
+    end if vcf.nil?
 
     raise ParameterException, "No population VCF for pileup BAM pileup summaries" if vcf.nil?
 
@@ -191,7 +191,7 @@ module HTS
     reads_2 = file('reads_2')
     Open.write(reads_2, %w(read chr pos qual) * "\t" + "\n")
     CMD.cmd("samtools view --no-PG #{bam_2} | cut -f 1,2,3,4,11 | sed 's/\\t/:/' >> #{reads_2}")
-    
+
     first = []
     last = []
     common = []
@@ -282,7 +282,7 @@ module HTS
     TSV.traverse output, :type => :array, :into => tsv do |line|
       next if line =~ /^(?:@|CONTIG)/ 
       contig, pos, r_count, a_count, r, a = line.split("\t")
-    
+
       position = [contig, pos] * ":"
       [position, [a_count, r_count, a, r]]
     end
@@ -294,7 +294,7 @@ module HTS
   task :sort_BAM => :binary do |bam,sort_order|
     Open.mkdir files_dir 
     sorted = file('sorted.bam')
-    
+
     args = {}
     args["INPUT"] = bam
     args["OUTPUT"] = sorted
