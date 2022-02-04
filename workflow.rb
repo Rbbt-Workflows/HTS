@@ -367,6 +367,18 @@ module HTS
     [args, fixed_files]
   end
 
+  helper :log_gatk do |command,args|
+    save_args = {}
+    args.each do |k,v|
+      next if k.to_s == "progress_bar"
+      save_args[k.to_s] = v.to_s
+    end
+    gatk_log = info[:gatk_log]
+    gatk_log ||= []
+    gatk_log << [command, save_args]
+    set_info :gatk_log, gatk_log
+  end
+
   helper :gatk_io do |command,args,sin=nil,tmp_dir=nil|
 
     if GATK::SPARK_COMMANDS.include?(command) and config('spark', :gatk, command) 
@@ -374,6 +386,8 @@ module HTS
       command += "Spark"
       set_info :spark, true
     end
+
+    log_gatk command, args
 
     begin
       GATK.run(command, args, sin, tmp_dir)
@@ -389,6 +403,8 @@ module HTS
       command += "Spark"
       set_info :spark, true
     end
+
+    log_gatk command, args
 
     begin
       GATK.run_log(command, args, sin, tmp_dir)
