@@ -30,6 +30,7 @@ module HTS
               Organism["Hsa"].b37.known_sites["panel_of_normals.vcf"].produce.find
             when 'hg38'
               Organism["Hsa"].hg38.known_sites["panel_of_normals.vcf"].produce.find
+            else
               raise "No default or Broad panel of normals for reference '#{reference}'"
             end
     end

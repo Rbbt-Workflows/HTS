@@ -16,6 +16,7 @@ Use - to read from STDIN
 
 -h--help Print this help
 -l--list Only list the samples
+-u--update_studies Update study cache
 
 EOF
 if options[:help]
@@ -27,7 +28,6 @@ if options[:help]
   exit 0
 end
 
-
 elem = ARGV[0]
 
 list = options[:list]
@@ -37,7 +37,7 @@ Workflow.require_workflow "HTS"
 
 require 'HTS/tasks/sample'
 
-study_files = Sample.load_study_files
+study_files = Sample.load_study_files options[:update_studies]
 
 if study_files.include? elem
   sample_files = study_files[elem]

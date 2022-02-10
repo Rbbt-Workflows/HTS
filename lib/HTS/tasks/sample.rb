@@ -214,8 +214,8 @@ module Sample
                       end
   end
 
-  def self.load_study_files
-    @@study_files ||= Persist.persist("Study_files", :marshal, :file => Rbbt.var.cache.HTS_study_files.find) do
+  def self.load_study_files(update = false)
+    @@study_files ||= Persist.persist("Study_files", :marshal, :file => Rbbt.var.cache.HTS_study_files.find, :update => update) do
                         dna = load_study_files_DNA
                         rna = load_study_files_RNA
 
@@ -260,6 +260,17 @@ module Sample
     samples = samples.select{|smpl| smpl.is_a? Hash}
     samples = samples.map{|hash| hash.keys}.flatten
     samples.map{|sample| study + ":" + sample}
+  end
+
+  def self.matched_normal(sample, study = nil)
+    nsample = nil
+    [sample + '_normal', [study, "normal"] * ":"].each do |normal_sample|
+      nsample = normal_sample
+
+      sample_files = Sample.sample_files normal_sample if study == Sample.sample_study(nsample)
+      return nsample if sample_files
+    end
+    nil
   end
 
   def self.sample_study(sample)
