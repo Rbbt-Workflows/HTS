@@ -82,7 +82,14 @@ module Samtools
       end
     end
 
-    linked
+    if File.exists?(linked + '.crai')
+      linked_cram = linked.sub(/\.bam$/,'.cram')
+      Open.ln_s linked, linked_cram
+      Open.ln_s linked + '.crai', linked_cram + '.crai'
+      linked_cram
+    else
+      linked
+    end
   end
   
   def self.prepare_FASTA(file, dir = nil)
