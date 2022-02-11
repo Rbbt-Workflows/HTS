@@ -1,7 +1,7 @@
 module HTS
   input :BAM, :file, "BAM file", nil, :nofile => true
   input :BAM_list, :array, "List of BAM files"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :reference_confidence_mode, :select, "Mode for emitting reference confidence scores", "NONE", :select_options => %w(NONE BP_RESOLUTION GVCF)
   extension :vcf

@@ -2,7 +2,7 @@ require 'tools/BAM_shard'
 module HTS
 
   input :bam_files, :array, "BAM filenames to multiplex"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension :bam
   task :BAM_multiplex => :binary do |bam_filenames,reference|
     bam_filenames = Dir.glob(File.join(bam_filenames.first, "*.bam")) if Array === bam_filenames && bam_filenames.length == 1 && ! Step === bam_filenames && File.directory?(bam_filenames.first)
@@ -39,7 +39,7 @@ module HTS
   input :by_group, :boolean, "Separate files by read-group", true
   input :max_discard_fraction, :boolean, "Max dicard fraction", 0.05
   input :tmp_dir, :string, "Temporary directory", nil
-  input :cram_original_reference, :select, "Reference code used for reading CRAM files", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :cram_original_reference, :select, "Reference code used for reading CRAM files", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :revert_BAM => :binary do |bam_file,by_group,max_discard_fraction,tmp_dir,reference|
     args = {}
     args["INPUT"] = bam_file

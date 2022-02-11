@@ -2,7 +2,7 @@ module HTS
 
   
   input :interval_list, :file, "Interval list", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension 'interval_list'
   task :preprocess_intervals => :tsv do |interval_list,reference|
 
@@ -35,7 +35,7 @@ module HTS
   end
 
   dep :preprocess_intervals
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension 'bed'
   task :germline_intervals => :tsv do |reference|
     file = GATK.known_sites[reference]["af-only-gnomad.vcf.gz"].produce.find
@@ -61,7 +61,7 @@ module HTS
 
   dep :germline_intervals
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension 'tsv'
   task :collect_allelic_counts => :tsv do |bam,reference|
 

@@ -42,7 +42,7 @@ module HTS
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   dep :GC_windows, :jobname => :reference
   extension 'seqz.gz'
   task :seqz => :text do |normal,tumor,reference|

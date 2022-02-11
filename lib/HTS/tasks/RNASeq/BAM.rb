@@ -3,7 +3,7 @@ module HTS
   input :fastq1, :array, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :array, "FASTQ 2 file", nil, :nofile => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :read_group_name, :string, "READ_GROUP_NAME BAM field", nil
   input :sample_name, :string, "SAMPLE_NAME BAM field", nil
   input :library_name, :string, "LIBRARY_NAME BAM field", "DefaultLibraryName"
@@ -18,7 +18,7 @@ module HTS
     output = file('output')
     Open.mkdir output
 
-    reference = 'b37' if reference.nil? && organism.nil?
+    reference = 'hg38' if reference.nil? && organism.nil?
     reference = 'hg38_noalt' if reference == 'hg38'
     organism = Organism.organism_for_build(reference) if organism.nil? and reference
 
@@ -45,7 +45,7 @@ module HTS
   input :fastq1, :array, "FASTQ 1 file", nil, :nofile => true
   input :fastq2, :array, "FASTQ 2 file", nil, :nofile => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :phred, :select, "Phred Qualities", 'phred33', :select_options => %w(phred33 phred64)
   input :rna_strandness, :select, "RNA Strandness", 'FR', :select_options => %w(FR)
   input :read_group_name, :string, "READ_GROUP_NAME BAM field", nil
@@ -59,7 +59,7 @@ module HTS
     cpus = config("cpus", :hisat_build, :hisat, :default => 1)
     samtools_cpus = config("cpus", :samtools_index, :samtools, :index, :default => nil)
 
-    reference = 'b37' if reference.nil? && organism.nil?
+    reference = 'hg38' if reference.nil? && organism.nil?
     organism = Organism.organism_for_build(reference) if organism.nil? and reference
 
     index = HISAT.build_gft_index(organism, cpus)
@@ -134,14 +134,14 @@ module HTS
 
   dep :RNA_BAM_sorted
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :RNA_BAM_cigars => :binary do |organism,reference|
     Open.mkdir files_dir 
     fixed = file('fixed.bam')
 
     if reference.nil? && organism
       reference = Organism.hg_build(organism) 
-      reference = 'b37' if reference == 'hg19'
+      reference = 'hg38' if reference == 'hg19'
     end
     
     orig_reference = reference_file(reference)

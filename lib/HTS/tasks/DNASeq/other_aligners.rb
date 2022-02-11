@@ -1,6 +1,6 @@
 module HTS
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file", nil, :nofile => true
   input :fastq2, :file, "FASTQ file 2", nil, :nofile => true
   extension :bam
@@ -20,7 +20,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file", nil, :nofile => true
   input :fastq2, :file, "FASTQ file 2", nil, :nofile => true
   input :bowtie_args, :string, "Bowtie2 arguments", "--end-to-end"
@@ -56,7 +56,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :fastq1, :file, "FASTQ file", nil, :nofile => true
   input :fastq2, :file, "FASTQ file 2", nil, :nofile => true
   input :novoalign_args, :string, "NovoAlign arguments", "-F STDFQ -R 0 -r All 9999 -o SAM -o FullNW"

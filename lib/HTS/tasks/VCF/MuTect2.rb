@@ -4,7 +4,7 @@ module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :interval_padding, :integer, "Interval padding", 50
   input :pon, :file, "Panel of normals", 'default', :nofile => true
@@ -126,7 +126,7 @@ module HTS
     nil
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   dep :contamination, :tumor_bam => :tumor, :normal_bam => :normal, :compute => :canfail

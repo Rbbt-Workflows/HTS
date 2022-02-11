@@ -368,7 +368,7 @@ module Sample
     sample = clean_name
     options = Sample.sample_options(sample).merge(Sample.study_options(sample))
     organism ||= Organism.organism_for_build(reference) if reference
-    organism ||= options[:organism] || Organism.organism_for_build(options[:reference] || 'b37') || Organism.default_code("Hsa")
+    organism ||= options[:organism] || Organism.organism_for_build(options[:reference] || 'hg38') || Organism.default_code("Hsa")
     organism
   end
 

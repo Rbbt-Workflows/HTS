@@ -30,7 +30,7 @@ module HTS
   #dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   
   input :bam_file, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :pileup_germline_resource, :file, "Germline resource for BAM_pileup_sumaries", :small_exac, :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,reference,pileup_germline_resource|
 
@@ -91,7 +91,7 @@ module HTS
 
 
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension 'pileup.gz'
   task :pileup => :text do |bam,reference|
     orig_reference = reference_file(reference)
@@ -180,7 +180,7 @@ module HTS
   end
 
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :bam_1, :file, "BAM file", nil, :nofile => true
   input :bam_2, :file, "BAM file", nil, :nofile => true
   task :compare_BAM => :tsv do |bam_1,bam_2|
@@ -253,7 +253,7 @@ module HTS
 
   input :BAM, :file, "BAM file", nil, :nofile => true
   input :positions, :array, "Genomic position"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :BAM_position_pileup => :tsv do |bam,positions,reference|
     bam = Samtools.prepare_BAM(bam)
     reference = reference_file reference
@@ -426,7 +426,7 @@ module HTS
 
   input :bam, :file, "BAM file", nil, :nofile => true
   input :bed_file, :file, "BED file", nil, :nofile => true
-  input :reference, :select, "Reference code", nil, :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   extension :bam
   task :extract_BAM_region_with_mates_samtools => :binary do |bam,bed_file,reference|
     cpus = config :cpus, :samtools_bam, :samtools_view, :samtools, :default => 2

@@ -4,7 +4,7 @@ module HTS
   input :positions, :array, "Genomic Positions"
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :depth, :integer, "Expected read depth", 50
   task :mutation_BAM_img => :array do |positions,tumor,normal,reference,depth|
     output = file('output')

@@ -4,7 +4,7 @@ module HTS
   input :varfile, :file, "variants file in bed format", :nofile => true
   input :bamfile, :file, "BAM", :nofile => true
   input :outbam, :file, "Output BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :snvfrac, :float, "Maximum allowable linked SNP MAF (for avoiding haplotypes)", 1
   input :mutfrac, :float, "Allelic fraction at which to make SNVs", 0.1
   input :numsnvs, :float, "maximum number of mutations to try (default: entire input)", nil
@@ -32,7 +32,7 @@ module HTS
 
   input :varfile, :file, "variants file in bed format", nil, :nofile => true
   input :bamfile, :file, "BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :snvfrac, :float, "Maximum allowable linked SNP MAF (for avoiding haplotypes)", 1
   input :mutfrac, :float, "Allelic fraction at which to make SNVs", 0.5
   input :numsnvs, :float, "maximum number of mutations to try (default: entire input)", nil
@@ -66,7 +66,7 @@ module HTS
   input :varfile, :file, "variants file in bed format", :nofile => true
   input :bamfile, :file, "BAM", :nofile => true
   input :outbam, :file, "Output BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :maxlibsize, :float, "imaximum fragment length of seq. library"
   input :kmer, :float, "kmer size for assembly", 31
   input :svfrac, :float, "allele fraction of variant", 1.0

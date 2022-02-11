@@ -9,7 +9,7 @@ module HTS
 
   input :truth_vcf, :file, "Truth VCF"
   input :input_vcf, :file, "VCF to compare"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :somatic, :boolean, "Do somatic instead of germline", false
   task :hap_py => :tsv do |truth,input,reference,somatic|
     orig_reference = reference_file(reference)
@@ -167,6 +167,20 @@ module HTS
     tsv
   end
 
+  input :vcf1, :file, "File 1", nil, :nofile => true
+  input :vcf2, :file, "File 2", nil, :nofile => true
+  extension :vcf
+  task :join_vcfs => :text do |vcf1,vcf2|
+    Misc.open_pipe do |f|
+      Open.open(vcf1) do |sin|
+        Misc.consume_stream(sin, false, f, false)
+      end
+      Open.open(vcf2) do |v|
+        io = CMD.cmd("grep -v '^#' ", :in => v, :pipe => true)
+        Misc.consume_stream(io, false, f)
+      end
+    end
+  end
 
 
 end

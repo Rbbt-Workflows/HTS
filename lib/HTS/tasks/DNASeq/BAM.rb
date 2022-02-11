@@ -55,7 +55,7 @@ module HTS
     gatk("MarkIlluminaAdapters", args)
   end
 
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :bwa_mem_args, :string, "Arg string", "-M -p -K 1000000 -v 0"
   input :remove_unpaired, :boolean, "Remove possible unpaired reads", false
   input :skip_mark_adapters, :boolean, "Skip mark adapters", false
@@ -226,7 +226,7 @@ module HTS
   dep :BAM_sorted
   extension :bam
   input :interval_list, :file, "Interval list", nil, :nofile => true
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :known_sites, :array, "List of population resources for this reference"
   task :BAM_rescore => :binary do |interval_list,reference,known_sites|
 

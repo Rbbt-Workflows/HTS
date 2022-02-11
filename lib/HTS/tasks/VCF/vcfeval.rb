@@ -8,7 +8,7 @@ module HTS
 
   input :truth_vcf, :file, "Truth VCF"
   input :input_vcf, :file, "VCF to compare"
-  input :reference, :select, "Reference code", "b37", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :truth_sample, :string, "Tumor sample name in truth VCF"
   input :input_sample, :string, "Tumor sample name in input VCF"
   task :vcfeval => :tsv do |truth,input,reference,truth_sample,input_sample|
