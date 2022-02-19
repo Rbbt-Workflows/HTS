@@ -240,9 +240,9 @@ module HTS
     bar.init
 
     bar.process = lambda do |line|
-      if m = line.match(/(?:\s(\d+),000,000\s|Processed (\d+) fastq reads)/)
+      if m = line.match(/(?:\s([\d,]+),000,000\s|Processed (\d+) fastq reads)/)
         if m[1]
-          pos = m[1]
+          pos = m[1].gsub(',', '')
           pos.to_i * 1_000_000
         elsif m[2]
           pos = m[2]

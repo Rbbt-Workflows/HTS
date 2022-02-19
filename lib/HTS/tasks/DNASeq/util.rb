@@ -433,6 +433,7 @@ module HTS
 
 
     TmpFile.with_file do |reads|
+      log :samtools, "Extracting read list with samtools"
       cpus = config :cpus, :samtools_view, :samtools, :view, :default => 1
       if reference
         orig_reference = reference_file(reference)
@@ -442,6 +443,7 @@ module HTS
         CMD.cmd_log(:samtools, "view --threads #{cpus} -L '#{bed_file}' '#{bam}' |cut -f 1 > '#{reads}'")
       end
 
+      log :FilterSamReads, "Extracting reads with FilterSamReads"
       args = {}
       args["INPUT"] = bam
       args["OUTPUT"] = self.tmp_path

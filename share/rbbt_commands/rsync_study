@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/util/migrate'
+
+$0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Synchronize a complete study or just a particular sample
+
+$ #{$0} [options] <source> <target> [<sample>] [<sample>]
+
+Source and target must point to the study folders
+
+-h--help Print this help
+-t--test Do a verbose dry run
+EOF
+
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.doc
+  end
+  exit 0
+end
+
+source, target, *samples = ARGV
+
+raise ParameterException if target.nil?
+
+cmd = "rsync -avz -L --include options --include 'options/*' --include WGS --include WES --include WGS.orig --include WES.orig"
+
+samples.each do |sample|
+  cmd << " --include 'W*/#{sample}' --include 'W*/#{sample}/*' " 
+  cmd << " --include 'W*/#{sample}_normal' --include 'W*/#{sample}_normal/*' " 
+  cmd << " --include 'W*/normal' --include 'W*/normal/*' " 
+end
+cmd << " --exclude '*'"
+
+cmd << ' -n' if options[:test] 
+
+cmd << " '#{source}' '#{target}' "
+
+CMD.cmd_log(cmd)

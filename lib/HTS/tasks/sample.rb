@@ -45,199 +45,201 @@ module Sample
   end
 
   def self.load_study_files_DNA
-    @@study_files_DNA ||= begin
-                        study_files = {}
-                        Sample.all_studies.each do |study|
-                          dir = Sample.study_dir study
-                          sample_files = {}
+    begin
+      study_files = {}
+      Sample.all_studies.each do |study|
+        dir = Sample.study_dir study
+        sample_files = {}
 
-                          dir.glob('genotypes/*').each do |path|
-                            file = File.basename path
-                            sample = file.split(".").first
+        dir.glob('genotypes/*').each do |path|
+          file = File.basename path
+          sample = file.split(".").first
 
-                            if File.directory?(path)
-                              vcf_files = path.glob("*.vcf.*")
-                              if vcf_files.any?
-                                sample_files[sample] ||= {}
-                                sample_files[sample]["VCF"] = vcf_files
-                              end
-                            else
-                              if path =~ /\.vcf*/
-                                sample_files[sample] ||= {}
-                                sample_files[sample]["VCF"] ||= []
-                                sample_files[sample]["VCF"] << path
-                              end
-                            end
-                          end
+          if File.directory?(path)
+            vcf_files = path.glob("*.vcf.*")
+            if vcf_files.any?
+              sample_files[sample] ||= {}
+              sample_files[sample]["VCF"] = vcf_files
+            end
+          else
+            if path =~ /\.vcf*/
+              sample_files[sample] ||= {}
+              sample_files[sample]["VCF"] ||= []
+              sample_files[sample]["VCF"] << path
+            end
+          end
+        end
 
-                          dir.glob('W?S/*').each do |path|
-                            file = File.basename path
-                            sample = file.split(".").first
-                            fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz") + path.glob("*.fq") + path.glob("*.fq.gz")).sort
-                            if fastq_files.any?
-                              fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:\.|_)(?:2|reads?2)\.(?:fastq|fq)/ }
-                              fastq2_files += fastq_files.select{|f| File.basename(f) =~ /_R2_/ }
-                              fastq1_files = fastq_files - fastq2_files
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["FASTQ"] = [fastq1_files, fastq2_files]
-                            end
+        dir.glob('W?S/*').each do |path|
+          file = File.basename path
+          sample = file.split(".").first
+          fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz") + path.glob("*.fq") + path.glob("*.fq.gz")).sort
+          if fastq_files.any?
+            fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:\.|_)(?:2|reads?2)\.(?:fastq|fq)/ }
+            fastq2_files += fastq_files.select{|f| File.basename(f) =~ /_R2_/ }
+            fastq1_files = fastq_files - fastq2_files
+            sample_files[sample] ||= {}
+            sample_files[sample]["FASTQ"] = [fastq1_files, fastq2_files]
+          end
 
-                            bam_files = path.glob("*.bam") + path.glob("*.BAM")
-                            if bam_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["BAM"] = bam_files
-                            end
+          bam_files = path.glob("*.bam") + path.glob("*.BAM")
+          if bam_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["BAM"] = bam_files
+          end
 
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["BAM"] = path if path =~ /.*\.bam$/i
+          sample_files[sample] ||= {}
+          sample_files[sample]["BAM"] = path if path =~ /.*\.bam$/i
 
-                            bam_files = path.glob("*.cram") + path.glob("*.CRAM")
-                            if bam_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["CRAM"] = bam_files
-                            end
+          bam_files = path.glob("*.cram") + path.glob("*.CRAM")
+          if bam_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["CRAM"] = bam_files
+          end
 
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["CRAM"] = path if path =~ /.*\.cram$/i
+          sample_files[sample] ||= {}
+          sample_files[sample]["CRAM"] = path if path =~ /.*\.cram$/i
 
 
-                            ubam_files = path.glob("*.ubam") + path.glob("*.uBAM")
-                            if ubam_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["uBAM"] = ubam_files
-                            end
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam$/i
+          ubam_files = path.glob("*.ubam") + path.glob("*.uBAM")
+          if ubam_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["uBAM"] = ubam_files
+          end
+          sample_files[sample] ||= {}
+          sample_files[sample]["uBAM"] = path if path =~ /.*\.ubam$/i
 
-                            orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam") + \
-                              path.glob("*.orig.BAM") + path.orig.glob("*.BAM")
-                            if orig_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["orig.BAM"] = orig_files
-                            end
+          orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam") + \
+            path.glob("*.orig.BAM") + path.orig.glob("*.BAM")
+          if orig_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["orig.BAM"] = orig_files
+          end
 
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam$/i
+          sample_files[sample] ||= {}
+          sample_files[sample]["orig.BAM"] = path if path =~ /.*\.orig\.bam$/i
 
-                            orig_files = path.glob("*.orig.cram") + path.orig.glob("*.cram") + \
-                              path.glob("*.orig.CRAM") + path.orig.glob("*.CRAM")
-                            if orig_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["orig.CRAM"] = orig_files
-                            end
+          orig_files = path.glob("*.orig.cram") + path.orig.glob("*.cram") + \
+            path.glob("*.orig.CRAM") + path.orig.glob("*.CRAM")
+          if orig_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["orig.CRAM"] = orig_files
+          end
 
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["orig.CRAM"] = path if path =~ /.*\.orig\.cram$/i
-                          end
+          sample_files[sample] ||= {}
+          sample_files[sample]["orig.CRAM"] = path if path =~ /.*\.orig\.cram$/i
+        end
 
-                          dir.glob('W?S.orig/*').each do |path|
-                            file = File.basename path
-                            sample = file.split(".").first
-                            orig_files = path.glob("*.bam") + path.glob("*.BAM")
-                            if orig_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["orig.BAM"] = orig_files
-                            end
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/i
+        dir.glob('W?S.orig/*').each do |path|
+          file = File.basename path
+          sample = file.split(".").first
+          orig_files = path.glob("*.bam") + path.glob("*.BAM")
+          if orig_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["orig.BAM"] = orig_files
+          end
+          sample_files[sample] ||= {}
+          sample_files[sample]["orig.BAM"] = path if path =~ /.*\.bam$/i
 
-                            orig_files = path.glob("*.cram") + path.glob("*.CRAM")
-                            if orig_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["orig.CRAM"] = orig_files
-                            end
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["orig.CRAM"] = path if path =~ /.*\.cram$/i
-                          end
+          orig_files = path.glob("*.cram") + path.glob("*.CRAM")
+          if orig_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["orig.CRAM"] = orig_files
+          end
+          sample_files[sample] ||= {}
+          sample_files[sample]["orig.CRAM"] = path if path =~ /.*\.cram$/i
+        end
 
-                          sample_files.delete_if do |sample,info| info.empty? end
-                          study_files[study] = sample_files
-                        end
-                        study_files
-                      end
+        sample_files.delete_if do |sample,info| info.empty? end
+        study_files[study] = sample_files
+      end
+      study_files
+    end
   end
 
   def self.load_study_files_RNA
-    @@study_files_RNA ||= begin
-                        study_files = {}
-                        Sample.all_studies.each do |study|
-                          dir = Sample.study_dir study
+    begin
+      study_files = {}
+      Sample.all_studies.each do |study|
+        dir = Sample.study_dir study
+        sample_files = {}
 
-                          sample_files = {}
-                          dir.glob('RNA/*').each do |path|
-                            file = File.basename path
-                            sample = file.split(".").first
+        dir.glob('RNA/*').each do |path|
+          file = File.basename path
+          sample = file.split(".").first
 
-                            fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz") + path.glob("*.fq") + path.glob("*.fq.gz")).sort
-                            if fastq_files.any?
-                              fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:\.|_)(?:2|reads?2)\.(?:fastq|fq)/ }
-                              fastq1_files = fastq_files - fastq2_files
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["RNA_FASTQ"] = [fastq1_files, fastq2_files]
-                            end
+          fastq_files = (path.glob("*.fastq") + path.glob("*.fastq.gz") + path.glob("*.fq") + path.glob("*.fq.gz")).sort
+          if fastq_files.any?
+            fastq2_files = fastq_files.select{|f| File.basename(f) =~ /(?:\.|_)(?:2|reads?2)\.(?:fastq|fq)/ }
+            fastq1_files = fastq_files - fastq2_files
+            sample_files[sample] ||= {}
+            sample_files[sample]["RNA_FASTQ"] = [fastq1_files, fastq2_files]
+          end
 
-                            bam_files = path.glob("*.bam")
-                            if bam_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["RNA_BAM"] = bam_files
-                            end
+          bam_files = path.glob("*.bam")
+          if bam_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["RNA_BAM"] = bam_files
+          end
 
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["RNA_BAM"] = path if path =~ /.*\.bam/
+          sample_files[sample] ||= {}
+          sample_files[sample]["RNA_BAM"] = path if path =~ /.*\.bam/
 
-                            orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam")
-                            if orig_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["RNA_orig.BAM"] = orig_files
-                            end
+          orig_files = path.glob("*.orig.bam") + path.orig.glob("*.bam")
+          if orig_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["RNA_orig.BAM"] = orig_files
+          end
 
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["RNA_orig.BAM"] = path if path =~ /.*\.orig\.bam/
-                          end
+          sample_files[sample] ||= {}
+          sample_files[sample]["RNA_orig.BAM"] = path if path =~ /.*\.orig\.bam/
+        end
 
-                          dir.glob('RNA.orig/*').each do |path|
-                            file = File.basename path
-                            sample = file.split(".").first
-                            orig_files = path.glob("*.bam")
-                            if orig_files.any?
-                              sample_files[sample] ||= {}
-                              sample_files[sample]["RNA_orig.BAM"] = orig_files
-                            end
-                            sample_files[sample] ||= {}
-                            sample_files[sample]["RNA_orig.BAM"] = path if path =~ /.*\.bam$/
-                          end
+        dir.glob('RNA.orig/*').each do |path|
+          file = File.basename path
+          sample = file.split(".").first
+          orig_files = path.glob("*.bam")
+          if orig_files.any?
+            sample_files[sample] ||= {}
+            sample_files[sample]["RNA_orig.BAM"] = orig_files
+          end
+          sample_files[sample] ||= {}
+          sample_files[sample]["RNA_orig.BAM"] = path if path =~ /.*\.bam$/
+        end
 
-                          sample_files.delete_if do |sample,info| info.empty? end
-                          study_files[study] = sample_files
-                        end
-                        study_files
-                      end
+        sample_files.delete_if do |sample,info| info.empty? end
+        study_files[study] = sample_files
+      end
+      study_files
+    end
   end
 
   def self.load_study_files(update = false)
-    @@study_files ||= Persist.persist("Study_files", :marshal, :file => Rbbt.var.cache.HTS_study_files.find, :update => update) do
-                        dna = load_study_files_DNA
-                        rna = load_study_files_RNA
+    persist = $dont_persist_studies != true
+    @@study_files = nil unless persist
+    @@study_files ||= Persist.persist("Study_files", :marshal, :file => Rbbt.var.cache.HTS_study_files.find, :update => update, :persist => persist) do
+      dna = load_study_files_DNA
+      rna = load_study_files_RNA
 
-                        study_files = {}
-                        dna.each do |study,sample_files|
-                          study_files[study] ||= {}
-                          sample_files.each do |sample,info|
-                            study_files[study][sample] ||= {}
-                            study_files[study][sample].merge!(info)
-                          end
-                        end
+      study_files = {}
+      dna.each do |study,sample_files|
+        study_files[study] ||= {}
+        sample_files.each do |sample,info|
+          study_files[study][sample] ||= {}
+          study_files[study][sample].merge!(info)
+        end
+      end
 
-                        rna.each do |study,sample_files|
-                          study_files[study] ||= {}
-                          sample_files.each do |sample,info|
-                            study_files[study][sample] ||= {}
-                            study_files[study][sample].merge!(info)
-                          end
-                        end
+      rna.each do |study,sample_files|
+        study_files[study] ||= {}
+        sample_files.each do |sample,info|
+          study_files[study][sample] ||= {}
+          study_files[study][sample].merge!(info)
+        end
+      end
 
-                        study_files
-                      end
+      study_files
+    end
   end
 
   def self.sample_files(sample)

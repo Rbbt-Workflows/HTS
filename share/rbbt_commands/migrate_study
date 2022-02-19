@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/util/migrate'
+
+$0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Synchronize a complete study or just a particular sample
+
+$ #{$0} [options] <study> [<sample>]
+
+-h--help Print this help
+-t--test Do a verbose dry run
+-sp--search_path* Search path to save to
+-s--source* Source server
+-t--target* Target server
+EOF
+
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.doc
+  end
+  exit 0
+end
+
+study, sample = ARGV
+
+study_path = Path.setup("share/data/studies/#{study}")
+
+search_path = options[:search_path] || 'user'
+
+if sample.nil?
+  Rbbt.migrate(study_path, search_path, options)
+else
+  Rbbt.migrate(study_path.options, search_path, options)
+
+  Rbbt.migrate(study_path.WGS[sample], search_path, options)
+  Rbbt.migrate(study_path.WGS[sample + "_normal"], search_path, options)
+  Rbbt.migrate(study_path.WGS["normal"], search_path, options)
+
+  Rbbt.migrate(study_path["WGS.orig"][sample], search_path, options)
+  Rbbt.migrate(study_path["WGS.orig"][sample + "_nornal"], search_path, options)
+  Rbbt.migrate(study_path["WGS.orig"]["nornal"], search_path, options)
+
+  Rbbt.migrate(study_path.WES[sample], search_path, options)
+  Rbbt.migrate(study_path.WES[sample + "_normal"], search_path, options)
+  Rbbt.migrate(study_path.WES["normal"], search_path, options)
+
+  Rbbt.migrate(study_path["WES.orig"][sample], search_path, options)
+  Rbbt.migrate(study_path["WES.orig"][sample + "_nornal"], search_path, options)
+  Rbbt.migrate(study_path["WES.orig"]["nornal"], search_path, options)
+end

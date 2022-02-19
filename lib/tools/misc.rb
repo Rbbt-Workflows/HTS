@@ -186,6 +186,9 @@ module HTS
       found = true if line =~ /^##FORMAT=<ID=GT,/
       next line if line =~ /^##/
       if  line =~ /^#CHR/
+        if line.split("\t").length  == 8
+          line = line.strip + "\tFORMAT\tSample"
+        end
         if ! found 
           format_line = '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' << "\n"
           next format_line + line 
@@ -194,6 +197,10 @@ module HTS
         end
       end
       parts = line.split("\t")
+      
+      if parts.length == 8
+        parts += ["GT", "1/0"]
+      end
 
       format = parts[8].split(":")
 

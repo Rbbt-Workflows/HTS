@@ -106,6 +106,8 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    bootstrap
    bootstrap_samples
    studies
+   migrate_study
+   rsync_study
   }
   software=install/software{
    AlleleCount

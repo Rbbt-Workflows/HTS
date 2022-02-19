@@ -19,7 +19,8 @@ module HTS
   input :vcf_1, :file, "VCF to compare"
   input :vcf_2, :file, "VCF to compare against"
   input :sort, :boolean, "Sort files", true
-  task :compare_vcf => :tsv do |vcf_1,vcf_2,sort|
+  input :only_pass, :boolean, "Only mutations that PASS", false
+  task :compare_vcf => :tsv do |vcf_1,vcf_2,sort,only_pass|
     first = []
     last = []
     common = []
@@ -30,7 +31,8 @@ module HTS
           Open.write(pipe1) do |pipe1|
             TSV.traverse vcf_1, :type => :array do |line|
               next if line =~ /^#/ 
-                chr, pos, id, ref, alt, *rest = line.split("\t")
+              chr, pos, id, ref, alt, qual, filter, *rest = line.split("\t")
+              next if only_pass && filter != "PASS"
               pipe1.puts [chr, pos, ref, alt] * ":" + "\t" + line.gsub("|", "---")
             end
           end
@@ -40,7 +42,8 @@ module HTS
           Open.write(pipe2) do |pipe2|
             TSV.traverse vcf_2, :type => :array do |line|
               next if line =~ /^#/ 
-                chr, pos, id, ref, alt, *rest = line.split("\t")
+              chr, pos, id, ref, alt, qual, filter, *rest = line.split("\t")
+              next if only_pass && filter != "PASS"
               pipe2.puts [chr, pos, ref, alt] * ":" + "\t" + line.gsub("|", "---")
             end
           end
@@ -48,7 +51,7 @@ module HTS
 
         TSV.traverse TSV.paste_streams([pipe1, pipe2], :same_fields => true, :sort => sort), :type => :array do |line|
           next if line =~ /^(?:#|CHR)/
-          mutation, chr, pos, id, *parts = line.split("\t", -1)
+            mutation, chr, pos, id, *parts = line.split("\t", -1)
           case
           when id[0] == "|"
             first << mutation

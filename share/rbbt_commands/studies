@@ -16,6 +16,7 @@ Use - to read from STDIN
 
 -h--help Print this help
 -l--list Only list the samples
+-n--normals Include the normal (control) samples
 -u--update_studies Update study cache
 
 EOF
@@ -42,6 +43,7 @@ study_files = Sample.load_study_files options[:update_studies]
 if study_files.include? elem
   sample_files = study_files[elem]
   sample_files.each do |sample,files|
+    next if sample =~/_?normal$/ and ! options[:normals]
     if list
       puts sample
     else
@@ -58,6 +60,7 @@ else
       puts Log.color(:magenta, "#{"=" * study.length}")
     end
     sample_files.each do |sample,files|
+      next if sample =~/_?normal$/ and ! options[:normals]
       next if elem && sample != elem
       if list
         puts sample

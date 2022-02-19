@@ -82,7 +82,7 @@ module Samtools
       end
     end
 
-    if File.exists?(linked + '.crai')
+    if File.exists?(linked + '.crai') && linked =~ /\.bam$/
       linked_cram = linked.sub(/\.bam$/,'.cram')
       Open.ln_s linked, linked_cram
       Open.ln_s linked + '.crai', linked_cram + '.crai'

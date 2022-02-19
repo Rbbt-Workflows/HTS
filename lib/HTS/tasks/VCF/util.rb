@@ -171,12 +171,29 @@ module HTS
   input :vcf2, :file, "File 2", nil, :nofile => true
   extension :vcf
   task :join_vcfs => :text do |vcf1,vcf2|
+    header_lines = []
+
+    Open.open(vcf1) do |f|
+      header_lines += CMD.cmd("grep '^##'", :in => f).read.split("\n")
+    end
+
+    Open.open(vcf2) do |f|
+      header_lines += CMD.cmd("grep '^##' | grep -v '##SAMPLE' ", :in => f).read.split("\n")
+    end
+
+
+    header_lines.uniq!
+
     Misc.open_pipe do |f|
-      Open.open(vcf1) do |sin|
-        Misc.consume_stream(sin, false, f, false)
+      f.puts header_lines * "\n"
+
+      Open.open(vcf1) do |v|
+        io = CMD.cmd("grep -v '^##' ", :in => v, :pipe => true)
+        Misc.consume_stream(io, false, f, false)
       end
+
       Open.open(vcf2) do |v|
-        io = CMD.cmd("grep -v '^#' ", :in => v, :pipe => true)
+        io = CMD.cmd("grep -v '^##' ", :in => v, :pipe => true)
         Misc.consume_stream(io, false, f)
       end
     end
