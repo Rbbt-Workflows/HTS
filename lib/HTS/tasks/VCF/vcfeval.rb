@@ -44,7 +44,7 @@ module HTS
 
       Open.ln_s sdf, './sdf'
 
-      text = CMD.cmd('rtg', "vcfeval --no-roc --all-records -t '#{sdf}' --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      text = CMD.cmd('rtg', "vcfeval --decompose --squash-ploidy --no-roc --all-records -t '#{sdf}' --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
       text = text.collect{|line| line.gsub(/^  */,'')}
       TSV.open(StringIO.new(text * "\n"), :header_hash => '', :sep => /\s+/, :type => :list)
     end
