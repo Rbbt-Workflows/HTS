@@ -25,6 +25,7 @@ module Sample
     :type_of_sequencing => :string,
     :interval_list => :file,
     :pon => :file,
+    :panel_of_normals => :file,
     :germline_resource => :file,
     :skip_rescore => :boolean,
     :skip_duplicates => :boolean,

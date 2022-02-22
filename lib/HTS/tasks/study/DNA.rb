@@ -14,7 +14,7 @@ module Study
   task :panel_of_normals => :text do |intervals|
 
     orig_reference = dependencies.first.recursive_inputs[:reference]
-    type_of_sequencing = dependencies.first.recursive_inputs[:type_of_sequencing]
+    type_of_sequencing = dependencies.first.recursive_inputs[:type_of_sequencing] if dependencies.first.recursive_inputs.fields.include?(:type_of_sequencing)
     type_of_sequencing = 'WGS' if type_of_sequencing.nil?
     intervals = HTS.helpers[:capture_intervals].call orig_reference, type_of_sequencing if intervals.nil?
 
