@@ -33,6 +33,19 @@ module HTS
       truth_sample = HTS.guess_vcf_tumor_sample(truth_sorted)
       input_sample = HTS.guess_vcf_tumor_sample(input_sorted)
 
+      begin
+        CMD.cmd("grep -v '#' #{truth_sorted}")
+      rescue
+        raise ParameterException, "No mutations in truth set"
+      end
+
+      begin
+        CMD.cmd("grep -v '#' #{input_sorted}")
+      rescue
+        raise ParameterException, "No mutations in input set"
+      end
+
+
       CMD.cmd('bgzip', "#{truth_sorted}")
       CMD.cmd('bgzip', "#{input_sorted}")
       CMD.cmd('tabix', "#{truth_sorted}.gz")
