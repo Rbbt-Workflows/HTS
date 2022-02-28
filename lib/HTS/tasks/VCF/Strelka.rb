@@ -34,11 +34,11 @@ module HTS
   end
 
   dep :strelka_pre
-  extension :vcf
   input :only_pass, :boolean, "Only filter variants based on PASS status", true
   input :strelka_filter_tier, :boolean, "Take only tier 1 variants from strelka", true
   input :strelka_filter_evs, :integer, "Strelka EVS minimum score filter", 15
   input :strelka_filter_qs, :integer, "Strelka QS(S|I) minimum score filter", 15
+  extension :vcf
   task :strelka_filtered => :text do |pass,tier,evs,qs|
     TSV.traverse step(:strelka_pre), :into => :stream, :type => :array do |line|
       next line if line[0] =~ /^#/
@@ -60,21 +60,35 @@ module HTS
     end
   end
 
-  dep :strelka_pre_indels
-  input :strelka_filter_evs, :integer, "Strelka EVS minimum score filter", 0
-  input :strelka_filter_qs, :integer, "Strelka QS(S|I) minimum score filter", 0
-  dep_task :strelka_filtered_indels, HTS, :strelka_filtered do |jobname,options,dependencies|
-    strelka_indels = dependencies.select{|dep| dep.task_name == :strelka_pre_indels}.first
-    options["HTS#strelka_pre"] = strelka_indels
-    {:inputs => options, :jobname => jobname}
+  dep :strelka_pre_indels, :compute => true
+  input :only_pass, :boolean, "Only filter variants based on PASS status", true
+  input :strelka_filter_tier, :boolean, "Take only tier 1 variants from strelka", true
+  input :strelka_filter_evs, :integer, "Strelka EVS minimum score filter", 15
+  input :strelka_filter_qs, :integer, "Strelka QS(S|I) minimum score filter", 15
+  extension :vcf
+  task :strelka_filtered_indels => :text  do |pass,tier,evs,qs|
+    TSV.traverse step(:strelka_pre_indels), :into => :stream, :type => :array do |line|
+      next line if line[0] =~ /^#/
+
+      chr = line.split("\t").first
+      next unless chr =~ /^(chr)?[0-9MTXY]+$/
+      next unless line =~ /PASS/
+      next line if pass
+      qs_nt = line.split(";").select{|d| d =~ /^QS(S|I)_NT/}.first.split("=").last.to_i
+      next unless qs_nt >= qs
+      tqs_nt = line.split(";").select{|d| d =~ /^TQS(S|I)_NT/}.first.split("=").last.to_i
+      next if tier and tqs_nt > 1 
+      tqs = line.split(";").select{|d| d =~ /^TQS(S|I)/}.first.split("=").last.to_i
+      next if tier and tqs > 1 
+      somatic_evs = line.split(";").select{|d| d =~ /^SomaticEVS/}.first.split.first.split("=").last.to_f
+      next unless somatic_evs >= evs
+
+      line
+    end
   end
 
   dep :strelka_filtered, :compute => :produce
-  dep :strelka_filtered_indels do |jobname, options|
-    job = HTS.job(:strelka_filtered_indels, jobname, options)
-    job.overriden = false
-    job
-  end
+  dep :strelka_filtered_indels, :compute => :produce
   extension :vcf
   task :strelka => :text do
     
