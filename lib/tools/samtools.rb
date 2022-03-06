@@ -135,7 +135,7 @@ module Samtools
   end
 
   def self.BAM_get_chr_reads(bam_file, chr)
-    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => 1)
     CMD.cmd("samtools view --no-PG -@ #{cpus} -Sb -h '#{bam_file}' #{chr} > #{chr}.bam")
   end
 
@@ -161,7 +161,7 @@ module Samtools
   end
 
   def self.viewSam(inBAM, outSAM)
-    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => nil)
+    cpus = Rbbt::Config.get("cpus", :samtools_index, :samtools, :index, :default => 1)
     CMD.cmd("samtools view --no-PG -@ #{cpus} #{inBAM} > #{outSAM}")
   end
 
@@ -182,6 +182,11 @@ module Samtools
     bam = bam.path if Step === bam
     bam = bam.find if Path === bam
     CMD.cmd("samtools view --no-PG -H '#{bam}' | grep ^@SQ | cut -f 2 |sed 's/SN://'").read.split("\n")
+  end
+
+  def self.to_cram(bam, reference, cram)
+    cpus = Rbbt::Config.get("cpus", :samtools_view, :samtools, :view, :cram, :default => 1)
+    CMD.cmd_log("samtools", "view -@ #{cpus} -T #{reference} -C -o #{cram} #{bam}")
   end
 end
 
