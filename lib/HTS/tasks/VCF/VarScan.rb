@@ -63,15 +63,17 @@ module HTS
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
-      io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
-      Open.write(output[clean_name + '.snv.vcf'].find, io)
+      #io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
+      #Open.write(output[clean_name + '.snv.vcf'].find, io)
+      CMD.cmd_log("sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' #{output[clean_name + '.snp.vcf']}", :in => pipe)
     end
 
     reference_file = GATK.prepare_FASTA(reference_file(reference))
 
-    vcfs = output.glob("*.indel.vcf") + output.glob("*.snv.vcf")
+    vcfs = output.glob("*.vcf") 
+    vcfs.delete_if{|f| File.empty?(f) }
     clean_vcfs = vcfs.collect do |vcf|
-      clean_vcf = vcf.replace_extension('vcf', 'clean.vcf')
+      clean_vcf = vcf.replace_extension('clean.vcf')
       HTS.vcf_clean_IUPAC_alleles(vcf, Path.setup(clean_vcf))
       clean_vcf
     end
@@ -81,6 +83,7 @@ module HTS
     args["OUTPUT"] = self.tmp_path
     args["SEQUENCE_DICTIONARY"] = reference_file.replace_extension('dict', true)
     gatk("MergeVcfs", args)
+    nil
   end
   
   dep :varscan_somatic, :compute => :produce

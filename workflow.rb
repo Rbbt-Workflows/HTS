@@ -16,6 +16,7 @@ require 'tools/HISAT'
 require 'tools/STAR'
 require 'tools/BAMSurgeon'
 require 'tools/misc'
+require 'tools/SAGE'
 #require 'tools/pfff'
 require 'sources/HTS_reference'
 

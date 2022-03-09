@@ -35,6 +35,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    shard.rb
    stringTie.rb
    svABA.rb
+   SAGE.rb
   }
   tasks=HTS/tasks{
    BAMSurgeon.rb
@@ -83,6 +84,8 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     svABA.rb
     vcfeval.rb
     util.rb
+    hap_py.rb
+    SAGE.rb
    }
 
    sample=sample{
