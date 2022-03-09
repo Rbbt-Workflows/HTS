@@ -36,16 +36,11 @@ somatic_score is set to 40 according to documentation in the web page
     normal_sample = GATK.BAM_sample_name(normal) if normal
 
 
-    TmpFile.with_file do |tmp_dir|
-      Misc.in_dir tmp_dir do
-        CMD.cmd_log("bam-somaticsniper".to_sym,"-F vcf -L -G \
-                -s 0.01 -T 0.85 -N 2 -r 0.001 \
-                -q #{quality} -Q #{somatic_score}  \
-                -n '#{normal_sample}' -t '#{tumor_sample}' \
-                -f '#{reference}' '#{tumor}' '#{normal}' '#{self.tmp_path}'")
-      end
-    end
-
+    CMD.cmd_log("bam-somaticsniper".to_sym,"-F vcf -L -G \
+              -s 0.01 -T 0.85 -N 2 -r 0.001 \
+              -q #{quality} -Q #{somatic_score}  \
+              -n '#{normal_sample}' -t '#{tumor_sample}' \
+              -f '#{reference}' '#{tumor}' '#{normal}' '#{self.tmp_path}'")
     nil
   end
 
@@ -57,26 +52,31 @@ somatic_score is set to 40 according to documentation in the web page
     reference = Samtools.prepare_FASTA orig_reference
     reference = HTS.uncompress_FASTA orig_reference
 
-    TmpFile.with_file nil, true, :extension => :vcf do |tmpfile1|
-      TmpFile.with_file nil, true, :extension => :vcf do |tmpfile2|
-        args = {}
-        args["bam-file"] = step(:somatic_sniper).inputs[:tumor]
-        args["vcf-file"] = step(:somatic_sniper).path
-        args["output"] = tmpfile1
-        args["reference"] = reference
-        args["sample"] = GATK.BAM_sample_name(step(:somatic_sniper).inputs[:tumor])
-        FPFilter.filter(args.to_hash)
+    TmpFile.with_file do |tmp_dir|
+      Misc.in_dir tmp_dir do
+        TmpFile.with_file nil, true, :extension => :vcf do |tmpfile1|
+          TmpFile.with_file nil, true, :extension => :vcf do |tmpfile2|
+            args = {}
+            args["bam-file"] = step(:somatic_sniper).inputs[:tumor]
+            args["vcf-file"] = step(:somatic_sniper).path
+            args["output"] = tmpfile1
+            args["reference"] = reference
+            args["sample"] = GATK.BAM_sample_name(step(:somatic_sniper).inputs[:tumor])
+            FPFilter.filter(args.to_hash)
 
-        HTS.vcf_clean_IUPAC_alleles(tmpfile1, Path.setup(tmpfile2))
+            HTS.vcf_clean_IUPAC_alleles(tmpfile1, Path.setup(tmpfile2))
 
-        args = {}
-        args["reference"] = reference
-        args["variant"] = tmpfile2
-        args["output"] = self.tmp_path
-        args["exclude-filtered"] = true
-        args["exclude-non-variants"] = true
-        GATK.run_log("SelectVariants", args)
+            args = {}
+            args["reference"] = reference
+            args["variant"] = tmpfile2
+            args["output"] = self.tmp_path
+            args["exclude-filtered"] = true
+            args["exclude-non-variants"] = true
+            GATK.run_log("SelectVariants", args)
+          end
+        end
       end
     end
+
   end
 end
