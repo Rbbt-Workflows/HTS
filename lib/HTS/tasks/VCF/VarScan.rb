@@ -9,7 +9,7 @@ module HTS
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
-  dep :GC_windows, :jobname => :reference
+  dep :GC_windows
   input :normal_purity, :float, "Normal sample purity", 1 
   input :tumor_purity, :float, "Tumor sample purity", 1 
   extension 'vcf'
@@ -46,7 +46,7 @@ module HTS
 
     deps
   end
-  dep :GC_windows, :jobname => :reference
+  dep :GC_windows
   input :normal_purity, :float, "Normal sample purity", 1 
   input :tumor_purity, :float, "Tumor sample purity", 1 
   extension 'vcf'

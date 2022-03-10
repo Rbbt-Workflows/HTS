@@ -7,9 +7,10 @@ module HTS
     CMD.cmd('pip install sequenza-utils')
   end
   
+  input :reference, :file, "Reference", nil
   extension 'gc.gz'
-  task :GC_windows => :text do 
-    orig_reference = reference_file(self.clean_name)
+  task :GC_windows => :text do |reference|
+    orig_reference = reference && File.exists?(reference) ? reference : reference_file(reference || self.clean_name)
     reference = Samtools.prepare_FASTA orig_reference
     CMD.cmd("'#{SEQUENZA_UTILS}' gc_wiggle -w 50 -f '#{reference}' -o - | gzip > #{self.tmp_path}")
     nil
@@ -43,7 +44,7 @@ module HTS
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
-  dep :GC_windows, :jobname => :reference
+  dep :GC_windows, :jobname => :reference, :reference => nil
   extension 'seqz.gz'
   task :seqz => :text do |normal,tumor,reference|
     Step.wait_for_jobs dependencies
