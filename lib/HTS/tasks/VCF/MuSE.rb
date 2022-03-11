@@ -10,6 +10,7 @@ module HTS
   extension :vcf
   task :muse => :text do |tumor,normal, reference,type_of_sequencing|
 
+    reference_code = File.basename(reference).sub('.fa','').sub('gz','')
     reference = reference_file reference
     orig_reference = reference
 
@@ -79,7 +80,15 @@ module HTS
       bar.done if bar
     end
 
-    CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt #{type_of_sequencing.to_s == "WGS" ? "-G" : "-E" } -O #{self.tmp_path}")
+    build = Organism.GRC_build reference_code
+    if build
+      dbsnp = DbSNP[build]["common.vcf.gz"].find
+      dbsnp = GATK.prepare_VCF dbsnp
+      CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt #{type_of_sequencing.to_s == "WGS" ? "-G" : "-E" } -O #{self.tmp_path} -D #{dbsnp}")
+    else
+      log :nodbsnp, "DbSNP version not found for #{reference}. Parameter -D not used"
+      CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt #{type_of_sequencing.to_s == "WGS" ? "-G" : "-E" } -O #{self.tmp_path}")
+    end
     nil
   end
 end
