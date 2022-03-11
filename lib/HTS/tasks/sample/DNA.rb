@@ -118,7 +118,7 @@ module Sample
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
     :sequenza_CNV => :sequenza_CNV,
-    :manta_pre => :manta_pre,
+    :manta => :manta_pre,
     :manta_somatic => :manta_somatic,
     :pindel_indels => :pindel_indels,
     :haplotype => :haplotype,
@@ -189,6 +189,45 @@ module Sample
       end
       {:inputs => options}
     end
+  end
+
+  dep :BAM_normal, :compute => :bootstrap do |sample,options|
+    nsample = nil
+    sample_files = nil
+    sample_study = Sample.sample_study(sample)
+    [sample + '_normal', [sample_study, "normal"] * ":"].each do |normal_sample|
+      nsample = normal_sample
+      sample_files = Sample.sample_files normal_sample if sample_study == Sample.sample_study(nsample)
+      break if sample_files
+    end
+
+    if sample_files
+      {:inputs => options, :jobname => sample}
+    else
+      j = Sample.job(:BAM_normal, sample, options)
+      Sample.can_produce?(j) ? j : {:workflow => Sample, :task => :missing_data, :jobname => sample}
+    end
+  end
+  dep :BAM, :compute => :bootstrap
+  extension :vcf 
+  dep :manta_somatic
+  dep_task :strelka_manta, HTS, :strelka, :normal => :BAM_normal, :tumor => :BAM do |jobname,options,dependencies|
+    sample = jobname
+    sample_files = Sample.sample_files sample
+
+    if dependencies.empty? && sample_files.nil?
+      next {:workflow => Sample, :task => :missing_data, :jobname => sample}
+    end
+
+    options = add_sample_options jobname, options
+
+    if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
+      options[:normal] = nil
+    end
+
+    manta_job = dependencies.flatten.select{|d| d.task_name == :manta_somatic}.first
+    options[:indel_candidates] = manta_job.file("results/variants/candidateSmallIndels.vcf.gz")
+    {:inputs => options}
   end
 
   dep :BAM_normal
@@ -537,12 +576,12 @@ module Sample
 
   #dep Sample, :BAM
   #dep_task :collect_fragment_counts, HTS, :collect_fragment_counts, :bam => :BAM
-  dep Sample, :BAM
-  dep Sample, :BAM_normal
-  dep_task :manta, HTS, :manta_pre, :tumor => :BAM, :normal => :BAM_normal do |sample,options,deps|
-    options = add_sample_options sample, options
-    {:inputs => options}
-  end
+  #dep Sample, :BAM
+  #dep Sample, :BAM_normal
+  #dep_task :manta, HTS, :manta_pre, :tumor => :BAM, :normal => :BAM_normal do |sample,options,deps|
+  #  options = add_sample_options sample, options
+  #  {:inputs => options}
+  #end
 
   dep :BAM, :compute => [:produce, :canfail]
   dep :BAM_normal, :compute => [:produce, :canfail]

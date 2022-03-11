@@ -10,9 +10,10 @@ module HTS
     digest = Misc.file2md5(file)
     basename = File.basename(file)
 
-    dir = Rbbt.var.fasta_indices[digest].find if dir.nil?
+    dir = Rbbt.var.BED_indices[digest].find if dir.nil?
     Path.setup(dir) unless Path === dir
 
+    Open.mkdir dir
     linked = dir[basename].find
     CMD.cmd_log("bgzip -c #{file} > '#{ linked + '.gz' }'") unless File.exists?(linked + '.gz')
     if ! File.exists?(linked + ".gz.tbi") || Persist.newer?(linked + ".gz.tbi", file)
