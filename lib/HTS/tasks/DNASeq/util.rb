@@ -313,8 +313,10 @@ module HTS
     cpus = config :cpus, :samtools_sort_cpus, :samtools_cpus, :sort_samtools, :samtools, :sort
     cpus ||= config :threads, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
 
+    tmpdir ||= config :tmpdir, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
+    tmpdir ||= files_dir
     Open.mkdir self.files_dir
-    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{files_dir}", "-m" => max_mem, "--threads" => cpus)
+    CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{tmpdir}", "-m" => max_mem, "--threads" => cpus)
     nil
   end
 
