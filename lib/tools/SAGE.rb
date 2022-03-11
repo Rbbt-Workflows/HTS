@@ -12,6 +12,8 @@ module SAGE
     end
   end
 
+  Rbbt.claim Rbbt.share.databases.SAGE["38/HighConfidence.38.bed"], :url, "ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/release/NA12878_HG001/NISTv3.3.2/GRCh38/HG001_GRCh38_GIAB_highconf_CG-IllFB-IllGATKHC-Ion-10X-SOLID_CHROM1-X_v.3.3.2_highconf_nosomaticdel_noCENorHET7.bed"
+
   def self.run(tumor, reference, output, ref_version = '38', options = {})
     Rbbt.software.opt.SAGE.produce
 
@@ -36,6 +38,8 @@ module SAGE
 
     Rbbt.share.databases.SAGE.produce
     hotspots = Rbbt.share.databases.SAGE[version]["KnownHotspots.#{type}.#{version}.vcf.gz"].find
+    panel_bed = Rbbt.share.databases.SAGE[version]["ActionableCodingPanel.#{type}.#{version}.bed.gz"].find
+    high_confidence_bed = Rbbt.share.databases.SAGE[version]["HighConfidence.#{version}.bed"].produce.find
 
     reference_name = GATK.BAM_sample_name(reference)
     tumor_name = GATK.BAM_sample_name(tumor)
@@ -54,7 +58,8 @@ java -Xms4G -Xmx32G -cp #{Rbbt.software.opt.jars["SAGE.jar"].find} com.hartwig.h
     EOF
 
     cmd << " -hotspots #{hotspots}" if hotspots
-    #cmd << " -high_confidence_bed #{high_confidence_bed}" if high_confidence_bed
+    cmd << " -panel_bed #{panel_bed}" if panel_bed
+    cmd << " -high_confidence_bed #{high_confidence_bed}" if high_confidence_bed
     #cmd << " -ensembl_data_dir #{ensembl_cache}" if ensembl_cache
 
     CMD.cmd_log(cmd)

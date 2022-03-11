@@ -6,34 +6,34 @@ module HTS
     CMD.cmd('conda install varscan -c bioconda')
   end
 
-  input :normal, :file, "Normal BAM", nil, :nofile => true
-  input :tumor, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
-  dep :GC_windows
-  input :normal_purity, :float, "Normal sample purity", 1 
-  input :tumor_purity, :float, "Tumor sample purity", 1 
-  extension 'vcf'
-  task :varscan_somatic_alt => :text do |normal,tumor,reference,normal_purity,tumor_purity|
+  #input :normal, :file, "Normal BAM", nil, :nofile => true
+  #input :tumor, :file, "Tumor BAM", nil, :nofile => true
+  #input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  #dep :GC_windows
+  #input :normal_purity, :float, "Normal sample purity", 1 
+  #input :tumor_purity, :float, "Tumor sample purity", 1 
+  #extension 'vcf'
+  #task :varscan_somatic_alt => :text do |normal,tumor,reference,normal_purity,tumor_purity|
 
-    CMD.get_tool "Varscan"
+  #  CMD.get_tool "Varscan"
 
-    Open.mkdir files_dir
-    output = file('output')
-    pileup = file('pileup')
+  #  Open.mkdir files_dir
+  #  output = file('output')
+  #  pileup = file('pileup')
 
-    reference = reference_file reference
-    reference = Samtools.prepare_FASTA reference
-    CMD.cmd("samtools mpileup -f '#{reference}' -Q 20 '#{normal}' '#{tumor}' > '#{pileup}'")
-    io = Misc.in_dir output do
-      monitor_cmd_genome ["varscan somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
-    end
+  #  reference = reference_file reference
+  #  reference = Samtools.prepare_FASTA reference
+  #  CMD.cmd("samtools mpileup -f '#{reference}' -Q 20 '#{normal}' '#{tumor}' > '#{pileup}'")
+  #  io = Misc.in_dir output do
+  #    monitor_cmd_genome ["varscan somatic '#{pileup}' '#{clean_name}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' "], output[clean_name + '.snp.vcf']
+  #  end
 
-    ConcurrentStream.setup(io) do
-      FileUtils.rm pileup
-    end
+  #  ConcurrentStream.setup(io) do
+  #    FileUtils.rm pileup
+  #  end
 
-    io
-  end
+  #  io
+  #end
 
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
@@ -46,7 +46,6 @@ module HTS
 
     deps
   end
-  dep :GC_windows
   input :normal_purity, :float, "Normal sample purity", 1 
   input :tumor_purity, :float, "Tumor sample purity", 1 
   extension 'vcf'
