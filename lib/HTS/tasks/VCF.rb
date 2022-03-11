@@ -15,6 +15,7 @@ require 'HTS/tasks/VCF/vcfeval'
 require 'HTS/tasks/VCF/hap_py'
 require 'HTS/tasks/VCF/util'
 require 'HTS/tasks/VCF/SAGE'
+require 'HTS/tasks/VCF/LoFreq'
 
 module HTS
 

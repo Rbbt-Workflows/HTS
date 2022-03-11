@@ -314,7 +314,7 @@ module HTS
     cpus ||= config :threads, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
 
     tmpdir ||= config :tmpdir, :samtools_sort_threads, :samtools_threads, :sort_samtools, :samtools, :sort
-    tmpdir = tmpdir.sub("[USER]", ENV["USER"])
+    tmpdir = tmpdir.sub("[USER]", ENV["USER"]) if tmpdir
     tmpdir ||= files_dir
     Open.mkdir tmpdir
     CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{tmpdir}", "-m" => max_mem, "--threads" => cpus)

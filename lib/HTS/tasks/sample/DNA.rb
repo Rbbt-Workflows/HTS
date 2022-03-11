@@ -105,6 +105,7 @@ module Sample
   #{{{ EXPORT HTS METHODS
   #{{{ genomic_mutations and variant callers
   {
+    :lofreq => :lofreq,
     :sage => :sage,
     :strelka => :strelka,
     :mutect2 => [:mutect2, true],

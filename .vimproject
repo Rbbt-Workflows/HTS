@@ -36,6 +36,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    stringTie.rb
    svABA.rb
    SAGE.rb
+   LoFreq.rb
   }
   tasks=HTS/tasks{
    BAMSurgeon.rb
