@@ -25,7 +25,7 @@ module Strelka
     CMD.conda(:strelka, :python2)
   end
 
-  def self.runSomatic(tumor, normal, reference, output, cpus, interval_list)
+  def self.runSomatic(tumor, normal, reference, output, cpus, interval_list, indel_candidates = nil)
     #cmd_config = Rbbt.software.opt.Strelka.produce.bin["configureStrelkaSomaticWorkflow.py"].find 
     cmd_config = "configureStrelkaSomaticWorkflow.py"
 
@@ -34,6 +34,7 @@ module Strelka
     cmd_string = "--tumorBam='#{tumor}' --ref='#{reference}' --runDir='#{output}' "
     cmd_string += " --normalBam='#{normal}' " unless normal.nil?
     cmd_string += " --callRegions='#{interval_list}' " unless interval_list.nil?
+    cmd_string += " --indelCandidates='#{indel_candidates}' " unless indel_candidates.nil?
 
     CMD.cmd_log(cmd_config, cmd_string)    
     cmd_workflow = File.join(output, "runWorkflow.py")

@@ -5,8 +5,9 @@ module HTS
   input :normal, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :interval_list, :file, "interval list bed file", nil, :nofile => true
+  input :indel_candidates, :file, "Candidate small indels from Manta", nil
   extension :vcf
-  task :strelka_pre => :text do |tumor,normal,reference,interval_list|
+  task :strelka_pre => :text do |tumor,normal,reference,interval_list,indel_candidates|
     output = file('output')
     reference = reference_file reference
     normal = Samtools.prepare_BAM(normal) if normal
@@ -22,7 +23,7 @@ module HTS
     reference = Samtools.prepare_FASTA(reference)
 
     cpus = config :cpus, :strelka, :default => 3
-    Strelka.runSomatic(tumor, normal, reference, output, cpus, interval_list)
+    Strelka.runSomatic(tumor, normal, reference, output, cpus, interval_list, indel_candidates)
     
     Open.read(output.results.variants["somatic.snvs.vcf.gz"])
   end
@@ -90,12 +91,5 @@ module HTS
   dep :strelka_filtered, :compute => :produce
   dep :strelka_filtered_indels, :compute => :produce
   extension :vcf
-  task :strelka => :text do
-    
-    args = {}
-    args["INPUT"] = dependencies.collect{|dep| dep.path}
-    args["OUTPUT"] = self.tmp_path
-    gatk("MergeVcfs", args)
-    nil
-  end
+  dep_task :strelka, HTS, :join_vcfs, :vcf1 => :strelka_filtered, :vcf2 => :strelka_pre_indels
 end

@@ -67,6 +67,7 @@ module HTS
     end
   end
   input :type, :select, "Type of analysis", :somatic, :select_options => %w(germline somatic)
+  extension "vcf.gz"
   task :manta_pre => :text do 
     CMD.cmd_log(dependencies.flatten.first.files_dir + "/runWorkflow.py")
     FileUtils.ln_s dependencies.flatten.first.files_dir + "/results/variants/somaticSV.vcf.gz", self.path
