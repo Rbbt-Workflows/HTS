@@ -1,7 +1,5 @@
 HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt *.conf" {
  workflow.rb
- bin=bin filter="*"{
- }
  lib=lib {
   sources=sources{
    HTS_reference.rb
@@ -36,7 +34,6 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    stringTie.rb
    svABA.rb
    SAGE.rb
-   LoFreq.rb
   }
   tasks=HTS/tasks{
    BAMSurgeon.rb
@@ -77,6 +74,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     MuTect2.rb
     Pindel.rb
     SomaticSeq.rb
+    LoFreq.rb
     Strelka.rb
     VarScan.rb
     control_FREEC.rb
@@ -112,6 +110,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    studies
    migrate_study
    rsync_study
+   combine_caller_vcfs
   }
   software=install/software{
    AlleleCount
