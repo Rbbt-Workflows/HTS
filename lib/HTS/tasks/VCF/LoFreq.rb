@@ -43,11 +43,36 @@ get_git $name $url
 
   dep :lofreq_pre, :compute => :produce
   extension :vcf
-  dep_task :lofreq, HTS, :join_vcfs, :vcf1 => :placeholder, :vcf2 => :placeholder do |jobname,options,dependencies|
+  dep_task :lofreq_joined, HTS, :join_vcfs, :vcf1 => :placeholder, :vcf2 => :placeholder do |jobname,options,dependencies|
     lofreq_pre = dependencies.flatten.first
     output = lofreq_pre.file('output')
     options[:vcf1] = output["somatic_final.snvs.vcf.gz"]
     options[:vcf2] = output["somatic_final.indels.vcf.gz"]
     {:inputs => options}
+  end
+
+  dep :lofreq_joined
+  extension :vcf
+  task :lofreq => :text do 
+    TSV.traverse step(:lofreq_joined), :type => :array, :into => :stream do |line|
+      next line if line =~ /^##/
+      next line + "\tFORMAT\tTumor" if line =~ /^#/
+
+      parts = line.split("\t")
+      info = parts.pop
+      parts << ""
+      format = []
+      values = []
+      info.split(";").each do |e|
+        key, value = e.split("=")
+
+        value = key if value.nil?
+
+        format << key
+        values << value 
+      end
+
+      (parts + [format*":", values*":"]) * "\t"
+    end
   end
 end
