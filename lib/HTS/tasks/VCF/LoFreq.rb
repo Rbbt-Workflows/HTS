@@ -28,9 +28,9 @@ module HTS
     if build
       dbsnp = DbSNP[build]["common.vcf.gz"].find
       dbsnp = GATK.prepare_VCF dbsnp
-      CMD.cmd_log(:lofreq, "somatic -n #{normal} -t #{tumor} -f #{reference} --threads #{cpus} -o #{output} -d #{dbsnp}")
+      CMD.cmd_log(:lofreq, "somatic -n #{normal} -t #{tumor} -f #{reference} --threads #{cpus} -o #{output}/ -d #{dbsnp}")
     else
-      CMD.cmd_log(:lofreq, "somatic -n #{normal} -t #{tumor} -f #{reference} --threads #{cpus} -o #{output}")
+      CMD.cmd_log(:lofreq, "somatic -n #{normal} -t #{tumor} -f #{reference} --threads #{cpus} -o #{output}/")
     end
     
     Dir.glob(File.join(output,'*'))
