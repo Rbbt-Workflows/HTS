@@ -240,13 +240,12 @@ module Sample
 
 
 
-  dep :mutect2, :canfail => true
-  dep :strelka, :canfail => true
-  dep :muse, :canfail => true
-  dep :manta_somatic, :canfail => true
-  #dep :pindel_indels, :canfail => true
-  #dep :svABA_indels, :canfail => true
-  #dep :varscan
+  input :callers, :array, "Callers to use", %w(mutect2 muse strelka sage)
+  dep :mutect2 do  |jobname,options,dependencies|
+    options[:callers].collect do |vcaller|
+      {:task => vcaller, :inputs => options, :jobname => jobname}
+    end
+  end
   task :caller_cohort => :array do
     dependencies.collect do |dep|
       next if dep.error?
@@ -292,9 +291,15 @@ module Sample
   task :consensus_somatic_variants => :text do |min_callers|
     TSV.traverse step(:combined_caller_vcfs), :into => :stream, :type => :array do |line|
       next line if line =~ /^#/
-      num = line.split("\t")[6].split(";").collect{|f| f.split("--").first}.uniq.length
+      parts = line.split("\t")
+      callers = parts[6].split(";")
+      callers = callers.select{|f| f.split("--").last == "PASS"}
+      callers = callers.collect{|f| f.split("--").first }
+      num = callers.uniq.length
       next unless num >= min_callers
-      line
+      parts[6] = "PASS"
+
+      parts * "\t"
     end
   end
 

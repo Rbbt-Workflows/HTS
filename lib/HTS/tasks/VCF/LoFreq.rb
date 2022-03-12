@@ -1,13 +1,18 @@
 
 module HTS
-  CMD.tool :lofreq do
-    'conda install -c bioconda lofreq'
+  Rbbt.claim Rbbt.software.opt.LoFreq, :install do
+    commands =<<-EOF
+get_git $name $url
+    EOF
+    {:git => "https://github.com/CSB5/lofreq.git", :commands => commands}
   end
+
+  CMD.tool :lofreq, Rbbt.software.opt.LoFreq
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
-  task :lofreq => :text do |tumor,normal,reference|
+  task :lofreq_pre => :text do |tumor,normal,reference|
     output = file('output')
     orig_reference = reference
 
@@ -34,5 +39,15 @@ module HTS
     end
     
     Dir.glob(File.join(output,'*'))
+  end
+
+  dep :lofreq_pre, :compute => :produce
+  extension :vcf
+  dep_task :lofreq, HTS, :join_vcfs, :vcf1 => :placeholder, :vcf2 => :placeholder do |jobname,options,dependencies|
+    lofreq_pre = dependencies.flatten.first
+    output = lofreq_pre.file('output')
+    options[:vcf1] = output["somatic_final.snvs.vcf.gz"]
+    options[:vcf2] = output["somatic_final.indels.vcf.gz"]
+    {:inputs => options}
   end
 end
