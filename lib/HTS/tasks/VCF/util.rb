@@ -107,11 +107,11 @@ module HTS
     header_lines = []
 
     Open.open(vcf1) do |f|
-      header_lines += CMD.cmd("grep '^##'", :in => f).read.split("\n")
+      header_lines += CMD.cmd("grep '^##'", :in => f, :nofail => true).read.split("\n")
     end
 
     Open.open(vcf2) do |f|
-      header_lines += CMD.cmd("grep '^##' | grep -v '##SAMPLE' ", :in => f).read.split("\n")
+      header_lines += CMD.cmd("grep '^##' | grep -v '##SAMPLE' ", :in => f, :nofail => true).read.split("\n")
     end
 
 
@@ -121,12 +121,12 @@ module HTS
       f.puts header_lines * "\n"
 
       Open.open(vcf1) do |v|
-        io = CMD.cmd("grep -v '^##' ", :in => v, :pipe => true)
+        io = CMD.cmd("grep -v '^##' ", :in => v, :pipe => true, :nofail => true)
         Misc.consume_stream(io, false, f, false)
       end
 
       Open.open(vcf2) do |v|
-        io = CMD.cmd("grep -v '^#' ", :in => v, :pipe => true)
+        io = CMD.cmd("grep -v '^#' ", :in => v, :pipe => true, :nofail => true)
         Misc.consume_stream(io, false, f)
       end
     end
