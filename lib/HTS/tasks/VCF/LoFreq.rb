@@ -56,8 +56,17 @@ get_git $name $url
   task :lofreq => :text do 
     TSV.traverse step(:lofreq_joined), :type => :array, :into => :stream do |line|
       next line if line =~ /^##/
-      next line + "\tFORMAT\tTumor" if line =~ /^#/
-
+      if line =~ /^#/
+        header =<<-EOF
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
+##FORMAT=<ID=AF,Number=1,Type=Float,Description="Allelic frequency calculated from read context counts as (Full + Partial + Core + Realigned + Alt) / Coverage">
+##FORMAT=<ID=SB,Number=4,Type=Integer,Description="">
+##FORMAT=<ID=DP4,Number=1,Type=String,Description="">
+##FORMAT=<ID=SOMATIC,Number=1,Type=String,Description="">
+##FORMAT=<ID=UQ,Number=1,Type=Integer,Description="">
+EOF
+        next header + line + "\tFORMAT\tTumor"  
+      end
       parts = line.split("\t")
       info = parts.pop
       parts << ""
