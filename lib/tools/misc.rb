@@ -79,8 +79,12 @@ module HTS
 
       tumor_sample = HTS.guess_vcf_tumor_sample(file)
       file_fields = TSV.parse_header(file).fields
-      sample1, sample2 = file_fields.values_at -2, -1
-      swap_samples = sample1 == tumor_sample
+      if file_fields.length == 10
+        sample1, sample2 = file_fields.values_at -2, -1
+        swap_samples = sample1 == tumor_sample
+      else
+        sample2 = file_fields[-1]
+      end
       TSV.traverse file, :type => :array do |line|
         next if line =~ /^#/
         parts = line.split("\t")
@@ -113,8 +117,14 @@ module HTS
         mfilter << filter
         minfo << info
         mformat += format.split(":")
-        msample1 += sample1.split(":")
-        msample2 += sample2.split(":")
+        
+        if sample2.nil?
+          msample2 += sample1.split(":")
+          msample1 += [""] * sample1.split(":").length
+        else
+          msample1 += sample1.split(":")
+          msample2 += sample2.split(":") 
+        end
         mrest << rest
       end
 
