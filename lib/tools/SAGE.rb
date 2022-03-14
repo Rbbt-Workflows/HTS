@@ -41,8 +41,8 @@ module SAGE
     panel_bed = Rbbt.share.databases.SAGE[version]["ActionableCodingPanel.#{type}.#{version}.bed.gz"].find
     high_confidence_bed = Rbbt.share.databases.SAGE[version]["HighConfidence.#{version}.bed"].produce.find
 
-    reference_name = GATK.BAM_sample_name(reference)
-    tumor_name = GATK.BAM_sample_name(tumor)
+    reference_name = GATK.BAM_sample_name(reference, reference_fa)
+    tumor_name = GATK.BAM_sample_name(tumor, reference_fa)
 
     cpus =  options[:cpus] || 1
 
