@@ -1,0 +1,7 @@
+%h1 IGV
+= action_parameters do
+  - input :bam, :string, "Path to BAM"
+  - input :reference_code, :string, "Reference to use", "hg38"
+
+- if defined?(bam)
+  = tool :IGV_js, :tumor_bam => bam, :reference_code => reference_code

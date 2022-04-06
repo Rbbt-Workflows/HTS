@@ -62,10 +62,12 @@ module HTS
       end
     end
 
+    preamble << '##INFO=<ID=CalledBy,Number=.,Type=String,Description="Callers calling this variant">'
 
     list.keys.each do |name|
       preamble << "##FILTER=<ID=#{name}--PASS,Description=\"Passes #{name} filter\">" unless preamble.select{|l| l.include?("FILTER") && l.include?(name + "--PASS")}.any?
     end
+
 
     preamble << '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth at this position in the sample">'
     preamble << '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
@@ -74,7 +76,10 @@ module HTS
     preamble << '##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Depth of reads supporting alleles or variant allele">'
     preamble << '##FORMAT=<ID=BCOUNT,Number=4,Type=Integer,Description="Occurrence count for each base at this site (A,C,G,T)">'
 
+    #preamble[1..-2] = preamble[1..-2].sort
+
     variants = {}
+    called_by = {}
     list.each do |name,file|
 
       tumor_sample = HTS.guess_vcf_tumor_sample(file)
@@ -96,6 +101,8 @@ module HTS
         format = format.split(":").reject{|f| f == '.'}.collect{|f| name + "--" + f} * ":"
         variants[mutation] ||= []
         variants[mutation] << [filter, info, format, normal_sample, tumor_sample] + rest
+        called_by[mutation] ||= []
+        called_by[mutation] << name
       end
     end
 
@@ -105,49 +112,54 @@ module HTS
     str = preamble * "\n" + "\n"
     str += fields * "\t" + "\n"
 
-    variants.each do |mutation, lists|
-      chr, pos, ref, alt = mutation.split(":")
-      mfilter = []
-      minfo = []
-      mformat = []
-      msample1 = []
-      msample2 = []
-      mrest = []
-      lists.each do |filter, info, format, sample1, sample2,*rest|
-        mfilter << filter
-        minfo << info
-        mformat += format.split(":")
-        
-        if sample2.nil?
-          msample2 += sample1.split(":")
-          msample1 += [""] * sample1.split(":").length
-        else
-          msample1 += sample1.split(":")
-          msample2 += sample2.split(":") 
+    Log::ProgressBar.with_bar variants.length, :desc => "Merging VCF variants" do |bar|
+      variants.each do |mutation, lists|
+        chr, pos, ref, alt = mutation.split(":")
+        mfilter = []
+        minfo = []
+        mformat = []
+        msample1 = []
+        msample2 = []
+        mrest = []
+        lists.each do |filter, info, format, sample1, sample2,*rest|
+          mfilter << filter
+          minfo << info
+          mformat += format.split(":")
+
+          if sample2.nil?
+            msample2 += sample1.split(":")
+            msample1 += ["."] * sample1.split(":").length
+          else
+            msample1 += sample1.split(":")
+            msample2 += sample2.split(":") 
+          end
+          mrest << rest
         end
-        mrest << rest
+
+        new_format = []
+        new_sample1 = []
+        new_sample2 =[]
+
+        common_format = %w(GT AF DP AU AD BCOUNT)
+        common_format.each do |key|
+          match = mformat.select{|k| k.split("--").last == key }.first
+          next unless match
+          kpos = mformat.index match
+          new_format << match.partition("--").last
+          new_sample1 << msample1[kpos]
+          new_sample2 << msample2[kpos]
+        end
+
+        mformat = new_format + mformat
+        msample1 = new_sample1 + msample1
+        msample2 = new_sample2 + msample2
+
+        minfo = minfo.select{|e| ! e.empty?}
+        minfo.unshift  "CalledBy=#{called_by[mutation]*","}"
+        str << ([chr, pos, '.', ref, alt, '.', mfilter * ";", minfo * ";", mformat * ":", msample1 * ":", msample2 * ":"] + Misc.zip_fields(mrest).collect{|l| l * ":"}) * "\t" 
+        str << "\n"
+        bar.tick
       end
-
-      new_format = []
-      new_sample1 = []
-      new_sample2 =[]
-
-      common_format = %w(GT AF DP AU AD BCOUNT)
-      common_format.each do |key|
-        match = mformat.select{|k| k.split("--").last == key }.first
-        next unless match
-        kpos = mformat.index match
-        new_format << match.partition("--").last
-        new_sample1 << msample1[kpos]
-        new_sample2 << msample2[kpos]
-      end
-
-      mformat = new_format + mformat
-      msample1 = new_sample1 + msample1
-      msample2 = new_sample2 + msample2
-
-      str += ([chr, pos, '.', ref, alt, '.', mfilter * ";", minfo * ";", mformat * ":", msample1 * ":", msample2 * ":"] + Misc.zip_fields(mrest).collect{|l| l * ":"}) * "\t" 
-      str += "\n"
     end
 
     str
@@ -167,7 +179,7 @@ module HTS
       elsif fields.include? "TUMOR"
         Log.warn "Could not find tumor_sample field in #{Misc.fingerprint(vcf)}, using TUMOR"
         "TUMOR"
-      elsif tsv[entry] && (genotype = tsv[entry][sample1].split(":").select{|p| p == "0/1" || p == "0|1"}.first)
+      elsif tsv[entry] && (genotype = tsv[entry][sample1].split(":").select{|p| p == "0/1" || p == "0|1" || p == "1/1" || p == "1|1" }.first)
         Log.warn "Could not find tumor_sample field in #{Misc.fingerprint(vcf)}, but #{sample1} has genotype #{genotype}"
         sample1
       else
@@ -207,11 +219,15 @@ module HTS
           next line
         end
       end
-      parts = line.split("\t")
+      parts = line.split("\t", -1)
       
       if parts.length == 8
         parts += ["GT", "1/0"]
       end
+
+      parts[7] = "." if parts[7].empty?
+
+      parts[5] = "." if parts[5].empty?
 
       format = parts[8].split(":")
 

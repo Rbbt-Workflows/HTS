@@ -9,7 +9,8 @@ module IGV
       #CMD.cmd_log("xvfb-run --server-args='-screen 0 #{height}x#{width}x24' --auto-servernum --server-num=1 java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.produce["igv.jar"].find}' -b '#{script_file}'")
       #CMD.cmd_log("xvfb-run --server-args='-screen 0 #{height}x#{width}x24' --auto-servernum --server-num=1 \
       #            java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.produce["lib/igv.jar"].find}' -b '#{script_file}'")
-      CMD.cmd_log("java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.glob("**/igv.jar").first}' -b '#{script_file}' -g '#{reference}'", :xvfb => true)
+      #CMD.cmd_log("java -Xmx4000m -jar '#{Rbbt.software.opt.IGV.glob("**/igv.jar").first}' -b '#{script_file}' -g '#{reference}'", :xvfb => true)
+      CMD.cmd_log('igv.sh', "-b '#{script_file}' -g '#{reference}'", :xvfb => true)
     end
   end
 

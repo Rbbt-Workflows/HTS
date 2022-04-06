@@ -54,6 +54,8 @@ module HTS
 
     raise "No normal sample name" if normal and normal_sample.nil?
 
+    raise "Normal and tumor samples have the same name: #{normal_sample}" if tumor_sample == normal_sample
+
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
 
     output = file('calls.vcf')

@@ -1,7 +1,19 @@
 %h1 IGV
-
 = action_parameters do
   - input :sample, :string
 
 - if defined? sample
-  = tool :IGV_js, :sample => sample
+
+  - Workflow.require_workflow "Sample"
+  - tumor_bam_job = Sample.job(:BAM, sample)
+  - raise "Job not done" unless tumor_bam_job.done?
+  - tumor_bam = tumor_bam_job.path
+
+  - normal_bam_job = Sample.job(:BAM_normal, sample)
+  - if normal_bam_job.done?
+    - normal_bam = normal_bam_job.path
+
+  - reference = tumor_bam_job.recursive_inputs["reference"]
+  - reference = 'hg19' if reference == 'b37'
+
+  = tool :IGV_js, :tumor_bam => tumor_bam, :normal_bam => normal_bam, :reference_code => reference, :sample => sample

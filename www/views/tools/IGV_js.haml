@@ -1,11 +1,7 @@
 #igv-div
 
-- Workflow.require_workflow "Sample"
-- tumor_bam_job = Sample.job(:BAM, sample)
-- raise "Job not done" unless tumor_bam_job.done?
-- tumor_bam = Samtools.prepare_BAM tumor_bam_job.path
-
 - filename = "tumor.bam"
+- tumor_bam = Samtools.prepare_BAM tumor_bam
 - url_tumor = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
 - f = @step.file(:html_resources)[filename].find
 - Open.link tumor_bam, f
@@ -13,10 +9,31 @@
 - index_tumor = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }.bai")
 - url_tumor = add_GET_param(url_tumor, '_format', 'binary')
 - index_tumor = add_GET_param(index_tumor, '_format', 'binary')
+- sample = File.basename(tumor_bam) unless defined?(sample) && sample
 
-- normal_bam_job = Sample.job(:BAM_normal, sample)
-- if normal_bam_job.done?
-  - normal_bam = Samtools.prepare_BAM normal_bam_job.path
+- if reference_code.include?("/") && File.exists?(reference_code)
+  - reference = HTS.prepare_FASTA reference_code
+  - id = File.basename(reference, '.fa')
+  - url_reference = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{id}.fa")
+  - f = @step.file(:html_resources)[id + '.fa'].find
+  - Open.link reference, f
+  - Open.link reference + '.fai', f + '.fai'
+
+  :deferjs
+    url_reference = rbbt.url_add_script_name("#{url_reference}")
+    reference_info = {
+      id: "#{id}",
+      name: "#{id}",
+      "fastaURL": url_reference,
+      "indexURL": url_reference + '.fai',
+      "tracks":[]
+    }
+- else
+  :deferjs
+    reference_info = undefined
+
+- if defined?(normal_bam) && normal_bam
+  - normal_bam = Samtools.prepare_BAM normal_bam
   - filename = "normal.bam"
   - url_normal = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{ filename }")
   - f = @step.file(:html_resources)[filename].find
@@ -26,72 +43,49 @@
   - url_normal = add_GET_param(url_normal, '_format', 'binary')
   - index_normal = add_GET_param(index_normal, '_format', 'binary')
 
-
-
-
-- reference = tumor_bam_job.recursive_inputs["reference"]
-- reference = 'hg19' if reference == 'b37'
-
-- if normal_bam
   :deferjs
     url_tumor = rbbt.url_add_script_name("#{url_tumor}")
     index_tumor = rbbt.url_add_script_name("#{index_tumor}")
     url_normal = rbbt.url_add_script_name("#{url_normal}")
     index_normal = rbbt.url_add_script_name("#{index_normal}")
 
-    genome = "#{reference}"
-    require_js(["/js-find/igv.min.js"], function(){
-      var igvDiv = document.getElementById("igv-div");
-      var options =
+    igv_tracks = [
         {
-          genome: genome,
-          tracks: [
-            {
-              "name": "#{ sample } tumor",
-              "url": url_tumor,
-              "indexURL": index_tumor,
-              "format": "bam"
-            },
-            {
-              "name": "#{ sample } normal",
-              "url": url_normal,
-              "indexURL": index_normal,
-              "format": "bam"
-            }
-          ]
-        };
+          "name": "tumor - #{ sample }",
+          "url": url_tumor,
+          "indexURL": index_tumor,
+          "format": "bam"
+        },
+        {
+          "name": "normal - #{ sample }",
+          "url": url_normal,
+          "indexURL": index_normal,
+          "format": "bam"
+        }
+      ]
 
-      igv.createBrowser(igvDiv, options)
-        .then(function (browser) {
-          console.log("Created IGV browser");
-        })
-    })
 - else
   :deferjs
     url_tumor = rbbt.url_add_script_name("#{url_tumor}")
     index_tumor = rbbt.url_add_script_name("#{index_tumor}")
-    //url_tumor = "file://#{tumor_bam}"
-    //index_tumor = "file://#{tumor_bam}.bai"
-    //url_normal = "file://#{normal_bam}"
-    //index_normal = "file://#{normal_bam}.bai"
-    genome = "#{reference}"
-    require_js(["/js-find/igv.min.js"], function(){
-      var igvDiv = document.getElementById("igv-div");
-      var options =
+    igv_tracks = [
         {
-          genome: genome,
-          tracks: [
-            {
-              "name": "#{ sample } tumor",
-              "url": url_tumor,
-              "indexURL": index_tumor,
-              "format": "bam"
-            }
-          ]
-        };
+          "name": "tumor - #{ sample }",
+          "url": url_tumor,
+          "indexURL": index_tumor,
+          "format": "bam"
+        }
+      ]
 
-      igv.createBrowser(igvDiv, options)
-        .then(function (browser) {
-          console.log("Created IGV browser");
-        })
-    })
+:deferjs
+  igv_options = {tracks: igv_tracks}
+  if (undefined === reference_info) {
+    igv_options.genome = "#{reference_code}"
+  }else{
+    igv_options.reference = reference_info
+    igv_options.genome = reference_info.id
+  }
+  require_js(["/js-find/igv.min.js"], function(){
+    var igvDiv = document.getElementById("igv-div");
+    igv.createBrowser(igvDiv, igv_options).then(function(browser){ console.log("Created IGV browser"); })
+  })

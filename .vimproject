@@ -156,6 +156,7 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    }
 			main=main{
 				sample-IGV.haml
+				BAM-IGV.haml
 			}
   }
  }

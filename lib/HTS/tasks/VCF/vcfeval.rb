@@ -25,10 +25,12 @@ module HTS
       sdf = File.join('.', "sdf")
 
       input_io = TSV.get_stream input
-      Misc.sensiblewrite(input_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort", :in => input_io)))
+      #Misc.sensiblewrite(input_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort", :in => input_io)))
+      Misc.sensiblewrite(input_sorted, HTS.add_vcf_genotype(CMD.cmd("sort -k 1,1 -k2,2n", :in => input_io)))
 
       truth_io = TSV.get_stream truth
-      Misc.sensiblewrite(truth_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort", :in => truth_io)))
+      #Misc.sensiblewrite(truth_sorted, HTS.add_vcf_genotype(CMD.cmd('bcftools', "sort", :in => truth_io)))
+      Misc.sensiblewrite(truth_sorted, HTS.add_vcf_genotype(CMD.cmd('sort -k 1,1 -k2,2n', :in => truth_io)))
 
       truth_sample = HTS.guess_vcf_tumor_sample(truth_sorted)
       input_sample = HTS.guess_vcf_tumor_sample(input_sorted)

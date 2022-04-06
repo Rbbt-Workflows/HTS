@@ -28,6 +28,13 @@ module HTS
     end
   end
 
+  def self.prepare_FASTA(file, dir = nil)
+    GATK.prepare_FASTA(file, dir)
+    BWA.prepare_FASTA(file, dir)
+    Samtools.prepare_FASTA(file, dir)
+    HTS.uncompress_FASTA(file, dir)
+  end
+
   def self.unfold_FASTA(file, dir = nil)
     file = file.path if Step === file
     file = file.find if Path === file
