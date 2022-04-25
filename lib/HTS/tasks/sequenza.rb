@@ -90,9 +90,9 @@ module HTS
   end
 
   dep :seqz
-  task :sequenza => :array do
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  task :sequenza => :array do |reference|
 
-    reference = self.recursive_inputs[:reference]
     reference = reference_file(reference)
     reference = Samtools.prepare_FASTA reference
     chromosomes = reference.replace_extension('dict', true).read.split("\n")

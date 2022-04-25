@@ -15,7 +15,7 @@ module Sample
 
   task :missing_data => :string do 
     sample = clean_name
-    raise "Sample #{ sample } unknown or data missing"
+    raise RbbtException, "Sample #{ sample } unknown or data missing"
   end
 
   input :by_group, :boolean, "Separate files by read-group if RevertSam is required", false

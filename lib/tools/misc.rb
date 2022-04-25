@@ -70,7 +70,9 @@ module HTS
 
 
     preamble << '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth at this position in the sample">'
+    preamble << '##FORMAT=<ID=DP4,Number=4,Type=Integer,Description="# high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases">'
     preamble << '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
+    preamble << '##FORMAT=<ID=TIR,Number=2,Type=Integer,Description="Reads strongly supporting indel allele for tiers 1,2">'
     preamble << '##FORMAT=<ID=AF,Number=1,Type=String,Description="Allele fractions of alternate alleles in the tumor">'
     preamble << '##FORMAT=<ID=AU,Number=2,Type=Integer,Description="Number of A alleles used in tiers 1,2">'
     preamble << '##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Depth of reads supporting alleles or variant allele">'
@@ -140,7 +142,7 @@ module HTS
         new_sample1 = []
         new_sample2 =[]
 
-        common_format = %w(GT AF DP AU AD BCOUNT)
+        common_format = %w(GT AF DP AU AD BCOUNT DP4 TIR)
         common_format.each do |key|
           match = mformat.select{|k| k.split("--").last == key }.first
           next unless match
