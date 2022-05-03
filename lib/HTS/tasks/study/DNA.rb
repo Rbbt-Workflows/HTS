@@ -48,6 +48,7 @@ module Study
       args = {}
       args["reference"] = reference
       args["variant"] = "gendb://pon_db"
+      args["create-output-variant-index"] = "false"
       args["output"] = self.tmp_path
       GATK.run_log("CreateSomaticPanelOfNormals", args)
       Open.rm_rf bed_dir
