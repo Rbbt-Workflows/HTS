@@ -23,7 +23,7 @@ if options[:help]
   exit 0
 end
 
-fastq_url = "https://b2drop.bsc.es/index.php/s/PLzkF7fbLcseGdE/download"
+fastq_url = "https://b2drop.bsc.es/index.php/s/7CgcErwwAZetTp3/download"
 
 Workflow.require_workflow "HTS"
 TmpFile.with_file do |tmpdir|
@@ -32,8 +32,8 @@ TmpFile.with_file do |tmpdir|
     CMD.cmd_log(:wget, "'#{fastq_url}' -O benchmark.zip ")
     CMD.cmd_log(:unzip, "benchmark.zip")
 
-    tumor_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/tumor/tumor_read1.fq.gz', :fastq2 => 'FASTQ/tumor/tumor_read2.fq.gz', :reference => 'hg38')
-    normal_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/normal/normal_read1.fq.gz', :fastq2 => 'FASTQ/normal/normal_read2.fq.gz', :reference => 'hg38')
+    tumor_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/tumor/tumor_read1.fq.gz', :fastq2 => 'FASTQ/tumor/tumor_read2.fq.gz', :reference => 'hg38', :sample_name => "tumor")
+    normal_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/normal/normal_read1.fq.gz', :fastq2 => 'FASTQ/normal/normal_read2.fq.gz', :reference => 'hg38', :sample_name => "normal")
 
     tumor_bam.produce
     normal_bam.produce
