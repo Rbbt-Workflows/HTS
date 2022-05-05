@@ -194,8 +194,6 @@ module Organism
   end
 
 
-
-
   # -- Claims for b37
   
   Organism.claim Organism["Hsa"].b37["b37.fa"], :proc do |target|

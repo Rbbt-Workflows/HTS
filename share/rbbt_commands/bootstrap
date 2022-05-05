@@ -2,18 +2,17 @@
 
 require 'rbbt-util'
 require 'rbbt/util/simpleopt'
-require 'rbbt/workflow'
-require 'rbbt/workflow/usage'
 
 $0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
 
 options = SOPT.setup <<EOF
 
-Bootstrap HTS samples
+Prepare the data for hg38 analysis
 
-$ #{$0} [options] <Study> <task>
+$ #{$0} [options] 
 
 -h--help Print this help
+
 EOF
 if options[:help]
   if defined? rbbt_usage
@@ -24,112 +23,22 @@ if options[:help]
   exit 0
 end
 
-require 'rbbt/workflow/integration/ansible'
+fastq_url = "https://b2drop.bsc.es/index.php/s/PLzkF7fbLcseGdE/download"
 
-$test_dir = File.expand_path("~/tmp/rbbt/ansible/bootstrap_HTS")
-module ArgoBootstrap
-  extend Workflow
-  extend Ansible::AnsibleWorkflow
+Workflow.require_workflow "HTS"
+TmpFile.with_file do |tmpdir|
+  Misc.in_dir tmpdir do
+    Open.mkdir "data"
+    CMD.cmd_log(:wget, "'#{fastq_url}' -O benchmark.zip ")
+    CMD.cmd_log(:unzip, "benchmark.zip")
 
-  helper :test_dir do
-   $test_dir
-  end
+    tumor_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/tumor/tumor_read1.fq.gz', :fastq2 => 'FASTQ/tumor/tumor_read2.fq.gz', :reference => 'hg38')
+    normal_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/normal/normal_read1.fq.gz', :fastq2 => 'FASTQ/normal/normal_read2.fq.gz', :reference => 'hg38')
 
-  desc "Prepare environment"
-  play 'prepare_env' do 
-    ans :file, path: "#{test_dir}/{{item}}", state: :directory
-    #ans :file, path: "#{test_dir}/root/data/", state: :absent
-    add :loop, <<-EOF.split("\n")
-.source
-root
-root/data
-root/share/data/studies/Benchmark/WES/Benchmark
-root/share/data/studies/Benchmark/WES/Benchmark_normal
-root/share/organisms/Hsa/hg38
-root/software/opt
-root/etc
-EOF
-  end
+    tumor_bam.produce
+    normal_bam.produce
 
-  desc "Set file server"
-  dep
-  play do
-    shell 'rbbt file_server add Organism rbbt.bsc.es'
-  end
-
-  desc "Create conda environment"
-  dep
-  play do
-    shell "conda create -p #{test_dir}/root/software/opt/conda"
-  end
-
-  desc "Configure conda environment"
-  dep
-  play do
-    shell "grep 'conda activate' #{test_dir}/root/etc/environment || echo 'conda activate ~/software/opt/conda' >> #{test_dir}/root/etc/environment;"
-  end
-
-  desc "Get Benchmark"
-  dep
-  play do
-   ans 'get_url', url: "https://b2drop.bsc.es/index.php/s/GkLyXQMfxzrtNkt/download", dest: "#{test_dir}/.source/benchmark.zip"
-  end
-
-  desc "Unpack Benchmark"
-  dep
-  play :unpack_benchmark do
-    ans 'unarchive', src: "#{test_dir}/.source/benchmark.zip", dest: "#{test_dir}/root/data/", remote_src: true
-    ans 'file', path: "#{test_dir}/root/data/benchmark", src: "#{test_dir}/root/data/ARGO-NEAT_minimal.v3", state: :link
-  end
-
-  desc "Prepare tumor sample"
-  dep 
-  play do
-      ans 'file', path: "#{test_dir}/root/share/data/studies/Benchmark/WES/Benchmark/{{item}}", src: "../../../../../../data/benchmark/FASTQ/tumor/{{item}}", state: :link
-      add 'loop', <<-EOF.split("\n")
-tumor_read1.fq.gz
-tumor_read2.fq.gz
-EOF
-  end
-
-  desc "Prepare normal sample"
-  dep
-  play :prepare_normal_sample do
-    ans 'file', path: "#{test_dir}/root/share/data/studies/Benchmark/WES/Benchmark_normal/{{item}}", src: "../../../../../../data/benchmark/FASTQ/normal/{{item}}", state: :link
-    add 'loop', <<-EOF.split("\n")
-normal_read1.fq.gz
-normal_read2.fq.gz
-EOF
-  end
-
-  desc "Prepare miniref reference"
-  dep :prepare_normal_sample
-  play do
-    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/hg38.fa.gz", src: "../../../../data/benchmark/reference/hg38.fa.gz", state: :link
-  end
-
-  desc "Prepare miniref known sites"
-  dep 
-  play :prepare_miniref_known_sites do
-    ans 'file', path: "#{test_dir}/root/share/organisms/Hsa/hg38/known_sites", src: "../../../../data/benchmark/known_sites/", state: :link
-  end
-
-  desc "Run benchmark"
-  input :reference, :select, "Reference code", 'hg38', :select_options => %w(b37 hg38 miniref)
-  dep do |jobname,options|
-    if options[:reference] == "miniref"
-      {:task => :prepare_miniref_known_sites, :jobname => jobname, :inputs => options}
-    else
-      {:task => :prepare_normal_sample, :jobname => jobname, :inputs => options}
-    end
-  end
-  play do |reference|
-    reference = "hg38" if reference == 'miniref'
-    shell "rbbt workflow task Sample -W HTS -jn Benchmark combined_caller_vcfs --log 0 -ck 'cpus 2' -r #{reference} -pf 2> #{test_dir}/benchmark.log"
-    add 'args', chdir: "#{test_dir}/root"
+    mutect2 = HTS.job(:mutect2, nil, :tumor => tumor_bam, :normal => normal_bam, :reference => 'hg38')
+    mutect2.produce
   end
 end
-
-playbook = Ansible.playbook ArgoBootstrap, :run_benchmark
-Ansible.play playbook
-puts Open.read(File.join($test_dir, "benchmark.log"))
