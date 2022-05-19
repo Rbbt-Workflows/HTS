@@ -227,9 +227,9 @@ module HTS
         parts += ["GT", "1/0"]
       end
 
-      parts[7] = "." if parts[7].empty?
+      parts[7] = "." if parts[7].nil? || parts[7].empty?
 
-      parts[5] = "." if parts[5].empty?
+      parts[5] = "." if parts[5].nil? || parts[5].empty?
 
       format = parts[8].split(":")
 
