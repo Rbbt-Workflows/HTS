@@ -19,8 +19,23 @@ get_git $name $url
     reference_code = File.basename(reference).sub('.fa','').sub('gz','')
     reference = reference_file reference
 
-    normal = Samtools.prepare_BAM(normal) if normal
-    tumor = Samtools.prepare_BAM(tumor) if tumor
+    normal = Samtools.prepare_BAM(normal)
+    tumor = Samtools.prepare_BAM(tumor)
+
+    if normal =~ /\.cram/
+      tmpdir = file('tmp')
+      Open.mkdir tmpdir.normal
+      normal = Samtools.to_bam(normal, reference, tmpdir.normal[File.basename(normal).sub(/\.cram$/, '.bam')])
+      normal = Samtools.prepare_BAM(normal, tmpdir.normal)
+    end
+
+    if tumor =~ /\.cram/
+      tmpdir ||= file('tmp')
+      Open.mkdir tmpdir.tumor
+      tumor = Samtools.to_bam(tumor, reference, tmpdir.tumor[File.basename(tumor).sub(/\.cram$/, '.bam')])
+      tumor = Samtools.prepare_BAM(tumor, tmpdir.tumor)
+    end
+
 
     reference = Samtools.prepare_FASTA(reference)
 
@@ -38,6 +53,8 @@ get_git $name $url
       CMD.cmd_log(:lofreq, "somatic -n #{normal} -t #{tumor} -f #{reference} --threads #{cpus} -o #{output}/")
     end
     
+    Open.rm tmpdir if tmpdir && File.exists?(tmpdir)
+
     Dir.glob(File.join(output,'*'))
   end
 

@@ -91,5 +91,5 @@ module HTS
   dep :strelka_filtered, :compute => :produce
   dep :strelka_filtered_indels, :compute => :produce
   extension :vcf
-  dep_task :strelka, HTS, :join_vcfs, :vcf1 => :strelka_filtered, :vcf2 => :strelka_pre_indels
+  dep_task :strelka, HTS, :join_vcfs, :vcf1 => :strelka_filtered, :vcf2 => :strelka_filtered_indels
 end

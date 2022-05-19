@@ -186,7 +186,14 @@ module Samtools
 
   def self.to_cram(bam, reference, cram)
     cpus = Rbbt::Config.get("cpus", :samtools_view, :samtools, :view, :cram, :default => 1)
-    CMD.cmd_log("samtools", "view -@ #{cpus} -T #{reference} -C -o #{cram} #{bam}")
+    CMD.cmd_log("samtools", "view -h -@ #{cpus} -T #{reference} -C -o #{cram} #{bam}")
+    cram
+  end
+
+  def self.to_bam(cram, reference, bam)
+    cpus = Rbbt::Config.get("cpus", :samtools_view, :samtools, :view, :cram, :default => 1)
+    CMD.cmd_log("samtools", "view -h -@ #{cpus} -T #{reference} -o #{bam} #{cram}")
+    bam
   end
 end
 

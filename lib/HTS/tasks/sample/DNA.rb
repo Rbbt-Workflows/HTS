@@ -115,7 +115,6 @@ module Sample
     :muse => :muse,
     :delly => :delly,
     :svABA => :svABA,
-    :svABA_indels => :svABA_indels,
     :sequenza_purity => :sequenza_purity,
     :sequenza_ploidy => :sequenza_ploidy,
     :sequenza_CNV => :sequenza_CNV,
@@ -240,7 +239,7 @@ module Sample
 
 
 
-  input :callers, :array, "Callers to use", %w(mutect2 muse strelka sage)
+  input :callers, :array, "Callers to use", %w(mutect2 muse strelka sage lofreq somatic_sniper)
   dep :mutect2 do  |jobname,options,dependencies|
     options[:callers].collect do |vcaller|
       {:task => vcaller, :inputs => options, :jobname => jobname}
@@ -321,6 +320,15 @@ module Sample
     options = add_sample_options jobname, options
     options[:BAM] = :BAM if dependencies.flatten.reject{|dep| (dep.dependencies.empty? ) || (dep.error? && ! dep.recoverable_error?) }.select{|dep|  dep.task_name == :BAM_normal}.first.nil?
     {:inputs => options, :jobname => jobname}
+  end
+
+  dep :svABA
+  extension :vcf
+  task :svABA_indels => :text do
+    file = step(:svABA).join.file('output/svABA.svaba.somatic.indel.vcf')
+    tumor_bam = step(:svABA).recursive_inputs[:tumor]
+    normal_bam = step(:svABA).recursive_inputs[:normal]
+    SvABA.fix_vcf_sample_names(file, tumor_bam, normal_bam)
   end
 
   dep :strelka, :compute => [:bootstrap, :canfail] do |jobname, options|
