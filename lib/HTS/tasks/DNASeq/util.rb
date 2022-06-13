@@ -47,7 +47,7 @@ module HTS
     raise ParameterException, "No population VCF for pileup BAM pileup summaries" if vcf.nil?
 
     orig_reference = reference_file(reference)
-    reference = GATK.prepare_FASTA orig_reference
+    reference = HTS.prepare_FASTA orig_reference
 
     variants_file = GATK.prepare_VCF vcf
     args = {}
@@ -95,7 +95,7 @@ module HTS
   extension 'pileup.gz'
   task :pileup => :text do |bam,reference|
     orig_reference = reference_file(reference)
-    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.prepare_FASTA orig_reference
 
     monitor_cmd_genome "samtools mpileup -f '#{reference}' -Q 20 '#{bam}'", false, true
   end
@@ -257,8 +257,7 @@ module HTS
   task :BAM_position_pileup => :tsv do |bam,positions,reference|
     bam = Samtools.prepare_BAM(bam)
     reference = reference_file reference
-    reference = GATK.prepare_FASTA reference
-    reference = Samtools.prepare_FASTA reference
+    reference = HTS.prepare_FASTA reference
 
     Open.mkdir files_dir
     output = file('output')

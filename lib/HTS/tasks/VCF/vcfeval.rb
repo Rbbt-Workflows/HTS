@@ -11,7 +11,8 @@ module HTS
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :truth_sample, :string, "Tumor sample name in truth VCF"
   input :input_sample, :string, "Tumor sample name in input VCF"
-  task :vcfeval => :tsv do |truth,input,reference,truth_sample,input_sample|
+  input :bed_regions, :file, "Regions to evaluate"
+  task :vcfeval => :tsv do |truth,input,reference,truth_sample,input_sample,bed_regions|
     orig_reference = reference_file(reference)
     reference = BWA.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
@@ -59,7 +60,11 @@ module HTS
 
       Open.ln_s sdf, './sdf'
 
-      text = CMD.cmd('rtg', "vcfeval --decompose --squash-ploidy --no-roc --all-records -t '#{sdf}' --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      if bed_regions && File.exists?(bed_regions)
+        text = CMD.cmd('rtg', "vcfeval --decompose --squash-ploidy --no-roc --all-records -t '#{sdf}' --bed-regions #{bed_regions} --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      else
+        text = CMD.cmd('rtg', "vcfeval --decompose --squash-ploidy --no-roc --all-records -t '#{sdf}' --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
+      end
       text = text.collect{|line| line.gsub(/^  */,'')}
       TSV.open(StringIO.new(text * "\n"), :header_hash => '', :sep => /\s+/, :type => :list)
     end

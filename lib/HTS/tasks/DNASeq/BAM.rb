@@ -71,9 +71,10 @@ module HTS
   task :BAM_bwa => :binary do |reference, bwa_mem_args,remove_unpaired,skip_mark_adapters|
 
     orig_reference = reference_file(reference)
-    reference = BWA.prepare_FASTA orig_reference
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
+    #reference = BWA.prepare_FASTA orig_reference
+    #reference = GATK.prepare_FASTA orig_reference
+    #reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.prepare_FASTA orig_reference
 
     FileUtils.mkdir_p files_dir unless Open.exists?(files_dir)
 
@@ -254,9 +255,10 @@ module HTS
     args["known-sites"] = known_sites
 
     orig_reference = reference_file(reference)
-    reference = BWA.prepare_FASTA orig_reference
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.prepare_FASTA orig_reference
+    #reference = BWA.prepare_FASTA orig_reference
+    #reference = GATK.prepare_FASTA orig_reference
+    #reference = Samtools.prepare_FASTA orig_reference
 
     args["reference"] = reference
     args["intervals"] = interval_list if interval_list

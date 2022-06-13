@@ -39,8 +39,7 @@ module HTS
     reference = reference_file reference
     orig_reference = reference
 
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.prepare_FASTA orig_reference
 
     args = {}
     tumor = tumor.path if Step === tumor
@@ -139,8 +138,7 @@ module HTS
     reference = reference_file reference
     orig_reference = reference
 
-    reference = GATK.prepare_FASTA orig_reference
-    reference = Samtools.prepare_FASTA orig_reference
+    reference = HTS.prepare_FASTA orig_reference
 
     tmp = TmpFile.tmp_file
     FileUtils.ln_s step(:mutect2_pre).path, tmp

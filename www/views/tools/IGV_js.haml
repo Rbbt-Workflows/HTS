@@ -13,6 +13,7 @@
 
 - if reference_code.include?("/") && File.exists?(reference_code)
   - reference = HTS.prepare_FASTA reference_code
+  - reference.sub!('.gz','')
   - id = File.basename(reference, '.fa')
   - url_reference = add_GET_param(remove_GET_param(@uri, ["_update", "_"]), "_fragment", "html_resources/#{id}.fa")
   - f = @step.file(:html_resources)[id + '.fa'].find
