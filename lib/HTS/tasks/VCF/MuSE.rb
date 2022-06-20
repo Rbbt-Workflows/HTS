@@ -10,7 +10,7 @@ module HTS
   extension :vcf
   task :muse => :text do |tumor,normal, reference,type_of_sequencing|
 
-    reference_code = File.basename(reference).sub('.fa','').sub('gz','')
+    reference_code = File.basename(reference).sub('.fa','').sub('.gz','')
     reference = reference_file reference
     orig_reference = reference
 

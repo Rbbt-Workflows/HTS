@@ -29,10 +29,18 @@ module HTS
   end
 
   def self.prepare_FASTA(file, dir = nil)
-    GATK.prepare_FASTA(file, dir)
-    BWA.prepare_FASTA(file, dir)
-    Samtools.prepare_FASTA(file, dir)
-    HTS.uncompress_FASTA(file, dir)
+    Path.setup(file) unless Path === file
+
+    if dir.nil? && file.replace_extension('dict','gz').exists? &&
+        File.exists?(file + '.bwt') && File.exists?(file + '.fai') 
+
+      return file.sub(".gz",'')
+    else
+      GATK.prepare_FASTA(file, dir)
+      BWA.prepare_FASTA(file, dir)
+      Samtools.prepare_FASTA(file, dir)
+      HTS.uncompress_FASTA(file, dir)
+    end
   end
 
   def self.unfold_FASTA(file, dir = nil)
@@ -192,8 +200,6 @@ module Organism
     CMD.cmd_log("wget '#{url}' -O  #{target}")
     nil
   end
-
-
 
 
   # -- Claims for b37

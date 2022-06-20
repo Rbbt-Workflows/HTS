@@ -46,9 +46,10 @@ module HTS
 
     if bam_file =~ /\.cram/i
       orig_reference = reference_file(reference)
-      reference = BWA.prepare_FASTA orig_reference
-      reference = GATK.prepare_FASTA orig_reference
-      reference = Samtools.prepare_FASTA orig_reference
+      reference = HTS.prepare_FASTA orig_reference
+      #reference = BWA.prepare_FASTA orig_reference
+      #reference = GATK.prepare_FASTA orig_reference
+      #reference = Samtools.prepare_FASTA orig_reference
       args["REFERENCE_SEQUENCE"] = reference
     end
 

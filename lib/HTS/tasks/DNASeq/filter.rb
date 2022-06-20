@@ -7,7 +7,8 @@ module HTS
   task :bwa_filter => :binary do |reference,fastq1,fastq2|
 
     reference = reference_file reference
-    reference = BWA.prepare_FASTA reference
+    #reference = BWA.prepare_FASTA reference
+    reference = HTS.prepare_FASTA reference
     bwa_mem_args = " -t " << config('cpus', 'bwa')
     if fastq2
       CMD.cmd_log("bwa mem #{bwa_mem_args} '#{reference}' '#{fastq1}' '#{fastq2}' | samtools fastq -F4 - | gzip > #{self.tmp_path}")
@@ -58,7 +59,7 @@ module HTS
     FileUtils.mkdir_p files_dir unless File.exists? files_dir
 
     reference = reference_file reference
-    reference = BWA.prepare_FASTA reference
+    reference = HTS.prepare_FASTA reference
     cpus = Rbbt::Config.get(:cpus, :razers)
     TmpFile.with_file :extension => :bam do |tmp_bam|
       if fastq2

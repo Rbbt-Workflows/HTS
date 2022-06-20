@@ -132,5 +132,24 @@ module HTS
     end
   end
 
+  input :vcf_files, :array, "List of vcf files"
+  input :vcf_names, :array, "List of vcf file names"
+  extension :vcf
+  task :combine_vcfs => :text do |vcf_files,vcf_names|
+    list = {}
+
+    iii vcf_files
+
+    if vcf_names.nil? || vcf_names.empty?
+      vcf_names = vcf_files.collect{|f| File.basename(f).sub('.vcf','').sub('.gz','')}
+    end
+
+    vcf_files.zip(vcf_names).each do |file,name|
+      list[name] = file
+    end
+    iii list
+    
+    HTS.combine_caller_vcfs(list)
+  end
 
 end
