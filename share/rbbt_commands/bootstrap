@@ -12,6 +12,7 @@ Prepare the data for hg38 analysis
 $ #{$0} [options] 
 
 -h--help Print this help
+-r--reference Reference code
 
 EOF
 if options[:help]
@@ -25,6 +26,8 @@ end
 
 fastq_url = "https://b2drop.bsc.es/index.php/s/7CgcErwwAZetTp3/download"
 
+reference = options[:reference] ||'hg38'
+
 Workflow.require_workflow "HTS"
 TmpFile.with_file do |tmpdir|
   Misc.in_dir tmpdir do
@@ -32,13 +35,13 @@ TmpFile.with_file do |tmpdir|
     CMD.cmd_log(:wget, "'#{fastq_url}' -O benchmark.zip ")
     CMD.cmd_log(:unzip, "benchmark.zip")
 
-    tumor_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/tumor/tumor_read1.fq.gz', :fastq2 => 'FASTQ/tumor/tumor_read2.fq.gz', :reference => 'hg38', :sample_name => "tumor")
-    normal_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/normal/normal_read1.fq.gz', :fastq2 => 'FASTQ/normal/normal_read2.fq.gz', :reference => 'hg38', :sample_name => "normal")
+    tumor_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/tumor/tumor_read1.fq.gz', :fastq2 => 'FASTQ/tumor/tumor_read2.fq.gz', :reference => reference, :sample_name => "tumor")
+    normal_bam = HTS.job(:BAM, nil, :fastq1 => 'FASTQ/normal/normal_read1.fq.gz', :fastq2 => 'FASTQ/normal/normal_read2.fq.gz', :reference => reference, :sample_name => "normal")
 
     tumor_bam.produce
     normal_bam.produce
 
-    mutect2 = HTS.job(:mutect2, nil, :tumor => tumor_bam, :normal => normal_bam, :reference => 'hg38')
+    mutect2 = HTS.job(:mutect2, nil, :tumor => tumor_bam, :normal => normal_bam, :reference => reference)
     mutect2.produce
   end
 end

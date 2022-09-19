@@ -28,7 +28,7 @@ module Bowtie
 
       Misc.in_dir dir do
         FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
-        CMD.cmd("'#{Rbbt.software.opt.Bowtie2["bowtie2-build"].find}' -f '#{ linked }' '#{linked}'")
+        CMD.cmd("'#{Rbbt.software.opt.Bowtie2.url.local.bin["bowtie2-build"].find}' -f '#{ linked }' '#{linked}'")
       end
     end
 
