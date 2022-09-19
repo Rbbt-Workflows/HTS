@@ -12,7 +12,7 @@ Prepare the data for hg38 analysis
 $ #{$0} [options] 
 
 -h--help Print this help
--r--reference Reference code
+-r--reference* Reference code
 
 EOF
 if options[:help]
