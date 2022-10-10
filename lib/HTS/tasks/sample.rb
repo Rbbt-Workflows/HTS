@@ -31,6 +31,7 @@ module Sample
     :skip_duplicates => :boolean,
     :remove_unpaired => :boolean,
     :remove_soft_clip => :boolean,
+    :max_mnp_distance => :integer,
   }
 
   class << self
