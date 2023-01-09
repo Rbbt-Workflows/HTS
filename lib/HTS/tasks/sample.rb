@@ -26,6 +26,7 @@ module Sample
     :interval_list => :file,
     :pon => :file,
     :panel_of_normals => :file,
+    :skip_dbSNP_in_muse => :boolean,
     :germline_resource => :file,
     :skip_rescore => :boolean,
     :skip_duplicates => :boolean,
