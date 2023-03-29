@@ -41,7 +41,7 @@ module HTS
   #end
 
   helper :reference_file do |reference|
-    reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
+    reference = Open.read(reference).strip if String === reference && File.exist?(reference) && File.size(reference) < 2000
 
     ref = case reference.sub('_noalt','')
           when 'hg19', 'hg38', 'b37', 'hs37d5'
@@ -68,11 +68,11 @@ module HTS
 
   helper :vcf_file do |orig_reference, file|
     reference = orig_reference.scan(/(?:b37|hg19|hg38|mm10|GRCm38|GRCh38|rn6|Rnor_6\.0)(?:_noalt)?/).first 
-    file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
+    file = Open.read(file).strip if String === file && File.exist?(file) && File.size(file) < 2000
 
-    reference = reference.sub('_noalt','')
+    reference = reference.sub('_noalt','') if reference
 
-    if File.exists?(orig_reference) && File.exists?(File.join(File.dirname(orig_reference), 'known_sites'))
+    if File.exist?(orig_reference) && File.exist?(File.join(File.dirname(orig_reference), 'known_sites'))
       directory = Path.setup(File.dirname(orig_reference))
 
       case file.to_s.downcase
@@ -147,7 +147,7 @@ module HTS
   end
 
   helper :germline_min_af do |file|
-    file = Open.read(file).strip if String === file && File.exists?(file) && File.size(file) < 2000
+    file = Open.read(file).strip if String === file && File.exist?(file) && File.size(file) < 2000
     case file.to_s.downcase
     when 'gnomad'
       0.0000025
@@ -183,7 +183,7 @@ module HTS
   BLACKLISTED_CONTIGS = ['hs37d5', /GL/, /NC_/, /KI/, /decoy/, /chrUn/, /random/]
   helper :intervals_for_reference do |reference|
     output = reference + '.byNS.interval_list' 
-    unless File.exists?(output)
+    unless File.exist?(output)
       args = {}
       args["REFERENCE"] = reference
       args["OUTPUT"] = output
@@ -275,7 +275,7 @@ module HTS
           io = Open.open(fifo)
           res = self.monitor_genome io, bgzip 
           ConcurrentStream.setup res do
-            Open.rm fifo if File.exists? fifo
+            Open.rm fifo if File.exist? fifo
           end
         end
       end
@@ -308,7 +308,7 @@ module HTS
   end
 
   helper :fix_file_for_spark do |file|
-    if String === file and File.exists?(file) and file.include?(":")
+    if String === file and File.exist?(file) and file.include?(":")
       new_file = TmpFile.tmp_file
       extension = Path.get_extension(file)
       new_file << "." << extension if extension 
@@ -428,7 +428,7 @@ module HTS
   end
 
   helper :capture_intervals do |reference,type='wgs_calling_regions'|
-    reference = Open.read(reference).strip if String === reference && File.exists?(reference) && File.size(reference) < 2000
+    reference = Open.read(reference).strip if String === reference && File.exist?(reference) && File.size(reference) < 2000
 
     type = 'exome_capture' if %w(wes wxs).include? type.downcase
     type = 'wgs_calling_regions' if %w(wgs).include? type.downcase

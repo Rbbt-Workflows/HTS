@@ -30,6 +30,8 @@ module Samtools
     {:git => url, :extra => extra}
   end
 
+  CMD.tool :bgzip, Rbbt.software.opt.HTSLib
+
   CMD.tool :samtools, Rbbt.software.opt.Samtools
 
   CMD.tool :bcftools, Rbbt.software.opt.bcftools
@@ -66,8 +68,8 @@ module Samtools
 
     Misc.lock linked do
       if ! (
-        (File.exists?(linked + ".bai") && ! Persist.newer?(linked + ".bai", file)) ||
-        (File.exists?(linked + ".crai") && ! Persist.newer?(linked + ".crai", file))
+        (File.exist?(linked + ".bai") && ! Persist.newer?(linked + ".bai", file)) ||
+        (File.exist?(linked + ".crai") && ! Persist.newer?(linked + ".crai", file))
       )
 
         Misc.in_dir dir do
@@ -82,7 +84,7 @@ module Samtools
       end
     end
 
-    if File.exists?(linked + '.crai') && linked =~ /\.bam$/
+    if File.exist?(linked + '.crai') && linked =~ /\.bam$/
       linked_cram = linked.sub(/\.bam$/,'.cram')
       Open.ln_s linked, linked_cram
       Open.ln_s linked + '.crai', linked_cram + '.crai'
@@ -106,10 +108,10 @@ module Samtools
     CMD.get_tool :samtools
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".fai") || Persist.newer?(linked + ".fai", file)
+    if ! File.exist?(linked + ".fai") || Persist.newer?(linked + ".fai", file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         Samtools.run("faidx '#{ linked }'")
       end
     end

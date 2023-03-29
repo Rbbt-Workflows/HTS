@@ -20,7 +20,7 @@ module HTS
     args = "--tumorBam #{tumor} --referenceFasta #{reference} --runDir #{files_dir} " 
     args += "--normalBam #{normal}" if normal
     Open.mkdir files_dir
-    if !File.exists? (files_dir + "/runWorkflow.py") 
+    if !File.exist? (files_dir + "/runWorkflow.py") 
       CMD.cmd_log("configManta.py", args)
     end
     files_dir + "/runWorkflow.py"
@@ -46,7 +46,7 @@ module HTS
     args += bams_str
 
     Open.mkdir files_dir
-    if !File.exists? (files_dir + "/runWorkflow.py")
+    if !File.exist? (files_dir + "/runWorkflow.py")
       CMD.cmd_log("configManta.py", args)
     end
     files_dir + "/runWorkflow.py"
@@ -93,7 +93,7 @@ module HTS
     args += "--normalBam #{normal}" if normal
 
     Open.mkdir files_dir
-    if !File.exists? file("runWorkflow.py") 
+    if !File.exist? file("runWorkflow.py") 
       CMD.cmd_log("configManta.py", args)
     end
     cmd = file("runWorkflow.py")

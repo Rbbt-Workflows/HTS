@@ -153,14 +153,14 @@ class Scatter
     end
 
     q.init do |file1, file2, lock|
-      Open.rm lock if File.exists? lock
+      Open.rm lock if File.exist? lock
       block.call file1, file2
     end
 
     times = 500
 
     iterate do |file1, file2|
-      sleep 2 while File.exists?(lock)
+      sleep 2 while File.exist?(lock)
       FileUtils.touch lock
       q.process file1, file2, lock
     end

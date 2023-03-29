@@ -49,10 +49,10 @@ class TestClass < Test::Unit::TestCase
       s.read_head
       f11, f12 = s.prepare_files("run1")
       f21, f22 = s.prepare_files("run2")
-      assert File.exists? f11
-      assert File.exists? f12
-      assert File.exists? f21
-      assert File.exists? f22
+      assert File.exist? f11
+      assert File.exist? f12
+      assert File.exist? f21
+      assert File.exist? f22
     end
   end
 

@@ -17,10 +17,10 @@ module HTS
     
     if linked =~ /.gz$/
       unzipped_linked = linked.sub(/.gz$/,'')
-      CMD.cmd("zcat #{linked} > #{unzipped_linked}") unless File.exists?(unzipped_linked)
+      CMD.cmd("zcat #{linked} > #{unzipped_linked}") unless File.exist?(unzipped_linked)
       dir.glob("*.gz.*").each do |file|
         unzipped_file = file.sub('.gz.', '.')
-        Open.ln_s File.basename(file), unzipped_file unless File.exists?(unzipped_file)
+        Open.ln_s File.basename(file), unzipped_file unless File.exist?(unzipped_file)
       end
       unzipped_linked
     else
@@ -29,10 +29,10 @@ module HTS
   end
 
   def self.prepare_FASTA(file, dir = nil)
-    Path.setup(file) unless Path === file
+    file = Path.setup(file.dup) unless Path === file
 
     if dir.nil? && file.replace_extension('dict','gz').exists? &&
-        File.exists?(file + '.bwt') && File.exists?(file + '.fai') 
+        File.exist?(file + '.bwt') && File.exist?(file + '.fai') 
 
       return file.sub(".gz",'')
     else
@@ -57,7 +57,7 @@ module HTS
     linked = dir[basename].find
 
     dir = linked + ".by_contig"
-    if ! File.exists?(dir) || Persist.newer?(dir, file)
+    if ! File.exist?(dir) || Persist.newer?(dir, file)
       Open.mkdir dir
       Misc.in_dir dir do
         CMD.cmd_log(CMD.bash("awk '/^>/ {OUT=substr(\\$1,2) \".fa\"}; {print >> OUT; close(OUT)}' #{CMD.gzip_pipe(linked)}"))
@@ -94,7 +94,7 @@ module HTS
     linked = dir[basename].find
     Open.ln_s file, linked
 
-    if ! File.exists?(linked + ".fixed.gtf") || Persist.newer?(linked + '.fixed.gtf', file)
+    if ! File.exist?(linked + ".fixed.gtf") || Persist.newer?(linked + '.fixed.gtf', file)
       Open.open(linked) do |sout|
         Open.open(linked + '.fixed.gtf', :mode => 'w') do |sin|
           TSV.traverse sout, :type => :array do |line|
@@ -122,7 +122,8 @@ module Organism
   # -- Claims for hg38
   
   Organism.claim Organism["Hsa"].hg38_noalt["hg38_noalt.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    CMD.get_tool(:bgzip)
+    FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/hg38.analysisSet.chroms.tar.gz"
     TmpFile.with_file do |tmpdir|
@@ -137,7 +138,8 @@ module Organism
 
 
   Organism.claim Organism["Hsa"].hg38["hg38.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    CMD.get_tool(:bgzip)
+    FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
     url = "https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta"
     target.sub!(/\.gz$/,'')
     CMD.cmd_log("wget '#{url}' -O - | bgzip > #{target}.gz")
@@ -205,7 +207,7 @@ module Organism
   # -- Claims for b37
   
   Organism.claim Organism["Hsa"].b37["b37.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
     target.sub!(/\.gz$/,'')
     url = "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/human_g1k_v37.fasta.gz"
     CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
@@ -269,7 +271,7 @@ module Organism
   # -- Claims for hg19
 
   #Organism.claim Organism["Hsa"].hg19["hg19.fa"], :proc do |target|
-  #  FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+  #  FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
   #  url = "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
   #  TmpFile.with_file do |directory|
   #    Misc.in_dir directory do
@@ -293,7 +295,7 @@ module Organism
   ## -- Claims for  hs37d5
 
   #Organism.claim Organism["Hsa"].hs37d5["hs37d5.fa"], :proc do |target|
-  #  FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+  #  FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
   #  target.sub!(/\.gz$/,'')
   #  url = "https://storage.googleapis.com/genomics-public-data/references/hs37d5/hs37d5.fa.gz"
   #  CMD.cmd_log("wget '#{url}' -O  - | gunzip -c > #{target}")
@@ -316,7 +318,8 @@ module Organism
   #end
 
   Organism.claim Organism["Mmu"].GRCm38["GRCm38.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    CMD.get_tool(:bgzip)
+    FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
     url = "ftp://ftp.ensembl.org/pub/release-96/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz"
     target.sub!(/\.gz$/,'')
     CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")
@@ -324,7 +327,8 @@ module Organism
   end
 
   Organism.claim Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa"], :proc do |target|
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    CMD.get_tool(:bgzip)
+    FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
     url = "ftp://ftp.ensembl.org/pub/release-101/fasta/rattus_norvegicus/dna/Rattus_norvegicus.Rnor_6.0.dna_sm.toplevel.fa.gz"
     target.sub!(/\.gz$/,'')
     CMD.cmd_log("wget '#{url}' -O - | gunzip -c | bgzip > #{target}.gz")

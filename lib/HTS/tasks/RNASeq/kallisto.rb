@@ -13,9 +13,9 @@ module Kallisto
     linked = dir[basename].find
     Misc.lock linked do
 
-      if ! File.exists?(linked + ".kallisto_idx") || Persist.newer?(linked + '.kallisto_idx', file)
+      if ! File.exist?(linked + ".kallisto_idx") || Persist.newer?(linked + '.kallisto_idx', file)
         Misc.in_dir dir do
-          FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+          FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
           CMD.cmd_log("kallisto index '#{linked}' -i #{linked}.kallisto_idx")
         end
       end

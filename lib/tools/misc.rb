@@ -15,10 +15,10 @@ module HTS
 
     Open.mkdir dir
     linked = dir[basename].find
-    CMD.cmd_log("bgzip -c #{file} > '#{ linked + '.gz' }'") unless File.exists?(linked + '.gz')
-    if ! File.exists?(linked + ".gz.tbi") || Persist.newer?(linked + ".gz.tbi", file)
+    CMD.cmd_log(:bgzip, "-c #{file} > '#{ linked + '.gz' }'") unless File.exist?(linked + '.gz')
+    if ! File.exist?(linked + ".gz.tbi") || Persist.newer?(linked + ".gz.tbi", file)
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         CMD.cmd_log("tabix '#{ linked }.gz'")
       end
     end

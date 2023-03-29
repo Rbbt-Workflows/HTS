@@ -26,7 +26,6 @@ module HTS
     bam = Samtools.prepare_BAM(bam) if bam
     reference = Samtools.prepare_FASTA(reference)
     inputs[:reference] = reference
-    iii inputs.to_hash
     BAMSurgeon.add_indels(inputs)
   end
 

@@ -23,7 +23,7 @@ module GATK
   def self.tmpdir
     begin
       tmpdir = Rbbt::Config.get('tmpdir', :gatk)
-      if tmpdir && ! File.exists?(tmpdir)
+      if tmpdir && ! File.exist?(tmpdir)
         Open.mkdir tmpdir
         File.chmod(0777, tmpdir)
       end
@@ -39,11 +39,12 @@ module GATK
   end
 
   def self.get_VCF(url, target)
-    FileUtils.mkdir_p File.dirname(target) unless File.exists? File.dirname(target)
+    CMD.get_tool(:bgzip)
+    FileUtils.mkdir_p File.dirname(target) unless File.exist? File.dirname(target)
     begin
       CMD.cmd_log("wget '#{url}'  -O - | gunzip - -c | bgzip -c > '#{target}'")
     rescue
-      FileUtils.rm target if File.exists?(target)
+      FileUtils.rm target if File.exist?(target)
     end
     nil
   end
@@ -82,12 +83,12 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
+    if ! File.exist?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
         if linked != file
           Open.rm linked
-          FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+          FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         end
         args = {}
         args["input"] = linked
@@ -111,11 +112,11 @@ module GATK
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
+    if ! File.exist?(linked + ".tbi") || Persist.newer?(linked + '.tbi', file)
 
       Misc.in_dir dir do
 
-        if !File.exists?(linked)
+        if !File.exist?(linked)
           Open.write(linked + '.tmp') do |fout|
             TSV.traverse file, :type => :array do |line|
               out = if line[0] == "#"
@@ -301,11 +302,11 @@ module GATK
 
     linked = dir[basename].find
     dict = linked.replace_extension('dict', 'gz')
-    if ! File.exists?(dict) || Persist.newer?(dict, file)
+    if ! File.exist?(dict) || Persist.newer?(dict, file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
-        Open.rm dict if File.exists?(dict)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
+        Open.rm dict if File.exist?(dict)
         CMD.cmd(:gatk, "CreateSequenceDictionary -R '#{ linked }'")
       end
     end

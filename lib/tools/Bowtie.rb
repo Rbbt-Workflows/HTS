@@ -24,10 +24,10 @@ module Bowtie
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".1.bt2") || Persist.newer?(linked + ".1.bt2", file)
+    if ! File.exist?(linked + ".1.bt2") || Persist.newer?(linked + ".1.bt2", file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         CMD.cmd("'#{Rbbt.software.opt.Bowtie2.url.local.bin["bowtie2-build"].find}' -f '#{ linked }' '#{linked}'")
       end
     end

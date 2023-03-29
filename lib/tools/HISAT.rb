@@ -48,10 +48,10 @@ module HISAT
 
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".idx.1.ht2") || Persist.newer?(linked + '.idx.1.ht2', file)
+    if ! File.exist?(linked + ".idx.1.ht2") || Persist.newer?(linked + '.idx.1.ht2', file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         CMD.cmd_log("bash -c 'extract_splice_sites.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.ss'")
         CMD.cmd_log("bash -c 'extract_exons.py #{Open.gzip?(linked) ? "<(gunzip -c '#{linked}')" : "'#{ linked }'"} > #{linked}.exon'")
 

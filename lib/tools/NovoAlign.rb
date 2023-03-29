@@ -16,10 +16,10 @@ module NovoAlign
     Path.setup(dir) unless Path === dir
     
     linked = dir[basename].find
-    if ! File.exists?(linked + ".nix") || Persist.newer?(linked + ".nix", file)
+    if ! File.exist?(linked + ".nix") || Persist.newer?(linked + ".nix", file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         CMD.cmd(:novoindex, "'#{ linked }.nix' '#{linked}'")
       end
     end

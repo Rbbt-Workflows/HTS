@@ -49,10 +49,10 @@ module HTS
       end
 
 
-      CMD.cmd('bgzip', "#{truth_sorted}")
-      CMD.cmd('bgzip', "#{input_sorted}")
-      CMD.cmd('tabix', "#{truth_sorted}.gz")
-      CMD.cmd('tabix', "#{input_sorted}.gz")
+      CMD.cmd(:bgzip, truth_sorted)
+      CMD.cmd(:bgzip, input_sorted)
+      CMD.cmd(:tabix, "#{truth_sorted}.gz")
+      CMD.cmd(:tabix, "#{input_sorted}.gz")
 
       sdf = Persist.persist("RTG SDF #{orig_reference}", :path, :other => {:reference => reference}) do |filename|
         CMD.cmd_log('rtg', "format #{reference} -o '#{filename}'")
@@ -60,7 +60,7 @@ module HTS
 
       Open.ln_s sdf, './sdf'
 
-      if bed_regions && File.exists?(bed_regions)
+      if bed_regions && File.exist?(bed_regions)
         text = CMD.cmd('rtg', "vcfeval --decompose --squash-ploidy --no-roc --all-records -t '#{sdf}' --bed-regions #{bed_regions} --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
       else
         text = CMD.cmd('rtg', "vcfeval --decompose --squash-ploidy --no-roc --all-records -t '#{sdf}' --sample '#{truth_sample},#{input_sample}' -o '#{file('output')}' -b '#{truth_sorted}.gz' -c '#{input_sorted}.gz'").read.split("\n").reject{|l| l.include?("---") || l.include?("Selected")}
