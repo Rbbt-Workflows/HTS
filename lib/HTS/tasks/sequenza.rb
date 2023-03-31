@@ -1,4 +1,3 @@
-require 'rbbt/util/R'
 module HTS
 
   SEQUENZA_UTILS = 'sequenza-utils'
@@ -93,6 +92,7 @@ module HTS
   dep :seqz
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :sequenza => :array do |reference|
+    require 'rbbt/util/R'
 
     reference = reference_file(reference)
     reference = Samtools.prepare_FASTA reference
