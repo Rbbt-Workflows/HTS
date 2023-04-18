@@ -33,6 +33,7 @@ module Sample
         options = options.merge({:fastq1_files => fastq_files.first, :fastq2_files => (fastq_files.last || [])})
         HTS.job(:BAM_rescore_mutiplex, sample, options)
       else
+        fastq_files = fastq_files.flatten
         options = options.merge({:fastq1 => fastq_files.first, :fastq2 => fastq_files.last})
         {:inputs => options, :jobname => sample}
       end
