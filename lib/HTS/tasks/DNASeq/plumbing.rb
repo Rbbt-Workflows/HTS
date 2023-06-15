@@ -82,7 +82,7 @@ module HTS
   end
 
   input :bam_file , :file, "BAM", :nofile => true
-  task :revert_BAM_sharded do |bam_file|
+  task :revert_BAM_sharded => :binary do |bam_file|
     bam_file = Samtools.prepare_BAM(bam_file)
     BAMShard.revert_BAM(bam_file, self.path)
   end

@@ -4,6 +4,7 @@ require 'rbbt/workflow'
 Misc.add_libdir if __FILE__ == $0
 
 #require 'rbbt/sources/HTS'
+Workflow.require_workflow "Sequence"
 
 require 'tools/BWA'
 require 'tools/GATK'
@@ -460,3 +461,4 @@ require 'HTS/tasks/FastQC'
 require 'HTS/tasks/pyclone'
 require 'HTS/tasks/sample' if defined? Sample
 require 'HTS/tasks/study' if defined? Study
+
