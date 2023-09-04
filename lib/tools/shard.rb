@@ -114,15 +114,13 @@ class GATKShard
     sizes = chunks.collect do |list|
       list.inject(0){|acc,e| acc += e[2].to_i - e[1].to_i}
     end
-    iii chunks.size
     TmpFile.with_file(sizes.sort * "\n") do  |file|
       ppp CMD.cmd(:gnuplot, :in => <<-EOF).read
 set terminal dumb 
 plot '#{file}'
       EOF
     end
-    iif sizes.sort
-    iii [Misc.min(sizes), Misc.mean(sizes), Misc.max(sizes)]
+    [Misc.min(sizes), Misc.mean(sizes), Misc.max(sizes)]
   end
 
   def self.cmd(command, args, interval_list, chunk_size = CHUNK_SIZE, cpus = nil, contigs = nil, bar = nil, break_interval = nil, &callback)

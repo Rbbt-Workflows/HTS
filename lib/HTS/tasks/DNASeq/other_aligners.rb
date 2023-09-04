@@ -62,7 +62,7 @@ module HTS
   input :novoalign_args, :string, "NovoAlign arguments", "-F STDFQ -R 0 -r All 9999 -o SAM -o FullNW"
   extension "bam"
   task :novoalign_BAM => :binary do |reference,fastq1,fastq2,novoalign_args|
-    FileUtils.mkdir_p files_dir unless File.exists? files_dir
+    FileUtils.mkdir_p files_dir unless File.exist? files_dir
 
     reference = reference_file reference
     cpus = Rbbt::Config.get(:cpus, :novoalign)
@@ -96,10 +96,10 @@ module HTS
         CMD.cmd("samtools sort --no-PG -O BAM  '#{tmp_sam}' > '#{self.tmp_path}'")
       end
     ensure
-      FileUtils.rm fastq1 if File.exists?(fastq1) && original_fastq1 != fastq1
-      FileUtils.rm fastq2 if fastq2 && File.exists?(fastq2) && original_fastq2 != fastq2
-      FileUtils.rm reference if File.exists?(reference) && original_reference != reference
-      FileUtils.rm reference + '.nix' if File.exists?(reference + '.nix') && original_reference != reference
+      FileUtils.rm fastq1 if File.exist?(fastq1) && original_fastq1 != fastq1
+      FileUtils.rm fastq2 if fastq2 && File.exist?(fastq2) && original_fastq2 != fastq2
+      FileUtils.rm reference if File.exist?(reference) && original_reference != reference
+      FileUtils.rm reference + '.nix' if File.exist?(reference + '.nix') && original_reference != reference
     end
     nil
   end

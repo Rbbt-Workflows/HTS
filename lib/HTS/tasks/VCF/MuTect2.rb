@@ -55,7 +55,7 @@ module HTS
 
     raise "Normal and tumor samples have the same name: #{normal_sample}" if tumor_sample == normal_sample
 
-    FileUtils.mkdir_p files_dir unless File.exists? files_dir
+    FileUtils.mkdir_p files_dir unless File.exist? files_dir
 
     output = file('calls.vcf')
     args["input"] = [tumor, normal].compact
@@ -98,9 +98,9 @@ module HTS
       Open.mkdir file('f1r2.tar.gz')
       GATKShard.cmd("Mutect2", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
-        `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exists? headervcf
+        `grep "#" "#{ioutfile}" > "#{headervcf}"` unless File.exist? headervcf
         `grep -v "#" #{ioutfile} >> #{contentvcf}` 
-        `head -n 1 "#{ioutfile}.stats" > "#{headervcf_stats}"` unless File.exists? headervcf_stats
+        `head -n 1 "#{ioutfile}.stats" > "#{headervcf_stats}"` unless File.exist? headervcf_stats
         `tail -n 1 #{ioutfile}.stats >> #{contentvcf_stats}` 
         `mv "#{ioutfile}-f1r2.tar.gz" "#{file('f1r2.tar.gz')}"`
       end

@@ -18,10 +18,10 @@ module FuSeq
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".idx") || Persist.newer?(linked + '.idx', file)
+    if ! File.exist?(linked + ".idx") || Persist.newer?(linked + '.idx', file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         args = {}
         gunzip_cmd = "gunzip -c \"#{linked}\"" +  '| sed "s/\(EN[[:alpha:]]*[[:digit:]]*\)\.[[:digit:]]/\1/g"'
         cmd = "TxIndexer -t <(#{gunzip_cmd})"
@@ -74,10 +74,10 @@ module FuSeq
     Path.setup(dir) unless Path === dir
 
     linked = dir[basename].find
-    if ! File.exists?(linked + ".sql") || Persist.newer?(linked + '.sql', file)
+    if ! File.exist?(linked + ".sql") || Persist.newer?(linked + '.sql', file)
 
       Misc.in_dir dir do
-        FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+        FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
         args = {}
         CMD.cmd_log("Rscript #{Rbbt.software.opt.FuSeq.find}/R/createSqlite.R #{file} #{linked}.sql")
       end

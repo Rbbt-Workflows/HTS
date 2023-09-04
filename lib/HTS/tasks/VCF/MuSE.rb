@@ -7,8 +7,9 @@ module HTS
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :type_of_sequencing, :select, "Whole genome or whole exome", nil, :select_options => %w(WGS WES panel)
+  input :skip_dbSNP_in_muse, :boolean, "Don't use DbSNP common variants in muse", false
   extension :vcf
-  task :muse => :text do |tumor,normal, reference,type_of_sequencing|
+  task :muse => :text do |tumor,normal, reference,type_of_sequencing,no_dbSNP|
 
     reference_code = File.basename(reference).sub('.fa','').sub('.gz','')
     reference = reference_file reference
@@ -81,8 +82,8 @@ module HTS
     end
 
     build = Organism.GRC_build reference_code
-    if build
-      dbsnp = DbSNP[build]["common.vcf.gz"].find
+    if build && ! no_dbSNP
+      dbsnp = DbSNP[build]["common.vcf.gz"].produce.find
       dbsnp = GATK.prepare_VCF dbsnp
       CMD.cmd_log(:MuSE, "sump -I #{int_file}.MuSE.txt #{type_of_sequencing.to_s == "WGS" ? "-G" : "-E" } -O #{self.tmp_path} -D #{dbsnp}")
     else

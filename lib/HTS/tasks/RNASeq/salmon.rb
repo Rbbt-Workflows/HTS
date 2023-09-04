@@ -12,10 +12,10 @@ module Salmon
 
     linked = dir[basename].find
     Misc.lock linked do
-      if ! File.exists?(linked + ".salmon_idx") || Persist.newer?(linked + '.salmon_idx', file)
+      if ! File.exist?(linked + ".salmon_idx") || Persist.newer?(linked + '.salmon_idx', file)
 
         Misc.in_dir dir do
-          FileUtils.ln_s file, dir[basename] unless File.exists?(linked)
+          FileUtils.ln_s file, dir[basename] unless File.exist?(linked)
           CMD.cmd_log("salmon index -t '#{linked}' -i #{linked}.salmon_idx")
         end
       end

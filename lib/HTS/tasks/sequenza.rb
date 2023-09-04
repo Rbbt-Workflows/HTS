@@ -1,4 +1,3 @@
-require 'rbbt/util/R'
 module HTS
 
   SEQUENZA_UTILS = 'sequenza-utils'
@@ -10,7 +9,7 @@ module HTS
   input :reference, :file, "Reference", nil
   extension 'gc.gz'
   task :GC_windows => :text do |reference|
-    orig_reference = reference && File.exists?(reference) ? reference : reference_file(reference || self.clean_name)
+    orig_reference = reference && File.exist?(reference) ? reference : reference_file(reference || self.clean_name)
     reference = Samtools.prepare_FASTA orig_reference
     CMD.cmd("'#{SEQUENZA_UTILS}' gc_wiggle -w 50 -f '#{reference}' -o - | gzip > #{self.tmp_path}")
     nil
@@ -77,13 +76,14 @@ module HTS
         first = false
       end
 
-      CMD.cmd("bgzip #{joined}")
+      CMD.cmd(:bgzip, joined)
 
       FileUtils.mv joined + '.gz', self.tmp_path
 
       FileUtils.rm_rf files_dir
       nil
     else
+      CMD.get_tool(:bgzip)
       CMD.cmd("sequenza-utils", "bam2seqz -gc '#{step(:GC_windows).path}'  -n '#{normal}' -t '#{tumor}' --fasta '#{reference}' | bgzip > #{self.tmp_path}")
     end
     nil
@@ -92,6 +92,7 @@ module HTS
   dep :seqz
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   task :sequenza => :array do |reference|
+    require 'rbbt/util/R'
 
     reference = reference_file(reference)
     reference = Samtools.prepare_FASTA reference

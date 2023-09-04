@@ -138,8 +138,6 @@ module HTS
   task :combine_vcfs => :text do |vcf_files,vcf_names|
     list = {}
 
-    iii vcf_files
-
     if vcf_names.nil? || vcf_names.empty?
       vcf_names = vcf_files.collect{|f| File.basename(f).sub('.vcf','').sub('.gz','')}
     end
@@ -147,7 +145,6 @@ module HTS
     vcf_files.zip(vcf_names).each do |file,name|
       list[name] = file
     end
-    iii list
     
     HTS.combine_caller_vcfs(list)
   end

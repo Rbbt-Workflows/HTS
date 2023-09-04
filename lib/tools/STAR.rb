@@ -49,7 +49,7 @@ module STAR
 
 
     linked = dir[basename].find
-    if ! File.exists?(dir.Genome) || Persist.newer?(dir.Genome, file)
+    if ! File.exist?(dir.Genome) || Persist.newer?(dir.Genome, file)
       Open.ln_s file, linked
 
       TmpFile.with_file(nil, true, :tmpdir => dir) do |unzipped|
@@ -60,7 +60,7 @@ module STAR
         end
 
         Misc.in_dir dir do
-          FileUtils.ln_s file, linked unless File.exists?(linked)
+          FileUtils.ln_s file, linked unless File.exist?(linked)
           CMD.cmd_log("STAR", "--runThreadN #{cpus} --runMode genomeGenerate --genomeDir #{dir} --genomeFastaFiles #{reference} --sjdbGTFfile #{unzipped} --sjdbOverhang #{read_length.to_i - 1}")
         end
       end

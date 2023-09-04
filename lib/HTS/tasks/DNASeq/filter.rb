@@ -56,7 +56,7 @@ module HTS
   input :fastq2, :file, "FASTQ file 2", nil
   extension "fastq.gz"
   task :razers3_filter => :binary do |reference,fastq1,fastq2|
-    FileUtils.mkdir_p files_dir unless File.exists? files_dir
+    FileUtils.mkdir_p files_dir unless File.exist? files_dir
 
     reference = reference_file reference
     reference = HTS.prepare_FASTA reference
@@ -78,7 +78,7 @@ module HTS
   input :novoalign_args, :string, "NovoAlign arguments", "-F STDFQ -R 0 -r All 9999 -o SAM -o FullNW"
   extension "fastq.gz"
   task :novoalign_filter => :binary do |reference,fastq1,fastq2,novoalign_args|
-    FileUtils.mkdir_p files_dir unless File.exists? files_dir
+    FileUtils.mkdir_p files_dir unless File.exist? files_dir
 
     reference = reference_file reference
     reference = NovoAlign.prepare_FASTA reference

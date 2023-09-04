@@ -24,7 +24,7 @@ module HTS
       bam = prepared_bams
     end
 
-    FileUtils.mkdir_p files_dir unless File.exists? files_dir
+    FileUtils.mkdir_p files_dir unless File.exist? files_dir
     output = file('calls.vcf')
 
     args = {}
