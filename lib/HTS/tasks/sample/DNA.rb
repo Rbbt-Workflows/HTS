@@ -412,9 +412,9 @@ module Sample
   dep :genomic_mutations
   dep :organism
   input :positions, :array, "List of positions to image. Use list of genomic mutations by default", :genomic_mutations
-  dep_task :mutation_BAM_img, HTS, :mutation_BAM_img, :organism => :organism, :tumor => :BAM, :normal => :BAM_normal do |jobname,options|
+  dep_task :mutation_BAM_img, HTS, :mutation_BAM_img, :organism => :organism, :tumor => :BAM, :normal => :BAM_normal do |jobname,options,dependencies|
     options = add_sample_options jobname, options
-    if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal}.empty?
+    if dependencies.flatten.select{|dep| dep.task_name == :BAM_normal }.empty?
       options[:normal] = nil
     end
     {:inputs => options}
