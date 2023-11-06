@@ -45,7 +45,7 @@ module Sample
       info[:input_defaults] = defaults
       info
     end
-  end
+  end if respond_to?(:task_info)
 
   def self.load_study_files_DNA
     begin

@@ -181,7 +181,7 @@ module HTS
   #  intervals
   #end
 
-  BLACKLISTED_CONTIGS = ['hs37d5', /GL/, /NC_/, /KI/, /decoy/, /chrUn/, /random/]
+  BLACKLISTED_CONTIGS ||= ['hs37d5', /GL/, /NC_/, /KI/, /decoy/, /chrUn/, /random/]
   helper :intervals_for_reference do |reference|
     output = reference + '.byNS.interval_list' 
     unless File.exist?(output)

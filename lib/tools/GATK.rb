@@ -369,7 +369,7 @@ PrintVariants
       #v = nil if TrueClass === v
       vs = Array === v ? v : [v]
       vs.collect do |v|
-        v = "'" + v.to_s + "'" unless v.to_s[0] == "'" || v.to_s[0] == '"' unless v.nil?
+        v = "'" + v.to_s + "'" unless v.chars[0] == "'" || v.chars[0] == '"' unless v.nil?
         [k,v].compact * " " 
       end
     end.compact.flatten * " "
