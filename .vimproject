@@ -49,14 +49,6 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
    FastQC.rb
    pyclone.rb
 
-   RNASeq=RNASeq{
-    BAM.rb
-    FuSeq.rb
-    kallisto.rb
-    salmon.rb
-    splicing.rb
-   }
-
    DNASeq=DNASeq{
     BAM.rb
     filter.rb
@@ -64,6 +56,14 @@ HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt 
     plumbing.rb
     bazam.rb
     util.rb
+   }
+
+   RNASeq=RNASeq{
+    BAM.rb
+    FuSeq.rb
+    kallisto.rb
+    salmon.rb
+    splicing.rb
    }
 
    VCF=VCF{

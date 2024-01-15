@@ -226,7 +226,7 @@ module HTS
 
   dep :BAM_sorted
   extension :bam
-  input :interval_list, :file, "Interval list", nil, :nofile => true
+  input :interval_list, :file, "Interval list", nil, :nofile => true, :noload => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
   input :known_sites, :array, "List of population resources for this reference"
   task :BAM_rescore => :binary do |interval_list,reference,known_sites|

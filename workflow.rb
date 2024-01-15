@@ -46,11 +46,11 @@ module HTS
 
     ref = case reference.sub('_noalt','')
           when 'hg19', 'hg38', 'b37', 'hs37d5'
-            Organism["Hsa"][reference][reference + ".fa"]
+            Organism["Hsa"][reference][reference + ".fa.gz"]
           when 'mm10', 'GRCm38'
-            Organism["Mmu"].GRCm38["GRCm38.fa"]
+            Organism["Mmu"].GRCm38["GRCm38.fa.gz"]
           when 'rn6', 'Rno_6.0'
-            Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa"]
+            Organism["Rno"]["Rnor_6.0"]["Rnor_6.0.fa.gz"]
           else
             reference
           end
