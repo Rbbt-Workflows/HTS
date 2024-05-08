@@ -27,6 +27,7 @@ module Salmon
 end
 
 module HTS
+
   input :fastq1, :array, "FASTQ 1 files", nil, :nofile => true
   input :fastq2, :array, "FASTQ 2 files", nil, :nofile => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
@@ -35,9 +36,15 @@ module HTS
     Open.mkdir files_dir
     output = file('output')
     cpus = config :cpus, :salmon, :salmon_quant
-    CMD.cmd_log("salmon", "quant -l A --validateMappings --index #{cdna}.salmon_idx -1 #{fastq1 * " "} -2 #{fastq2 * " "} --output #{output}", "--threads" => cpus )
+    #CMD.cmd_log("salmon", "quant -l A --validateMappings --index #{cdna}.salmon_idx -1 #{fastq1 * " "} -2 #{fastq2 * " "} --output #{output}", "--threads" => cpus )
+    #CMD.cmd_log("salmon", "quant -l A --index #{cdna}.salmon_idx -1 #{fastq1 * " "} -2 #{fastq2 * " "} --output #{output} --validateMappings ", "--threads" => cpus )
+    CMD.cmd_log("salmon", "quant -l A -1 #{fastq1 * " "} -2 #{fastq2 * " "}",
+                "no-version-check" => true,
+                "output" => output,
+                "threads" => cpus,
+                "index" => "#{cdna}.salmon_idx",
+                :add_option_dashes => true)
     Open.cp output["quant.sf"], self.tmp_path
     nil
   end
-
 end

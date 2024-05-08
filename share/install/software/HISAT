@@ -1,6 +1,8 @@
 #!/bin/bash
 
 name='HISAT'
-url="http://ccb.jhu.edu/software/hisat2/dl/hisat2-2.1.0-source.zip"
+url="https://cloud.biohpc.swmed.edu/index.php/s/fE9QCsX3NH4QwBi/download"
 
-install_src "$name" "$url" 
+prepare_pkg "$name" "$url"
+rm `build_dir`/CMakeLists.txt # Force regular make compilation to make it work in STARLIFE
+build "$name"

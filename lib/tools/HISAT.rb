@@ -18,6 +18,8 @@ module HISAT
   def self.build_gft_index(organism, cpus = nil)
     cpus ||= Rbbt::Config.get("cpus", :hisat_build, :hisat)
 
+    Rbbt.software.opt.HISAT.produce
+
     file = HTS.gtf_file(organism)
 
     file = file.path if Step === file

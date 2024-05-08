@@ -14,10 +14,11 @@ class GATKShard
 
     if contigs
       # Deal with contigs with ":" characters
+      intervals = intervals.select{|i| contigs.include?(i.first) }
       contigs = contigs.collect{|s| s.gsub(":","__")}
       intervals = intervals.sort do |a,b| 
-        astr = a[0,1].collect{|s| s.gsub(":","__")} * ":"
-        bstr = b[0,1].collect{|s| s.gsub(":","__")} * ":"
+        astr = a.values_at(0,1).collect{|s| s.to_s.gsub(":","__")} * ":"
+        bstr = b.values_at(0,1).collect{|s| s.to_s.gsub(":","__")} * ":"
         Misc.genomic_location_cmp_contigs(astr, bstr, contigs)
       end
     end
