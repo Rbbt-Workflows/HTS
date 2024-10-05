@@ -475,7 +475,7 @@ module Sample
   end
 
   dep :somatic_seq
-  task :somatic_seq_filtered do |jobname, options, deps|
+  task :somatic_seq_filtered => :text do |jobname, options, deps|
     reference = HTS.helpers[:reference_file].call(step(:somatic_seq).dependencies.flatten.select{|d| d.inputs.to_hash.include?"genome_reference"}.first.inputs.to_hash["genome_reference"])
     orig_reference = reference
 
