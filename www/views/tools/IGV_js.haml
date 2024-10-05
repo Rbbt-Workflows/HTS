@@ -11,7 +11,7 @@
 - index_tumor = add_GET_param(index_tumor, '_format', 'binary')
 - sample = File.basename(tumor_bam) unless defined?(sample) && sample
 
-- if reference_code.include?("/") && File.exists?(reference_code)
+- if reference_code.include?("/") && Open.exist?(reference_code)
   - reference = HTS.prepare_FASTA reference_code
   - reference.sub!('.gz','')
   - id = File.basename(reference, '.fa')
