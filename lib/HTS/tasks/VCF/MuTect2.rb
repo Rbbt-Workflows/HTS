@@ -24,7 +24,7 @@ module HTS
     pon = nil if pon == 'none'
     pon = Open.read(pon).strip if pon && Open.exists?(pon) && File.size(pon) < 10
 
-    if pon == 'default' || pon == 'Broad'
+    if File.basename(pon) == 'default' || File.basename(pon) == 'Broad'
       pon = case reference.to_s
             when 'b37'
               Organism["Hsa"].b37.known_sites["panel_of_normals.vcf"].produce.find

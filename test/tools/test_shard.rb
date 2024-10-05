@@ -20,14 +20,14 @@ class TestShard < Test::Unit::TestCase
   
   def test_hg38
     Workflow.require_workflow "HTS"
-    reference = "#{ENV["HOME"]}/.rbbt/var/fasta_indices/16beaa30591fbef604f9c752327c4bf0/hg38.fa.gz"
-    intervals = HTS.helpers[:intervals_for_reference].call reference
+    reference = HTS.helper :reference_file, 'hg38'
+    reference = HTS.prepare_FASTA reference
+    intervals = HTS.helper :intervals_for_reference, reference
     chunks = GATKShard.chunk_intervals intervals, GATKShard::CHUNK_SIZE / 10, nil, false
     assert !GATKShard.chunks_overlap?(chunks)
     chunks = Log.with_severity 0 do
       GATKShard.chunk_intervals intervals, GATKShard::CHUNK_SIZE / 5, nil, true
     end
-    iii chunks.length
     assert GATKShard.chunks_overlap?(chunks)
     GATKShard.chunk_sizes(chunks)
   end

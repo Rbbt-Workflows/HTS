@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+
+$0 = "rbbt #{$previous_commands*" "} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Check a BAM pileup for a mutation
+
+$ #{$0} [options] <filename.bam> <mutation>
+
+Use - to read from STDIN
+
+-h--help Print this help
+
+EOF
+if options[:help]
+  if defined? rbbt_usage
+    rbbt_usage 
+  else
+    puts SOPT.doc
+  end
+  exit 0
+end
+
+
+bam, mutation = ARGV
+
+raise ParameterException, :bam if bam.nil?
+raise ParameterException, :mutation if mutation.nil?
+
+Workflow.require_workflow "HTS"
+
+bam = Samtools.prepare_BAM(bam)
+chr, pos, alt = mutation.split(":")
+
+region = "#{chr}:#{pos}-#{pos}"
+
+txt = begin
+        CMD.cmd("samtools mpileup '#{bam}' -r '#{region}'").read
+      rescue
+        CMD.cmd("samtools mpileup '#{bam}' -r 'chr#{region}'").read
+      end
+
+puts txt.split("\t")[4]

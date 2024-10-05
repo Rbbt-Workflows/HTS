@@ -406,7 +406,7 @@ module HTS
       set_info :spark, true
     end
 
-    log_gatk command, args
+    log_gatk command, args if self.respond_to?(:info)
 
     begin
       GATK.run_log(command, args, sin, tmp_dir)

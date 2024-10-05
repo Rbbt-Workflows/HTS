@@ -2,10 +2,10 @@ require 'rbbt/sources/organism'
 
 module HTS
 
-  input :fastq1, :path, "FASTQ 1 file", nil, :nofile => true
-  input :fastq2, :path, "FASTQ 2 file", nil, :nofile => true
+  input :fastq1, :file, "FASTQ 1 file"
+  input :fastq2, :file, "FASTQ 2 file"
   input :read_group_name, :string, "READ_GROUP_NAME BAM field", nil
-  input :sample_name, :string, "SAMPLE_NAME BAM field", nil
+  input :sample_name, :string, "SAMPLE_NAME BAM field", nil, :jobname => true
   input :library_name, :string, "LIBRARY_NAME BAM field", "DefaultLibraryName"
   input :platform_unit, :string, "PLATFORM_UNIT BAM field", "DefaultPlatformUnit"
   input :platform, :string, "PLATFORM BAM field", "DefaultPlatform"

@@ -75,7 +75,6 @@ module GATK
     file = file.find if Path === file
     file = File.expand_path(file)
 
-
     digest = Misc.file2md5(file)
     basename = File.basename(file)
 
