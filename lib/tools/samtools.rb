@@ -30,7 +30,7 @@ module Samtools
     {:git => url, :extra => extra}
   end
 
-  CMD.tool :bgzip, Rbbt.software.opt.HTSLib
+  CMD.tool :bgzip, Rbbt.software.opt.HTSLib, 'command -v bgzip'
 
   CMD.tool :samtools, Rbbt.software.opt.Samtools
 
