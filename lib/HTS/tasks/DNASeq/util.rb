@@ -30,7 +30,7 @@ module HTS
   #dep :BAM_pileup_sumaries_known_biallelic, :jobname => "Default"
   
   input :bam_file, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :pileup_germline_resource, :file, "Germline resource for BAM_pileup_sumaries", :small_exac, :nofile => true
   task :BAM_pileup_sumaries => :text do |bam,reference,pileup_germline_resource|
 

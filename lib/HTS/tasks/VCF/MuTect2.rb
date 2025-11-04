@@ -4,7 +4,7 @@ module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :interval_padding, :integer, "Interval padding", 50
   input :panel_of_normals, :file, "Panel of normals", 'default', :nofile => true
