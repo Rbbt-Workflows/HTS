@@ -130,7 +130,7 @@ plot '#{file}'
     output_field = args.keys.select{|f| f =~ /output/i }.first
     cpus ||= Rbbt::Config.get('cpus', 'shard', :default => 3) 
 
-    is_bedfile = Misc.is_filename?(interval_list) && interval_list =~ /\.bed$/i 
+    is_bedfile = Path.is_filename?(interval_list) && interval_list =~ /\.bed$/i
 
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs)
     chunks = GATKShard.chunk_intervals(interval_list, chunk_size, contigs, break_interval)      if break_interval && chunks.length < (cpus.to_i * 2) || chunks.length < 20

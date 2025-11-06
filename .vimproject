@@ -1,5 +1,8 @@
 HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt *.conf" {
  workflow.rb
+ chats=chats filter="*"{
+  slurm
+ }
  lib=lib {
   sources=sources{
    HTS_reference.rb

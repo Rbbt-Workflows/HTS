@@ -17,8 +17,8 @@ module HTS
     reference = BWA.prepare_FASTA orig_reference
     reference = Samtools.prepare_FASTA orig_reference
 
-    truth = File.expand_path(truth) if Misc.is_filename? truth
-    input = File.expand_path(input) if Misc.is_filename? input
+    truth = File.expand_path(truth) if Path.is_filename? truth
+    input = File.expand_path(input) if Path.is_filename? input
 
     Misc.in_dir files_dir do
       input_sorted = File.join('.', "input.vcf")
