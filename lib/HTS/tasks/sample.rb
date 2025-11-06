@@ -332,7 +332,19 @@ module Sample
           study_options = if File.directory? options_file
                             input_names = STUDY_OPTIONS.keys
                             input_types = STUDY_OPTIONS
-                            options = Workflow.load_inputs(options_file, input_names, input_types)
+                            input_names.each do |name|
+                              type = input_types[name]
+
+                              file = options_file[name].find_with_extension(type)
+
+                              if Open.exists?(file)
+                                options[name] = Task.load_input_from_file(file, type || :string)
+                              elsif (files = Dir.glob(File.join(options_file, "#{name}.*"))).any?
+                                type = file.split('.').last
+                                options[name] = Task.load_input_from_file(files.first, type)
+                              end
+                            end
+
                             Dir.glob(File.join(options_file, "*#*")).each do |od|
                               options[File.basename(od)] = od
                             end
