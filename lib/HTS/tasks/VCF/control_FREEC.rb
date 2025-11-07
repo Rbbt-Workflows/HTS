@@ -5,7 +5,7 @@ module HTS
 
   input :sample_mateFile, :file, "File with mapped reads from tumor sample", nil, :nofile => true
   input :control_mateFile, :file, "File with mapped reads from control sample", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :snpFile, :file, "File containing known SNP", nil, :nofile => true
   input :intervals, :file, "List of Intervals for the capture regions", nil, :nofile => true
   input :mate_orientation,:string, "0 (for single ends), RF (Illumina mate-pairs), FR (Illumina paired-ends), FF (SOLiD mate-pairs)" "FR" 

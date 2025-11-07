@@ -5,7 +5,7 @@ module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :type_of_sequencing, :select, "Whole genome or whole exome", nil, :select_options => %w(WGS WES panel)
   input :skip_dbSNP_in_muse, :boolean, "Don't use DbSNP common variants in muse", false
   extension :vcf

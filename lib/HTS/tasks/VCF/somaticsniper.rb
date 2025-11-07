@@ -12,7 +12,7 @@ somatic_score is set to 40 according to documentation in the web page
   EOF
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Normal BAM (optional)", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :quality, :integer, "Mapping quality filter threshold", 1
   input :somatic_score, :integer, "Filtering somatic snv output with somatic quality less than", 40 
   extension :vcf
@@ -57,11 +57,13 @@ somatic_score is set to 40 according to documentation in the web page
         TmpFile.with_file nil, true, :extension => :vcf do |tmpfile1|
           TmpFile.with_file nil, true, :extension => :vcf do |tmpfile2|
             args = {}
-            args["bam-file"] = step(:somatic_sniper).inputs[:tumor]
+            bam = step(:somatic_sniper).inputs[:tumor]
+            bam = bam.path if Step === bam
+            args["bam-file"] = bam
             args["vcf-file"] = step(:somatic_sniper).path
             args["output"] = tmpfile1
             args["reference"] = reference
-            args["sample"] = GATK.BAM_sample_name(step(:somatic_sniper).inputs[:tumor])
+            args["sample"] = GATK.BAM_sample_name(bam)
             FPFilter.filter(args.to_hash)
 
             HTS.vcf_clean_IUPAC_alleles(tmpfile1, Path.setup(tmpfile2))

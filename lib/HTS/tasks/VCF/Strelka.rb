@@ -3,7 +3,7 @@ module HTS
 
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :normal, :file, "Tumor BAM", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :interval_list, :file, "interval list bed file", nil, :nofile => true
   input :indel_candidates, :file, "Candidate small indels from Manta", nil
   extension :vcf
