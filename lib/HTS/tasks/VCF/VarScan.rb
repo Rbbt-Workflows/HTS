@@ -55,10 +55,12 @@ module HTS
 
     output = file('output')
     Misc.in_dir output do
-      io_normal = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal, :noz => true))
-      io_tumor = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor, :noz => true))
+      #io_normal = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal, :noz => true))
+      #io_tumor = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor, :noz => true))
+      io_normal = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal))
+      io_tumor = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor))
 
-      pipe = Misc.paste_streams([io_normal, io_tumor]) do |a,b|
+      pipe = TSV.paste_streams([io_normal, io_tumor]) do |a,b|
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 
@@ -110,6 +112,7 @@ module HTS
     args = {}
     tumor = recursive_inputs[:tumor]
     tumor = tumor.path if Step === tumor
+    tumor = tumor.find if Path === tumor
 
 
     Open.mkdir files_dir
@@ -157,7 +160,7 @@ module HTS
       io_normal = CMD.cmd("gunzip '#{normal.join.path}' -c | sed 's/\t/#/;s/\t/#/' ", :pipe => true)
       io_tumor = CMD.cmd("gunzip '#{tumor.join.path}' -c | sed 's/\t/#/;s/\t/#/' ", :pipe => true)
 
-      pipe = Misc.paste_streams([io_normal, io_tumor]) do |a,b|
+      pipe = TSV.paste_streams([io_normal, io_tumor]) do |a,b|
         Misc.genomic_location_cmp_strict(a, b, '#')
       end
 

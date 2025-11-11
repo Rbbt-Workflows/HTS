@@ -91,11 +91,12 @@ module HTS
 
 
   input :bam, :file, "BAM file", nil, :nofile => true
-  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10), :nofile => true
+  input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   extension 'pileup.gz'
   task :pileup => :text do |bam,reference|
     orig_reference = reference_file(reference)
     reference = HTS.prepare_FASTA orig_reference
+    bam = bam.find if Path === bam
 
     monitor_cmd_genome "samtools mpileup -f '#{reference}' -Q 20 '#{bam}'", false, true
   end

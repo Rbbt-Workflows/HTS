@@ -24,7 +24,7 @@ module HTS
       io_normal = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal, :noz => true))
       io_tumor = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor, :noz => true))
 
-      pipe = Misc.paste_streams([io_normal, io_tumor]) do |a,b|
+      pipe = Open.paste_streams([io_normal, io_tumor]) do |a,b|
         chr1, _sep, pos1 = a.partition("#")
         chr2, _sep, pos2 = b.partition("#")
 

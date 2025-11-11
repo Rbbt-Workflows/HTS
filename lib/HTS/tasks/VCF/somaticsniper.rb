@@ -59,8 +59,12 @@ somatic_score is set to 40 according to documentation in the web page
             args = {}
             bam = step(:somatic_sniper).inputs[:tumor]
             bam = bam.path if Step === bam
+            bam = bam.find if Path === bam
+            vcf = step(:somatic_sniper).path
+            vcf = vcf.find if Path === vcf
+
             args["bam-file"] = bam
-            args["vcf-file"] = step(:somatic_sniper).path
+            args["vcf-file"] = vcf
             args["output"] = tmpfile1
             args["reference"] = reference
             args["sample"] = GATK.BAM_sample_name(bam)
