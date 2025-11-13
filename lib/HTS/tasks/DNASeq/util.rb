@@ -319,6 +319,7 @@ module HTS
       tmpdir = tmpdir.sub("[USER]", user) 
     end
     tmpdir ||= files_dir
+    tmpdir = File.expand_path tmpdir if tmpdir
     Open.mkdir tmpdir
     CMD.cmd(:samtools, "sort '#{bam}' -O BAM -o '#{self.tmp_path}' -T #{tmpdir}", "-m" => max_mem, "--threads" => cpus)
     nil

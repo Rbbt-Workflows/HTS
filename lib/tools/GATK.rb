@@ -23,6 +23,7 @@ module GATK
   def self.tmpdir
     begin
       tmpdir = Rbbt::Config.get('tmpdir', :gatk)
+      tmpdir = File.expand_path tmpdir if tmpdir
       if tmpdir && ! File.exist?(tmpdir)
         Open.mkdir tmpdir
         File.chmod(0777, tmpdir)
