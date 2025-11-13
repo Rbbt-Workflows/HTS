@@ -340,7 +340,7 @@ module Sample
                               if Open.exists?(file)
                                 options[name] = Task.load_input_from_file(file, type || :string)
                               elsif (files = Dir.glob(File.join(options_file, "#{name}.*"))).any?
-                                type = file.split('.').last
+                                type ||= File.basename(file).split('.').last
                                 options[name] = Task.load_input_from_file(files.first, type)
                               end
                             end
