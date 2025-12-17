@@ -38,52 +38,49 @@ module HTS
   input :normal, :file, "Normal BAM", nil, :nofile => true
   input :tumor, :file, "Tumor BAM", nil, :nofile => true
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
-  dep :pileup, :bam => :placeholder do |jobname,options|
-    deps = []
+  #dep :pileup, :bam => :placeholder do |jobname,options|
+  #  deps = []
 
-    deps << {:inputs => options.merge(:bam => options[:normal]), :jobname => jobname + '.normal'}
-    deps << {:inputs => options.merge(:bam => options[:tumor]), :jobname => jobname + '.tumor'}
+  #  deps << {:inputs => options.merge(:bam => options[:normal]), :jobname => jobname + '.normal'}
+  #  deps << {:inputs => options.merge(:bam => options[:tumor]), :jobname => jobname + '.tumor'}
 
-    deps
-  end
+  #  deps
+  #end
   input :normal_purity, :float, "Normal sample purity", 1 
   input :tumor_purity, :float, "Tumor sample purity", 1 
   extension 'vcf'
   task :varscan_somatic => :text do |normal,tumor,reference,normal_purity,tumor_purity|
-    normal = dependencies.select{|dep| dep.clean_name.include? '.normal'}.first
-    tumor = dependencies.select{|dep| dep.clean_name.include? '.tumor'}.first
+    # Use joint samtools mpileup (normal then tumor) and VarScan's --mpileup mode
+    orig_reference = reference_file(reference)
+    reference_fa = HTS.prepare_FASTA(orig_reference)
 
-    output = file('output')
-    #Misc.in_dir output do
-    #  #io_normal = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal, :noz => true))
-    #  #io_tumor = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor, :noz => true))
-    #  io_normal = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal))
-    #  io_tumor = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor))
-
-    #  pipe = TSV.paste_streams([io_normal, io_tumor]) do |a,b|
-    #    Misc.genomic_location_cmp_strict(a, b, '#')
-    #  end
-
-    #  #io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
-    #  #Open.write(output[clean_name + '.snv.vcf'].find, io)
-    #  CMD.cmd_log("sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' #{output[clean_name + '.snp.vcf']}", :in => pipe)
-    #end
+    # Resolve BAM inputs (they may be Paths/Steps)
+    normal_bam = recursive_inputs[:normal]
+    tumor_bam  = recursive_inputs[:tumor]
+    normal_bam = normal_bam.path if Step === normal_bam
+    normal_bam = normal_bam.find if Path === normal_bam
+    tumor_bam = tumor_bam.path if Step === tumor_bam
+    tumor_bam = tumor_bam.find if Path === tumor_bam
 
     Open.mkdir files_dir
-    fnormal = file('normal.pileup')
-    ftumor = file('tumor.pileup')
+    pileup = file('joint.mpileup')
 
-    CMD.cmd_log(:zcat, "'#{Open.find normal}' > '#{fnormal}'") unless fnormal.exists?
-    CMD.cmd_log(:zcat, "'#{Open.find tumor}' > '#{ftumor}'") unless ftumor.exists?
+    # Generate a joint mpileup: important flags per VarScan best practice
+    samtools_cmd = "mpileup -f '#{reference_fa}' -q 1 -Q 20 --max-depth 10000 '#{normal_bam}' '#{tumor_bam}' > '#{pileup}'"
+    CMD.cmd_log(:samtools, samtools_cmd) unless pileup.exists?
 
+    output = file('output')
     Misc.in_dir output do
-      CMD.cmd_log(:varscan, "somatic '#{fnormal}' '#{ftumor}' '#{output[clean_name]}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' #{output[clean_name + '.snp.vcf']}")
+      # Run VarScan in mpileup mode (normal first, tumor second)
+      varscan_cmd = "somatic '#{pileup}' '#{output[clean_name]}' --mpileup 1 --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --min-coverage 8 --min-var-freq 0.05 --somatic-p-value 0.05 --output-vcf 1"
+      CMD.cmd_log(:varscan, varscan_cmd)
     end
 
-    reference_file = GATK.prepare_FASTA(reference_file(reference))
-
-    vcfs = output.glob("#{clean_name}.*") 
+    # Clean IUPAC alleles and merge SNP/INDEL VCFs into a single VCF
+    vcfs = output.glob("#{clean_name}.*")
     vcfs.delete_if{|f| File.empty?(f) }
+    reference_dict = GATK.prepare_FASTA(orig_reference).replace_extension('dict', true)
+
     clean_vcfs = vcfs.collect do |vcf|
       clean_vcf = vcf.replace_extension('clean.vcf')
       HTS.vcf_clean_IUPAC_alleles(vcf, Path.setup(clean_vcf))
@@ -93,8 +90,9 @@ module HTS
     args = {}
     args["INPUT"] = clean_vcfs
     args["OUTPUT"] = self.tmp_path
-    args["SEQUENCE_DICTIONARY"] = reference_file.replace_extension('dict', true)
+    args["SEQUENCE_DICTIONARY"] = reference_dict
     gatk("MergeVcfs", args)
+
     Open.rm_rf files_dir
     nil
   end
