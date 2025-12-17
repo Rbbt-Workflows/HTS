@@ -49,6 +49,8 @@ module Sample
     elsif bam_files = sample_files[:BAM]
       path = [bam_files].flatten.first
       job = Step.new path
+      job.overriden_task = :BAM
+      job.overriden_workflow = HTS 
       job.task_name = :BAM
       job.workflow = HTS
       job
@@ -240,7 +242,7 @@ module Sample
 
 
 
-  input :callers, :array, "Callers to use", %w(mutect2 muse strelka varscan somatic_sniper)
+  input :callers, :array, "Callers to use", %w(mutect2 muse strelka somatic_sniper)
   dep :mutect2 do  |jobname,options,dependencies|
     options[:callers].collect do |vcaller|
       {:task => vcaller, :inputs => options, :jobname => jobname}

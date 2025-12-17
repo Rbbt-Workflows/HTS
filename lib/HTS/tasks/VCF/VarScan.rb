@@ -54,24 +54,35 @@ module HTS
     tumor = dependencies.select{|dep| dep.clean_name.include? '.tumor'}.first
 
     output = file('output')
+    #Misc.in_dir output do
+    #  #io_normal = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal, :noz => true))
+    #  #io_tumor = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor, :noz => true))
+    #  io_normal = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal))
+    #  io_tumor = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor))
+
+    #  pipe = TSV.paste_streams([io_normal, io_tumor]) do |a,b|
+    #    Misc.genomic_location_cmp_strict(a, b, '#')
+    #  end
+
+    #  #io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
+    #  #Open.write(output[clean_name + '.snv.vcf'].find, io)
+    #  CMD.cmd_log("sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' #{output[clean_name + '.snp.vcf']}", :in => pipe)
+    #end
+
+    Open.mkdir files_dir
+    fnormal = file('normal.pileup')
+    ftumor = file('tumor.pileup')
+
+    CMD.cmd_log(:zcat, "'#{Open.find normal}' > '#{fnormal}'") unless fnormal.exists?
+    CMD.cmd_log(:zcat, "'#{Open.find tumor}' > '#{ftumor}'") unless ftumor.exists?
+
     Misc.in_dir output do
-      #io_normal = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal, :noz => true))
-      #io_tumor = CMD.cmd("zcat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor, :noz => true))
-      io_normal = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(normal))
-      io_tumor = CMD.cmd("cat |sed 's/\t/#/;s/\t/#/' ", :pipe => true, :in => TSV.get_stream(tumor))
-
-      pipe = TSV.paste_streams([io_normal, io_tumor]) do |a,b|
-        Misc.genomic_location_cmp_strict(a, b, '#')
-      end
-
-      #io = monitor_cmd_genome ["sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' - ", :in => pipe], output[clean_name + '.snp.vcf']
-      #Open.write(output[clean_name + '.snv.vcf'].find, io)
-      CMD.cmd_log("sed 's/#/\t/;s/#/\t/' | grep -v '[[:space:]][[:space:]]' | varscan somatic --mpileup '#{clean_name}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' #{output[clean_name + '.snp.vcf']}", :in => pipe)
+      CMD.cmd_log(:varscan, "somatic '#{fnormal}' '#{ftumor}' '#{output[clean_name]}' --normal-purity #{normal_purity} --tumor-purity #{tumor_purity} --output-vcf '1' #{output[clean_name + '.snp.vcf']}")
     end
 
     reference_file = GATK.prepare_FASTA(reference_file(reference))
 
-    vcfs = output.glob("*.vcf") 
+    vcfs = output.glob("#{clean_name}.*") 
     vcfs.delete_if{|f| File.empty?(f) }
     clean_vcfs = vcfs.collect do |vcf|
       clean_vcf = vcf.replace_extension('clean.vcf')
@@ -84,6 +95,7 @@ module HTS
     args["OUTPUT"] = self.tmp_path
     args["SEQUENCE_DICTIONARY"] = reference_file.replace_extension('dict', true)
     gatk("MergeVcfs", args)
+    Open.rm_rf files_dir
     nil
   end
   

@@ -7,8 +7,8 @@ module HTS
   input :reference, :select, "Reference code", "hg38", :select_options => %w(b37 hg38 mm10)
   input :interval_list, :file, "Interval list", nil, :nofile => true
   input :interval_padding, :integer, "Interval padding", 50
-  input :panel_of_normals, :file, "Panel of normals", 'default', :nofile => true
-  input :germline_resource, :file, "Germline resource", :gnomad, :nofile => true
+  input :panel_of_normals, :path, "Panel of normals", 'default', :nofile => true
+  input :germline_resource, :path, "Germline resource", :gnomad, :nofile => true
   input :af_not_in_resource, :float, "Allele frequency of alleles not in resource", nil
   input :remove_soft_clip, :boolean, "Don't consider soft clip bases", false
   input :max_mnp_distance, :integer, "Max distance for mnp merge", 1
@@ -95,6 +95,7 @@ module HTS
       contentvcf_stats = file('tmp.content.stats')
       tmp_stats = file('tmp.stats')
 
+      intervals = intervals.sort_by{|i| s,e=i.split("\t").values_at 2,3; e.to_i - s.to_i}[0..5]
       Open.mkdir file('f1r2.tar.gz')
       GATKShard.cmd("Mutect2", args, intervals, GATKShard::CHUNK_SIZE, cpus, contigs, bar) do |ioutfile|
         bar.tick
@@ -161,7 +162,11 @@ module HTS
       args["tumor-segmentation"] = contamination.file('segments.tsv')
       args["contamination-table"] = contamination.path
     end
-    gatk("FilterMutectCalls", args)
+    begin
+      gatk("FilterMutectCalls", args)
+    rescue => e
+      raise ScoutException, "Error in filters: #{e.message}" 
+    end
     Open.link output, self.tmp_path
     nil
   end
