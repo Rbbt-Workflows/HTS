@@ -300,14 +300,14 @@ module Sample
 
     load_study_files.each do |study, sample_files|
       next if sstudy && study.to_s != sstudy.to_s
-      next unless Sample.study_dir(study).sample_info.exists?
-      sample_info = TSV.open(Sample.study_dir(study).sample_info).to_double
+      sample_info = TSV.open(Sample.study_dir(study).sample_info).to_double rescue {sample => {}}
       if sample_info[sample]
         info = sample_info[sample].to_hash
         IndiferentHash.setup info
         info[:sample_name] ||= sample
         return info
       end
+    rescue
     end
     IndiferentHash.setup({:sample_name => sample})
   end

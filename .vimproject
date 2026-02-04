@@ -1,6 +1,7 @@
 HTS=/$PWD filter="*.rb *.rake Rakefile *.rdoc *.R *.sh *.js *.haml *.sass *.txt *.conf" {
  workflow.rb
  chats=chats filter="*"{
+  fpfilter
   slurm
   varscan
  }
