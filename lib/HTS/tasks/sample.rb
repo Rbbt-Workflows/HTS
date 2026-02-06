@@ -293,23 +293,26 @@ module Sample
 
 
   def self.sample_options(sample, sstudy = nil)
-    if sample.include?(":") and sstudy.nil?
-      study, _sep, ssample  = sample.partition(":")
-      return sample_options(ssample, study)
-    end
+    @@sample_options ||= {}
+    @@sample_options[[sample,sstudy]] ||= begin
+                           if sample.include?(":") and sstudy.nil?
+                             study, _sep, ssample  = sample.partition(":")
+                             return sample_options(ssample, study)
+                           end
 
-    load_study_files.each do |study, sample_files|
-      next if sstudy && study.to_s != sstudy.to_s
-      sample_info = TSV.open(Sample.study_dir(study).sample_info).to_double rescue {sample => {}}
-      if sample_info[sample]
-        info = sample_info[sample].to_hash
-        IndiferentHash.setup info
-        info[:sample_name] ||= sample
-        return info
-      end
-    rescue
-    end
-    IndiferentHash.setup({:sample_name => sample})
+                           load_study_files.each do |study, sample_files|
+                             next if sstudy && study.to_s != sstudy.to_s
+                             next unless Sample.study_dir(study).sample_info.exists?
+                             sample_info = TSV.open(Sample.study_dir(study).sample_info).to_double
+                             if sample_info[sample]
+                               info = sample_info[sample].to_hash
+                               IndiferentHash.setup info
+                               info[:sample_name] ||= sample
+                               return info
+                             end
+                           end
+                           IndiferentHash.setup({:sample_name => sample})
+                                          end
   end
 
 
@@ -371,13 +374,20 @@ module Sample
   end
 
   def self.load_study_workflow(study)
-    wf_file = Sample.study_dir(study)["workflow.rb"]
-    require wf_file.find if wf_file.exists?
+    @@study_workflow ||= {}
+    @@study_workflow[study] ||= begin
+                                  wf_file = Sample.study_dir(study)["workflow.rb"]
+                                  require wf_file.find if wf_file.exists?
+                                  wf_file
+                                end
   end
 
   def self.load_sample_workflow(sample)
-    study = sample_study(sample)
-    load_study_workflow(study) if study
+    @@sample_workflow ||= {}
+    @@sample_workflow[sample] ||= begin
+                                   study = sample_study(sample)
+                                   load_study_workflow(study) if study
+                                 end
   end
 
   input :organism, :string, "Organism Code", nil

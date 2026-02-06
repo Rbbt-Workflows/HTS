@@ -242,7 +242,7 @@ module Sample
 
 
 
-  input :callers, :array, "Callers to use", %w(mutect2 muse strelka somatic_sniper)
+  input :callers, :array, "Callers to use", %w(mutect2 muse strelka varscan somatic_sniper lofreq)
   dep :mutect2 do  |jobname,options,dependencies|
     options[:callers].collect do |vcaller|
       {:task => vcaller, :inputs => options, :jobname => jobname}
